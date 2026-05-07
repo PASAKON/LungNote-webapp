@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardHeader } from "../../DashboardHeader";
+import { SketchyFilter } from "../../SketchyFilter";
+import { Topbar } from "../../Topbar";
+import { BottomTabs } from "../../BottomTabs";
 import { NoteForm } from "../../NoteForm";
 import { createNote } from "../../actions";
 import "../../dashboard.css";
@@ -22,21 +25,40 @@ export default async function NewNotePage({
     .eq("id", user.id)
     .maybeSingle();
 
+  const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
+  const initial = displayName.trim().charAt(0).toUpperCase() || "?";
+
   return (
     <div className="lungnote-dashboard">
-      <div className="dash-wrap">
-        <DashboardHeader
-          displayName={profile?.line_display_name ?? null}
-          pictureUrl={profile?.line_picture_url ?? null}
-          locale={locale}
-        />
-        <h1 className="dash-section-title">สร้างโน้ตใหม่</h1>
-        <NoteForm
-          submitLabel="บันทึก"
-          cancelHref="/dashboard"
-          onSubmit={createNote}
-        />
+      <SketchyFilter />
+      <Topbar
+        pictureUrl={profile?.line_picture_url ?? null}
+        initial={initial}
+        locale={locale}
+      />
+      <div className="dash-body">
+        <div className="note-form-wrap">
+          <Link href="/dashboard" className="note-form-back">
+            ← กลับ
+          </Link>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 28,
+              fontWeight: 700,
+              marginBottom: 16,
+            }}
+          >
+            สร้างโน้ตใหม่
+          </h1>
+          <NoteForm
+            submitLabel="บันทึก"
+            cancelHref="/dashboard"
+            onSubmit={createNote}
+          />
+        </div>
       </div>
+      <BottomTabs active="notes" />
     </div>
   );
 }
