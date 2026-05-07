@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 import { locales, defaultLocale } from "@/i18n/config";
 import { updateSession } from "@/lib/supabase/middleware";
 
+const LOCALE_FREE_PREFIXES = ["/auth"];
+
 function getLocaleFromHeader(request: NextRequest): string {
   const accept = request.headers.get("accept-language") ?? "";
   const preferred = accept.split(",")[0]?.split("-")[0]?.toLowerCase() ?? "";
@@ -13,6 +15,11 @@ function getLocaleFromHeader(request: NextRequest): string {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const isLocaleFree = LOCALE_FREE_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+  if (isLocaleFree) return updateSession(request);
 
   const hasLocale = locales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
