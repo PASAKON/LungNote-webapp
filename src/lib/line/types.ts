@@ -24,10 +24,19 @@ export type LineUnfollowEvent = {
   timestamp: number;
 };
 
+export type LinePostbackEvent = {
+  type: "postback";
+  replyToken: string;
+  source: LineSource;
+  timestamp: number;
+  postback: { data: string; params?: Record<string, string> };
+};
+
 export type LineEvent =
   | LineTextMessageEvent
   | LineFollowEvent
   | LineUnfollowEvent
+  | LinePostbackEvent
   | { type: string; [key: string]: unknown };
 
 export type LineWebhookBody = {
