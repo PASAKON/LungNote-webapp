@@ -19,6 +19,7 @@ export function dashboardLinkMessage(url: string): LineMessage[] {
 }
 
 export function welcomeMessage(): LineMessage[] {
+  // AI disclosure required by ADR-0009 §9 (PDPA-friendly transparency).
   return [
     {
       type: "text",
@@ -28,6 +29,8 @@ export function welcomeMessage(): LineMessage[] {
         "",
         "พิมพ์ 'dashboard' เพื่อรับลิงก์เปิดเว็บ",
         "พิมพ์ 'ช่วย' เพื่อดูเมนู",
+        "",
+        "💡 ข้อความของคุณอาจถูกประมวลผลโดย AI เพื่อช่วยตอบ",
       ].join("\n"),
     },
   ];

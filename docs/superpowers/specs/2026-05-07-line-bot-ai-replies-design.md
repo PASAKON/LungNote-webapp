@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-07
 **Status:** Draft
-**Companion ADR:** ADR-0008 (in `LungNote-wikis/40-Decisions/0008-line-bot-ai-replies.md`)
+**Companion ADR:** ADR-0009 (in `LungNote-wikis/40-Decisions/0009-line-bot-ai-replies.md`) — was originally numbered 0008 but renumbered to avoid collision with the LINE-only auth ADR shipped in parallel.
 **Owner:** champ
 
 ## 1. Purpose
@@ -327,7 +327,7 @@ Worst case (every user maxes 20/day rate limit):
 
 (Plan in detail handed to `writing-plans` skill.)
 
-1. ADR-0008 in wikis (companion document).
+1. ADR-0009 in wikis (companion document).
 2. `src/lib/supabase/service.ts` — server-only Supabase client with `SUPABASE_SECRET_KEY`.
 3. Supabase CLI setup + migration for the 4 tables + RLS policies.
 4. `src/lib/ai/{client,reply,prompts,rate-limit,memory}.ts`.
@@ -346,5 +346,5 @@ Worst case (every user maxes 20/day rate limit):
 - [ ] Every inbound webhook hits `line_webhook_events`; every AI call hits `ai_call_log`.
 - [ ] `pnpm lint && pnpm build` passes; tests pass; RLS test verifies anon cannot access tables.
 - [ ] OpenRouter daily spend cap is set to $20.
-- [ ] ADR-0008 merged in wikis.
+- [ ] ADR-0009 merged in wikis.
 - [ ] Glossary updated with: OpenRouter, Gemini 2.5 Flash, prompt caching, RLS service-role.

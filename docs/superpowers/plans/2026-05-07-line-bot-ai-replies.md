@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 16 App Router, TypeScript strict, `@supabase/supabase-js` v2 (service-role client), `@supabase/ssr` (existing user-context clients), Supabase CLI (first time), OpenRouter HTTP API, Gemini 2.5 Flash, Vitest (first-time test framework), MSW v2 (HTTP mocking).
 
-**Reference:** Companion design spec at [docs/superpowers/specs/2026-05-07-line-bot-ai-replies-design.md](../specs/2026-05-07-line-bot-ai-replies-design.md). Companion ADR-0008 in `LungNote-wikis`.
+**Reference:** Companion design spec at [docs/superpowers/specs/2026-05-07-line-bot-ai-replies-design.md](../specs/2026-05-07-line-bot-ai-replies-design.md). Companion ADR-0009 in `LungNote-wikis` (was originally 0008 but renumbered after a parallel auth ADR claimed that number).
 
 ---
 
@@ -1678,7 +1678,7 @@ git commit -m "feat(line): wire AI replies + audit log + rate-limit response int
 Add to `.env.example` (preserve existing entries):
 
 ```
-# OpenRouter LLM gateway — LINE bot AI replies (ADR-0008)
+# OpenRouter LLM gateway — LINE bot AI replies (ADR-0009)
 OPENROUTER_API_KEY=
 
 # Supabase service-role key (server-only) — used by src/lib/supabase/service.ts
@@ -1817,8 +1817,8 @@ Note its format (sections, term style). Append matching the existing pattern.
 Append to the appropriate section in `30-Domain/Glossary.md` (the Technical Alias section, if separated; otherwise the technical section). Match the existing style — typically `**Term** — definition`:
 
 ```markdown
-- **OpenRouter** — LLM API gateway (https://openrouter.ai) that exposes many models (Gemini, Claude, GPT, DeepSeek, etc.) through a unified HTTP interface. Used by [[../40-Decisions/0008-line-bot-ai-replies|ADR-0008]] for the LINE bot AI reply layer. Env: `OPENROUTER_API_KEY`.
-- **Gemini 2.5 Flash** — Google's mid-tier multilingual LLM; v1 default model for the LINE bot. Strong Thai fluency, ~$0.0001 per AI reply, 1-2s typical latency. Slug on OpenRouter: `google/gemini-2.5-flash`. See [[../40-Decisions/0008-line-bot-ai-replies|ADR-0008]].
+- **OpenRouter** — LLM API gateway (https://openrouter.ai) that exposes many models (Gemini, Claude, GPT, DeepSeek, etc.) through a unified HTTP interface. Used by [[../40-Decisions/0009-line-bot-ai-replies|ADR-0009]] for the LINE bot AI reply layer. Env: `OPENROUTER_API_KEY`.
+- **Gemini 2.5 Flash** — Google's mid-tier multilingual LLM; v1 default model for the LINE bot. Strong Thai fluency, ~$0.0001 per AI reply, 1-2s typical latency. Slug on OpenRouter: `google/gemini-2.5-flash`. See [[../40-Decisions/0009-line-bot-ai-replies|ADR-0009]].
 - **Prompt caching** — provider-side caching of static prompt prefixes (e.g. system prompt) to reduce token cost on repeat requests. Saves ~50% on cached portion. Used in `src/lib/ai/client.ts`.
 - **service_role (Supabase)** — privileged Postgres role that bypasses Row-Level Security. Used by `src/lib/supabase/service.ts` for system-internal writes (audit log, conversation memory, rate limit). Never exposed to clients. Authenticated by `SUPABASE_SECRET_KEY`.
 ```
@@ -1873,11 +1873,11 @@ gh pr ready 2
 
 Browser → https://openrouter.ai/settings → set daily spend cap to **$20**. Confirm in dashboard. No code change.
 
-- [ ] **Step 16.5: Wait for review + merge wikis ADR-0008 PR #2 first**
+- [ ] **Step 16.5: Wait for review + merge wikis ADR-0009 PR #2 first**
 
 Once `golfmaichai1` (or solo, if reviewing alone) approves:
 - Merge `LungNote-wikis/pull/2` (squash, delete branch).
-- Edit ADR-0008 status from `Proposed` → `Accepted` (one-liner PR or amend, before this implementation lands).
+- Edit ADR-0009 status from `Proposed` → `Accepted` (one-liner PR or amend, before this implementation lands).
 - Merge `LungNote-wikis/pull/3` (Glossary).
 
 - [ ] **Step 16.6: Merge webapp PR #2**
