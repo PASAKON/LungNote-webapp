@@ -10,11 +10,24 @@ import errorTemplate from "./flex-templates/error.json";
 
 const SITE_URL = "https://lungnote.com";
 
+// LIFF URL has 0 round-trip cost (vs 1-time auth-link token), so we
+// prefer it whenever NEXT_PUBLIC_LINE_LIFF_ID is configured. Account-
+// linking authUrl stays as the fallback for desktop / shared contexts.
+function preferredOpenUrl(authUrl: string, path = "/dashboard"): string {
+  const liffId = process.env.NEXT_PUBLIC_LINE_LIFF_ID;
+  if (liffId) {
+    const tail = path.startsWith("/") ? path : `/${path}`;
+    return `https://liff.line.me/${liffId}?next=${encodeURIComponent(tail)}`;
+  }
+  return authUrl;
+}
+
 export function dashboardLinkMessage(authUrl: string): LineMessage[] {
   const tpl = clone(dashboardLinkTemplate) as FlexMessage;
+  const target = preferredOpenUrl(authUrl, "/dashboard");
   rewriteUriActions(tpl.contents, (uri) =>
     uri.includes("/dashboard") || uri.includes("YOUR_LIFF_ID")
-      ? authUrl
+      ? target
       : uri,
   );
   return [tpl];
