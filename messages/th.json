@@ -1,0 +1,11 @@
+{
+  "app": {
+    "name": "LungNote",
+    "tagline": "เว็บแอปบันทึกสุขภาพปอด"
+  },
+  "home": {
+    "title": "ยินดีต้อนรับสู่ LungNote",
+    "description": "Mobile-first, สากล, ตาม web standards",
+    "cta": "เริ่มต้นใช้งาน"
+  }
+}

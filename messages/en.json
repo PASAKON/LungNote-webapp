@@ -1,0 +1,11 @@
+{
+  "app": {
+    "name": "LungNote",
+    "tagline": "Webapp for lung health notes"
+  },
+  "home": {
+    "title": "Welcome to LungNote",
+    "description": "Mobile-first, international, standards-compliant.",
+    "cta": "Get started"
+  }
+}
