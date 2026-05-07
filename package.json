@@ -39,6 +39,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.5",
     "jsdom": "^25.0.1",
+    "msw": "^2.14.4",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^2.1.9"
