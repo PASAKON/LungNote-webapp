@@ -6,6 +6,29 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toMatch(/LungNote/);
     expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/thai/);
   });
+
+  it("declares note-taking-only scope and explicit refusal policy", () => {
+    expect(SYSTEM_PROMPT).toMatch(/ALLOWED topics/i);
+    expect(SYSTEM_PROMPT).toMatch(/REFUSE/i);
+    // Off-scope examples we want the bot to deflect:
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/programming/);
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/homework|tutoring|trivia/);
+  });
+
+  it("provides Thai and English refusal templates", () => {
+    expect(SYSTEM_PROMPT).toMatch(/ขอโทษ/);
+    expect(SYSTEM_PROMPT).toMatch(/I can only help/i);
+  });
+
+  it("declares caveman-lite terse style with auto-clarity escape", () => {
+    expect(SYSTEM_PROMPT).toMatch(/caveman/i);
+    expect(SYSTEM_PROMPT).toMatch(/Drop filler/);
+    expect(SYSTEM_PROMPT).toMatch(/Fragments OK/);
+    // Auto-clarity: caveman rule says drop terse mode when user confused.
+    expect(SYSTEM_PROMPT).toMatch(/confused|ไม่เข้าใจ/);
+    // Polite particles stay (don't drop them as "filler"):
+    expect(SYSTEM_PROMPT).toMatch(/Thai polite particles/);
+  });
 });
 
 describe("buildPromptMessages", () => {
