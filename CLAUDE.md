@@ -49,6 +49,7 @@ cd webapp && ./scripts/setup-workspace.sh ~/code/lungnote
 8. **ห้ามใช้ `npm` หรือ `yarn`** — ใช้ `pnpm` เท่านั้น (lockfile compat)
 9. **ห้าม commit `.env*`** — secret อยู่ที่ Vercel, sync ลงด้วย `./scripts/pull-env.sh`
 10. **ห้าม push --force ที่ main** — ใช้ `--force-with-lease` ที่ feature branch เท่านั้น
+11. **DB table ต้องขึ้นต้นด้วย `lungnote_`** — ดู [Database-Naming](https://github.com/PASAKON/LungNote-wikis/blob/main/20-Conventions/Database-Naming.md). Migration ผ่าน Supabase CLI เท่านั้น, RLS on ทุก table
 
 ## Common Commands
 
