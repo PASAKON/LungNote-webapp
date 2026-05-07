@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { locales, defaultLocale } from "@/i18n/config";
 import { updateSession } from "@/lib/supabase/middleware";
 
-const LOCALE_FREE_PREFIXES = ["/auth"];
+const LOCALE_FREE_PREFIXES = ["/auth", "/liff"];
 
 function getLocaleFromHeader(request: NextRequest): string {
   const accept = request.headers.get("accept-language") ?? "";
