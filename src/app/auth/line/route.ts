@@ -3,6 +3,7 @@ import { redeemToken } from "@/lib/auth/line-link";
 import { syntheticEmailFromLineUserId } from "@/lib/auth/synthetic-email";
 import { getLineProfile } from "@/lib/line/profile";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,16 +21,15 @@ export async function GET(req: NextRequest) {
 
   const admin = createAdminClient();
 
-  const { data: profileRow } = (await admin
+  const { data: profileRow } = await admin
     .from("lungnote_profiles")
     .select("id")
     .eq("line_user_id", lineUserId)
-    .maybeSingle()) as { data: { id: string } | null };
+    .maybeSingle();
 
   let userId: string;
   if (profileRow?.id) {
     userId = profileRow.id;
-    // refresh profile fields
     if (profile) {
       await admin
         .from("lungnote_profiles")
@@ -40,24 +40,20 @@ export async function GET(req: NextRequest) {
         .eq("id", userId);
     }
   } else {
-    // create auth user
-    const { data: created, error: createErr } = await admin.auth.admin.createUser(
-      {
-        email,
-        email_confirm: true,
-        user_metadata: {
-          provider: "line",
-          line_user_id: lineUserId,
-          display_name: profile?.displayName ?? null,
-        },
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: {
+        provider: "line",
+        line_user_id: lineUserId,
+        display_name: profile?.displayName ?? null,
       },
-    );
+    });
     if (createErr || !created.user) {
       return errorRedirect(req, "create_user_failed");
     }
     userId = created.user.id;
 
-    // upsert profile row
     await admin.from("lungnote_profiles").insert({
       id: userId,
       line_user_id: lineUserId,
@@ -66,20 +62,30 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // mint magic link → redirect browser to Supabase verify URL → cookie set → /dashboard
-  const redirectTo = new URL("/dashboard", siteUrl(req)).toString();
-  const { data: linkData, error: linkErr } =
-    await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: { redirectTo },
-    });
-
-  if (linkErr || !linkData.properties?.action_link) {
+  // Mint a magic-link, but DO NOT redirect the browser to the Supabase
+  // verify endpoint (which would land at the project Site URL with
+  // #access_token=… fragment). Instead, take the hashed_token and verify
+  // it server-side via our cookie-aware @supabase/ssr client — that sets
+  // the auth cookies on this response, then we redirect to /dashboard
+  // ourselves.
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+  });
+  if (linkErr || !linkData.properties?.hashed_token) {
     return errorRedirect(req, "magic_link_failed");
   }
 
-  return NextResponse.redirect(linkData.properties.action_link);
+  const supabase = await createServerClient();
+  const { error: verifyErr } = await supabase.auth.verifyOtp({
+    type: "magiclink",
+    token_hash: linkData.properties.hashed_token,
+  });
+  if (verifyErr) {
+    return errorRedirect(req, "verify_failed");
+  }
+
+  return NextResponse.redirect(new URL("/dashboard", siteUrl(req)));
 }
 
 function errorRedirect(req: NextRequest, code: string): NextResponse {
