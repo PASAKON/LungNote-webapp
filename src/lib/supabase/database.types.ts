@@ -1,6 +1,5 @@
 // Hand-written Database type for Supabase typing.
-// Covers only the lungnote_* tables we touch from app code.
-// Regenerate with `supabase gen types typescript --linked` once schema stabilises.
+// Covers lungnote_* tables. Regenerate with `supabase gen types typescript --linked` once stable.
 
 export type Database = {
   public: {
@@ -57,10 +56,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      lungnote_folders: {
+        Row: {
+          id: string;
+          user_id: string;
+          parent_folder_id: string | null;
+          name: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          parent_folder_id?: string | null;
+          name: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          parent_folder_id?: string | null;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      lungnote_notebooks: {
+        Row: {
+          id: string;
+          user_id: string;
+          folder_id: string | null;
+          name: string;
+          cover_color: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          folder_id?: string | null;
+          name: string;
+          cover_color?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          folder_id?: string | null;
+          name?: string;
+          cover_color?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       lungnote_notes: {
         Row: {
           id: string;
           user_id: string;
+          notebook_id: string | null;
           title: string;
           body: string;
           created_at: string;
@@ -69,6 +124,7 @@ export type Database = {
         Insert: {
           id?: string;
           user_id: string;
+          notebook_id?: string | null;
           title: string;
           body?: string;
           created_at?: string;
@@ -77,9 +133,85 @@ export type Database = {
         Update: {
           id?: string;
           user_id?: string;
+          notebook_id?: string | null;
           title?: string;
           body?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      lungnote_todos: {
+        Row: {
+          id: string;
+          user_id: string;
+          note_id: string;
+          text: string;
+          done: boolean;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          note_id: string;
+          text: string;
+          done?: boolean;
+          position?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          note_id?: string;
+          text?: string;
+          done?: boolean;
+          position?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      lungnote_tags: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          color: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          color?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          color?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      lungnote_notes_tags: {
+        Row: {
+          note_id: string;
+          tag_id: string;
+          created_at: string;
+        };
+        Insert: {
+          note_id: string;
+          tag_id: string;
+          created_at?: string;
+        };
+        Update: {
+          note_id?: string;
+          tag_id?: string;
         };
         Relationships: [];
       };
