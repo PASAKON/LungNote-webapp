@@ -1,0 +1,174 @@
+/* LIFF login flow — based on LungNote-design login states */
+.liff-state {
+  --bg: #faf8f4;
+  --surface: #fffef9;
+  --border: #e0ddd4;
+  --muted: #8a8578;
+  --fg: #2c2a25;
+  --accent: #6aab8e;
+  --accent-light: #e8f4ed;
+  --yellow: #f0d87a;
+  --yellow-light: #fdf6dc;
+  --red: #d4685a;
+  --red-light: #fce8e5;
+
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .liff-state {
+    --bg: #1e1e1c;
+    --surface: #2a2a28;
+    --border: #3a3835;
+    --fg: #e8e6e0;
+    --accent-light: #1a3328;
+    --red-light: #3d2a26;
+  }
+}
+
+.liff-sketchy-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.liff-logo svg {
+  width: 64px;
+  height: 64px;
+  filter: url(#liff-sketchy);
+}
+.liff-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.liff-title span {
+  color: var(--accent);
+}
+.liff-subtitle {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 280px;
+}
+
+.liff-spinner-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 16px 0;
+}
+.liff-spinner {
+  width: 64px;
+  height: 64px;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: liff-spin 1s linear infinite;
+  filter: url(#liff-sketchy);
+}
+@keyframes liff-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.liff-spinner-text {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.liff-success-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--accent-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: url(#liff-sketchy);
+  animation: liff-pop 0.4s ease;
+  color: var(--accent);
+}
+.liff-success-icon svg {
+  width: 40px;
+  height: 40px;
+}
+@keyframes liff-pop {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.liff-success-msg {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.liff-error-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--red-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: url(#liff-sketchy);
+}
+.liff-error-icon span {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--red);
+}
+.liff-error-msg {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--red);
+}
+.liff-error-detail {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 320px;
+}
+
+.liff-btn {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  padding: 14px 32px;
+  border: 2.5px solid var(--fg);
+  border-radius: 3px;
+  cursor: pointer;
+  filter: url(#liff-sketchy);
+  transition: transform 0.15s;
+  text-decoration: none;
+  display: inline-block;
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+.liff-btn:hover {
+  transform: translate(-1px, -1px);
+}

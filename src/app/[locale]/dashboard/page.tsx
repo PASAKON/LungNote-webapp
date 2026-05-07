@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardHeader } from "./DashboardHeader";
+import { SketchyFilter } from "./SketchyFilter";
+import { Topbar } from "./Topbar";
+import { BottomTabs } from "./BottomTabs";
 import "./dashboard.css";
 
 export const dynamic = "force-dynamic";
@@ -22,56 +24,132 @@ export default async function DashboardPage({
     .eq("id", user.id)
     .maybeSingle();
 
+  const { count: notesCount } = await supabase
+    .from("lungnote_notes")
+    .select("*", { count: "exact", head: true });
+
+  const { count: todoOpenCount } = await supabase
+    .from("lungnote_todos")
+    .select("*", { count: "exact", head: true })
+    .eq("done", false);
+
   const { data: notes } = await supabase
     .from("lungnote_notes")
     .select("id, title, body, updated_at")
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .limit(20);
+
+  const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
+  const initial = displayName.trim().charAt(0).toUpperCase() || "?";
+  const today = new Date().toLocaleDateString("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="lungnote-dashboard">
-      <div className="dash-wrap">
-        <DashboardHeader
-          displayName={profile?.line_display_name ?? null}
-          pictureUrl={profile?.line_picture_url ?? null}
-          locale={locale}
-        />
+      <SketchyFilter />
+      <Topbar
+        pictureUrl={profile?.line_picture_url ?? null}
+        initial={initial}
+        locale={locale}
+      />
 
-        <h1 className="dash-section-title">โน้ตของฉัน</h1>
+      <div className="dash-body">
+        <div className="greeting">
+          <h2>
+            สวัสดี, <span className="highlight-tape">{displayName}</span>
+          </h2>
+          <p>{today}</p>
+        </div>
+
+        <div className="search-bar">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx={11} cy={11} r={7} />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="search"
+            placeholder="ค้นหาโน้ต..."
+            aria-label="search notes"
+            disabled
+          />
+        </div>
+
+        <div className="stats-row">
+          <div className="sketch-box stat-mini">
+            <div className="stat-mini-val mint">{notesCount ?? 0}</div>
+            <div className="stat-mini-label">โน้ต</div>
+          </div>
+          <div className="sketch-box stat-mini">
+            <div className="stat-mini-val orange">{todoOpenCount ?? 0}</div>
+            <div className="stat-mini-label">Todo เหลือ</div>
+          </div>
+          <div className="sketch-box stat-mini">
+            <div className="stat-mini-val ink">0</div>
+            <div className="stat-mini-label">วัน Streak</div>
+          </div>
+        </div>
+
+        <div className="section-h">
+          <h3>โน้ตล่าสุด</h3>
+          <Link href="/dashboard/notes/new">+ ใหม่</Link>
+        </div>
 
         {!notes || notes.length === 0 ? (
-          <div className="empty-state">
-            <h3>ยังไม่มีโน้ต</h3>
-            <p>เริ่มต้นด้วยการสร้างเล่มแรกของคุณ</p>
-            <p style={{ marginTop: 24 }}>
-              <Link href="/dashboard/notes/new" className="btn-primary">
-                + สร้างโน้ตใหม่
+          <div className="empty-block">
+            <div className="empty-illustration">
+              <div className="empty-notebook" />
+              <div className="empty-plus">+</div>
+            </div>
+            <div className="empty-title">ยังไม่มีโน้ต</div>
+            <p className="empty-desc">
+              สร้างโน้ตเล่มแรกของคุณ แล้วเริ่มจดสิ่งที่สำคัญ
+            </p>
+            <p style={{ marginTop: 16 }}>
+              <Link href="/dashboard/notes/new" className="btn-main primary">
+                สร้างโน้ตแรก
               </Link>
             </p>
           </div>
         ) : (
-          <div className="notes-grid">
-            {notes.map((n) => (
-              <Link
-                key={n.id}
-                href={`/dashboard/notes/${n.id}`}
-                className="note-card"
-              >
-                <div className="note-card-title">{n.title}</div>
-                <div className="note-card-preview">
-                  {n.body || <em>ยังไม่มีเนื้อหา</em>}
-                </div>
-                <div className="note-card-meta">
-                  แก้ไขล่าสุด {formatRelative(n.updated_at)}
-                </div>
-              </Link>
-            ))}
+          <div className="recent-section">
+            <div className="recent-list">
+              {notes.map((n) => (
+                <Link
+                  key={n.id}
+                  href={`/dashboard/notes/${n.id}`}
+                  className="note-row"
+                >
+                  <span className="note-dot" />
+                  <div className="note-info">
+                    <div className="note-title">{n.title}</div>
+                    <div className="note-meta">
+                      {formatRelative(n.updated_at)}
+                    </div>
+                  </div>
+                  <span className="note-arrow">›</span>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      <Link href="/dashboard/notes/new" className="fab-add" aria-label="add">
-        +
-      </Link>
+      <BottomTabs
+        active="home"
+        notesCount={notesCount ?? undefined}
+        todoCount={todoOpenCount ?? undefined}
+      />
     </div>
   );
 }
