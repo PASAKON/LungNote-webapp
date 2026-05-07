@@ -1,0 +1,117 @@
+{
+  "type": "flex",
+  "altText": "ยินดีต้อนรับสู่ LungNote!",
+  "contents": {
+    "type": "bubble",
+    "size": "giga",
+    "hero": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "image",
+          "url": "https://lungnote.app/assets/line/welcome-hero.png",
+          "size": "full",
+          "aspectRatio": "20:9",
+          "aspectMode": "cover"
+        }
+      ]
+    },
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "WELCOME",
+              "size": "xxs",
+              "color": "#6aab8e",
+              "weight": "bold"
+            }
+          ],
+          "backgroundColor": "#e8f4ed",
+          "cornerRadius": "sm",
+          "paddingAll": "4px",
+          "paddingStart": "8px",
+          "paddingEnd": "8px",
+          "width": "80px"
+        },
+        {
+          "type": "text",
+          "text": "ยินดีต้อนรับสู่ LungNote!",
+          "weight": "bold",
+          "size": "xl",
+          "margin": "md",
+          "color": "#2c2a25"
+        },
+        {
+          "type": "text",
+          "text": "จดโน้ต เช็คลิสต์ และจัดระเบียบชีวิต — ทุกอย่างอยู่ในที่เดียว เริ่มต้นได้เลยวันนี้",
+          "size": "sm",
+          "color": "#8a8578",
+          "wrap": true,
+          "margin": "sm"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingBottom": "0px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "✎ จดโน้ตด้วยฟอนต์ลายมือ  ☑ Todo List  📁 จัดโฟลเดอร์",
+          "size": "xs",
+          "color": "#8a8578",
+          "wrap": true
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "8px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "sm",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#6aab8e",
+          "action": {
+            "type": "uri",
+            "label": "เริ่มใช้งาน LungNote",
+            "uri": "https://liff.line.me/YOUR_LIFF_ID"
+          },
+          "height": "md"
+        },
+        {
+          "type": "button",
+          "style": "secondary",
+          "color": "#e8f4ed",
+          "action": {
+            "type": "uri",
+            "label": "ดูวิธีใช้งาน",
+            "uri": "https://lungnote.app/help"
+          },
+          "height": "md"
+        }
+      ],
+      "paddingAll": "16px"
+    },
+    "styles": {
+      "hero": {
+        "backgroundColor": "#e8f4ed"
+      },
+      "footer": {
+        "separator": false
+      }
+    }
+  }
+}

@@ -3,7 +3,14 @@ import "server-only";
 const LINE_API = "https://api.line.me/v2/bot";
 
 export type TextMessage = { type: "text"; text: string };
-export type LineMessage = TextMessage;
+
+export type FlexMessage = {
+  type: "flex";
+  altText: string;
+  contents: Record<string, unknown>;
+};
+
+export type LineMessage = TextMessage | FlexMessage;
 
 export async function replyMessage(
   replyToken: string,
