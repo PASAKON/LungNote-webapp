@@ -1,28 +1,34 @@
 import "server-only";
 import { chatCompletion, AIClientError } from "./client";
 import { buildPromptMessages } from "./prompts";
+import { loadMemory, saveMemory } from "./memory";
 import type { AIReplyResult } from "./types";
 
 /**
- * Generate an AI reply for a single user message.
+ * Generate an AI reply for a single user message, using a rolling 5-user + 5-assistant
+ * conversation memory window persisted in lungnote_conversation_memory.
  *
- * v0: stateless. No conversation memory, no rate limiting, no audit logging —
- * those are added in v1 once Supabase is wired up.
+ * Memory load and save are best-effort: a DB outage degrades to a stateless reply
+ * but never blocks the response to the user.
  *
- * @param lineUserId - LINE user ID (unused in v0; reserved for v1 memory/rate-limit).
- * @param userText - The user's message text.
+ * @param lineUserId - LINE user ID; used as the memory key.
+ * @param userText - The user's current message.
  */
 export async function generateChatReply(
   lineUserId: string,
   userText: string,
 ): Promise<AIReplyResult> {
-  // Suppress "unused parameter" warning while keeping the v1-compatible signature.
-  void lineUserId;
-
-  const messages = buildPromptMessages([], userText);
+  const memory = await loadMemory(lineUserId);
+  const messages = buildPromptMessages(memory, userText);
 
   try {
     const result = await chatCompletion(messages);
+
+    // Best-effort memory save; do not block the reply on this.
+    void saveMemory(lineUserId, memory, userText, result.text).catch((err: unknown) => {
+      console.error("saveMemory rejected", { lineUserId, err });
+    });
+
     return {
       ok: true,
       text: result.text,
