@@ -1,11 +1,11 @@
 {
   "app": {
     "name": "LungNote",
-    "tagline": "Webapp for lung health notes"
+    "tagline": "Notes, checklists, organized life"
   },
   "home": {
-    "title": "Welcome to LungNote",
-    "description": "Mobile-first, international, standards-compliant.",
-    "cta": "Get started"
+    "title": "Capture everything, in your own handwriting",
+    "description": "Notes, checklists, ideas — all in one place.",
+    "cta": "Start writing — free"
   }
 }

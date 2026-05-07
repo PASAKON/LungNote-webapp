@@ -1,0 +1,764 @@
+.lungnote-landing {
+  --bg: #faf8f4;
+  --surface: #fffef9;
+  --border: #e0ddd4;
+  --muted: #8a8578;
+  --fg: #2c2a25;
+  --accent: #6aab8e;
+  --accent-light: #e8f4ed;
+  --yellow: #f0d87a;
+  --yellow-light: #fdf6dc;
+
+  --max-w: 1080px;
+  --px: 24px;
+
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 17px/1.7 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lungnote-landing {
+    --bg: #1e1e1c;
+    --surface: #2a2a28;
+    --border: #3a3835;
+    --muted: #8a8578;
+    --fg: #e8e6e0;
+    --accent: #6aab8e;
+    --accent-light: #1a3328;
+    --yellow: #b8a550;
+    --yellow-light: #3d3a2a;
+  }
+}
+
+.lungnote-landing *,
+.lungnote-landing *::before,
+.lungnote-landing *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.lungnote-landing .sketchy-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.lungnote-landing .wrap {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding-left: var(--px);
+  padding-right: var(--px);
+}
+
+.lungnote-landing .sketch-box {
+  position: relative;
+  background: var(--surface);
+}
+.lungnote-landing .sketch-box::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2.5px solid var(--fg);
+  border-radius: 3px;
+  filter: url(#sketchy);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lungnote-landing .highlight-tape {
+  display: inline;
+  background: linear-gradient(
+    to bottom,
+    transparent 55%,
+    var(--yellow) 55%,
+    var(--yellow) 90%,
+    transparent 90%
+  );
+  padding: 0 4px;
+}
+
+.lungnote-landing nav.top-nav {
+  padding: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+.lungnote-landing .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.lungnote-landing .logo-icon {
+  flex-shrink: 0;
+}
+.lungnote-landing .logo-text {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.lungnote-landing .logo-text span {
+  color: var(--accent);
+}
+.lungnote-landing nav.top-nav ul {
+  list-style: none;
+  display: flex;
+  gap: 28px;
+  font-size: 15px;
+  font-weight: 500;
+  align-items: center;
+}
+.lungnote-landing nav.top-nav a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.lungnote-landing nav.top-nav a:hover {
+  color: var(--fg);
+}
+
+.lungnote-landing .btn-sketchy {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--fg);
+  background: var(--yellow-light);
+  padding: 12px 32px;
+  border: 2.5px solid var(--fg);
+  border-radius: 3px;
+  text-decoration: none;
+  cursor: pointer;
+  filter: url(#sketchy);
+  transition:
+    background 0.15s,
+    transform 0.15s;
+  position: relative;
+}
+.lungnote-landing .btn-sketchy:hover {
+  background: var(--yellow);
+  transform: translate(-1px, -1px);
+}
+.lungnote-landing .btn-sketchy:active {
+  transform: translate(0, 0);
+}
+.lungnote-landing .btn-nav {
+  font-size: 16px;
+  padding: 8px 20px;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.lungnote-landing .section-label {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.lungnote-landing .section-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.lungnote-landing .section-desc {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 520px;
+  line-height: 1.65;
+}
+
+.lungnote-landing .wavy-divider {
+  width: 100%;
+  height: 24px;
+  display: block;
+  color: var(--border);
+}
+
+.lungnote-landing .doodle-star,
+.lungnote-landing .doodle-arrow,
+.lungnote-landing .doodle-circle {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.35;
+}
+.lungnote-landing .doodle-star {
+  top: 60px;
+  right: 8%;
+}
+.lungnote-landing .doodle-arrow {
+  bottom: 120px;
+  left: 5%;
+}
+.lungnote-landing .doodle-circle {
+  top: 120px;
+  left: 10%;
+}
+
+.lungnote-landing .hero {
+  padding: 72px 0 80px;
+  text-align: center;
+  position: relative;
+}
+.lungnote-landing .hero-eyebrow {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--accent);
+  margin-bottom: 12px;
+  position: relative;
+  display: inline-block;
+}
+.lungnote-landing .hero-eyebrow::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='6'%3E%3Cpath d='M0 3 Q10 0 20 3 T40 3 T60 3 T80 3' fill='none' stroke='%236aab8e' stroke-width='1.5'/%3E%3C/svg%3E")
+    repeat-x;
+  background-size: 80px 6px;
+}
+.lungnote-landing .hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 9vw, 88px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--fg);
+  margin-bottom: 20px;
+}
+.lungnote-landing .hero .subtitle {
+  font-size: 19px;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto 36px;
+  line-height: 1.65;
+}
+
+.lungnote-landing .notebook-preview {
+  max-width: 580px;
+  margin: 48px auto 0;
+  background: var(--surface);
+  position: relative;
+  padding: 0;
+}
+.lungnote-landing .notebook-preview::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 2.5px solid var(--fg);
+  border-radius: 2px;
+  filter: url(#sketchy);
+  pointer-events: none;
+  z-index: 1;
+}
+.lungnote-landing .spiral-holes {
+  position: absolute;
+  left: 32px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  z-index: 2;
+}
+.lungnote-landing .spiral-hole {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  background: var(--bg);
+  position: absolute;
+  left: -6px;
+  filter: url(#sketchy);
+}
+.lungnote-landing .notebook-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px 14px 52px;
+  border-bottom: 2px solid var(--border);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.lungnote-landing .notebook-body {
+  padding: 20px 24px 20px 52px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 2.1;
+  color: var(--fg);
+  min-height: 240px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 45px,
+    var(--border) 45px,
+    var(--border) 46px
+  );
+  background-size: 100% 46px;
+  background-position: 0 25px;
+}
+.lungnote-landing .todo-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.lungnote-landing .todo-box {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid var(--fg);
+  border-radius: 2px;
+  flex-shrink: 0;
+  position: relative;
+  top: 4px;
+  filter: url(#sketchy);
+}
+.lungnote-landing .todo-box.done {
+  background: var(--accent-light);
+}
+.lungnote-landing .todo-box.done::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: -1px;
+  width: 10px;
+  height: 14px;
+  border: solid var(--accent);
+  border-width: 0 3px 3px 0;
+  transform: rotate(42deg);
+}
+.lungnote-landing .todo-done-text {
+  text-decoration: line-through;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--muted);
+  color: var(--muted);
+}
+.lungnote-landing .note-line {
+  color: var(--muted);
+  font-size: 18px;
+  font-style: italic;
+}
+
+.lungnote-landing .features {
+  padding: 80px 0;
+}
+.lungnote-landing .features-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+.lungnote-landing .features-header .section-desc {
+  margin: 0 auto;
+}
+.lungnote-landing .features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.lungnote-landing .feature-card {
+  background: var(--surface);
+  position: relative;
+  padding: 28px 24px;
+}
+.lungnote-landing .feature-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2.5px solid var(--fg);
+  border-radius: 2px;
+  filter: url(#sketchy);
+  pointer-events: none;
+}
+.lungnote-landing .feature-doodle {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+}
+.lungnote-landing .feature-doodle svg {
+  width: 56px;
+  height: 56px;
+  color: var(--fg);
+}
+.lungnote-landing .feature-card h3 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.lungnote-landing .feature-card p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.lungnote-landing .how-it-works {
+  padding: 80px 0;
+  position: relative;
+}
+.lungnote-landing .how-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+.lungnote-landing .how-header .section-desc {
+  margin: 0 auto;
+}
+.lungnote-landing .steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  position: relative;
+}
+.lungnote-landing .steps::before {
+  content: "";
+  position: absolute;
+  top: 40px;
+  left: 16%;
+  right: 16%;
+  height: 2.5px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--fg) 0,
+    var(--fg) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  opacity: 0.25;
+  z-index: 0;
+}
+.lungnote-landing .step {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.lungnote-landing .step-circle {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+}
+.lungnote-landing .step-circle::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2.5px solid var(--fg);
+  border-radius: 50%;
+  filter: url(#sketchy);
+}
+.lungnote-landing .step-circle span {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.lungnote-landing .step h3 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.lungnote-landing .step p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.lungnote-landing .testimonials {
+  padding: 80px 0;
+}
+.lungnote-landing .testimonials-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+.lungnote-landing .testimonials-header .section-desc {
+  margin: 0 auto;
+}
+.lungnote-landing .testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.lungnote-landing .testimonial-card {
+  background: var(--surface);
+  position: relative;
+  padding: 28px 24px;
+}
+.lungnote-landing .testimonial-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2.5px solid var(--fg);
+  border-radius: 2px;
+  filter: url(#sketchy);
+  pointer-events: none;
+}
+.lungnote-landing .testimonial-quote {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 8px;
+  display: block;
+}
+.lungnote-landing .testimonial-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--fg);
+  margin-bottom: 20px;
+}
+.lungnote-landing .testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lungnote-landing .author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  background: var(--accent-light);
+  color: var(--accent);
+  filter: url(#sketchy);
+}
+.lungnote-landing .author-info {
+  display: flex;
+  flex-direction: column;
+}
+.lungnote-landing .author-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.lungnote-landing .author-role {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.lungnote-landing .download-cta {
+  padding: 80px 0;
+  text-align: center;
+}
+.lungnote-landing .download-card {
+  background: var(--yellow-light);
+  position: relative;
+  padding: 56px 40px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.lungnote-landing .download-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2.5px solid var(--fg);
+  border-radius: 2px;
+  filter: url(#sketchy);
+  pointer-events: none;
+}
+.lungnote-landing .download-card h2 {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.lungnote-landing .download-card p {
+  font-size: 17px;
+  color: var(--muted);
+  margin-bottom: 32px;
+}
+.lungnote-landing .download-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.lungnote-landing .btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--fg);
+  background: var(--surface);
+  padding: 14px 28px;
+  border: 2.5px solid var(--fg);
+  border-radius: 3px;
+  text-decoration: none;
+  cursor: pointer;
+  filter: url(#sketchy);
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+.lungnote-landing .btn-download:hover {
+  background: var(--accent-light);
+  transform: translate(-1px, -1px);
+}
+.lungnote-landing .btn-download svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.lungnote-landing .download-note {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 16px;
+}
+
+.lungnote-landing .faq {
+  padding: 80px 0;
+}
+.lungnote-landing .faq-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.lungnote-landing .faq-list {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.lungnote-landing .faq-item {
+  position: relative;
+  margin-bottom: 16px;
+  background: var(--surface);
+  padding: 0;
+}
+.lungnote-landing .faq-item::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--fg);
+  border-radius: 2px;
+  filter: url(#sketchy);
+  pointer-events: none;
+}
+.lungnote-landing .faq-q {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 18px 20px;
+  font: 600 17px/1.5 var(--font-body);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.lungnote-landing .faq-q:hover {
+  color: var(--accent);
+}
+.lungnote-landing .faq-q .arrow {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+  color: var(--muted);
+}
+.lungnote-landing .faq-item.open .arrow {
+  transform: rotate(180deg);
+}
+.lungnote-landing .faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.lungnote-landing .faq-item.open .faq-a {
+  max-height: 320px;
+}
+.lungnote-landing .faq-a p {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  padding: 0 20px 18px;
+}
+
+.lungnote-landing footer {
+  padding: 32px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+.lungnote-landing footer a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .lungnote-landing .features-grid,
+  .lungnote-landing .testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .lungnote-landing .steps {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .lungnote-landing .steps::before {
+    display: none;
+  }
+  .lungnote-landing .hero {
+    padding: 48px 0 56px;
+  }
+  .lungnote-landing .features,
+  .lungnote-landing .how-it-works,
+  .lungnote-landing .testimonials,
+  .lungnote-landing .download-cta,
+  .lungnote-landing .faq {
+    padding: 56px 0;
+  }
+  .lungnote-landing nav.top-nav ul {
+    display: none;
+  }
+  .lungnote-landing .notebook-body {
+    padding: 16px 16px 16px 48px;
+    font-size: 19px;
+  }
+  .lungnote-landing .download-card {
+    padding: 36px 20px;
+  }
+  .lungnote-landing .doodle-star,
+  .lungnote-landing .doodle-arrow,
+  .lungnote-landing .doodle-circle {
+    display: none;
+  }
+  .lungnote-landing .download-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .lungnote-landing .features-grid,
+  .lungnote-landing .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lungnote-landing .features-grid .feature-card:last-child,
+  .lungnote-landing .testimonials-grid .testimonial-card:last-child {
+    grid-column: 1 / -1;
+    max-width: 50%;
+    margin: 0 auto;
+  }
+}
