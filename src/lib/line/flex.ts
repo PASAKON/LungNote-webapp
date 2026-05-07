@@ -1,34 +1,109 @@
-import type { LineMessage } from "./client";
+import type { FlexMessage, LineMessage } from "./client";
+import welcomeTemplate from "./flex-templates/welcome.json";
+import dashboardLinkTemplate from "./flex-templates/dashboard-link.json";
+import noteSavedTemplate from "./flex-templates/note-saved.json";
+import errorTemplate from "./flex-templates/error.json";
 
-// Minimal text-message stand-ins until designer-supplied Flex JSON lands
-// (see wikis/50-Workflows/Designer-Handoff-LINE-Dashboard.md §2)
+// Designer-supplied Flex JSON lives in ./flex-templates/.
+// Templates ship with placeholder URIs ("https://liff.line.me/YOUR_LIFF_ID/...")
+// and {{token}}-style text placeholders; we substitute at runtime.
 
-export function dashboardLinkMessage(url: string): LineMessage[] {
-  return [
-    {
-      type: "text",
-      text: [
-        "🔗 ลิงก์ Dashboard ของคุณ",
-        url,
-        "",
-        "ลิงก์ใช้ได้ภายใน 5 นาที, 1 ครั้งเท่านั้น.",
-        "ถ้าหมดอายุ พิมพ์ 'dashboard' อีกครั้ง.",
-      ].join("\n"),
-    },
-  ];
+const SITE_URL = "https://lungnote.com";
+
+export function dashboardLinkMessage(authUrl: string): LineMessage[] {
+  const tpl = clone(dashboardLinkTemplate) as FlexMessage;
+  rewriteUriActions(tpl.contents, (uri) =>
+    uri.includes("/dashboard") || uri.includes("YOUR_LIFF_ID")
+      ? authUrl
+      : uri,
+  );
+  return [tpl];
 }
 
 export function welcomeMessage(): LineMessage[] {
-  return [
-    {
-      type: "text",
-      text: [
-        "ยินดีต้อนรับสู่ LungNote 📓",
-        "จดโน้ต เช็คลิสต์ จัดระเบียบชีวิต",
-        "",
-        "พิมพ์ 'dashboard' เพื่อรับลิงก์เปิดเว็บ",
-        "พิมพ์ 'ช่วย' เพื่อดูเมนู",
-      ].join("\n"),
-    },
-  ];
+  const tpl = clone(welcomeTemplate) as FlexMessage;
+  rewriteUriActions(tpl.contents, (uri) =>
+    uri.includes("YOUR_LIFF_ID") ? `${SITE_URL}` : uri,
+  );
+  return [tpl];
+}
+
+export function noteSavedMessage(opts: {
+  title: string;
+  folderName?: string | null;
+  noteId: string;
+  authUrl: string;
+}): LineMessage[] {
+  const tpl = clone(noteSavedTemplate) as FlexMessage;
+  const savedAt = new Date().toLocaleString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  substituteText(tpl.contents, {
+    "{{note_title}}": opts.title,
+    "{{folder_name}}": opts.folderName ?? "ไม่มีโฟลเดอร์",
+    "{{saved_at}}": savedAt,
+    "{{note_id}}": opts.noteId,
+  });
+  rewriteUriActions(tpl.contents, (uri) =>
+    uri.includes("YOUR_LIFF_ID") ? opts.authUrl : uri,
+  );
+  return [tpl];
+}
+
+export function errorFlexMessage(message: string): LineMessage[] {
+  const tpl = clone(errorTemplate) as FlexMessage;
+  substituteText(tpl.contents, { "{{MESSAGE}}": message });
+  return [tpl];
+}
+
+// ---------- helpers ----------
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function substituteText(
+  node: unknown,
+  replacements: Record<string, string>,
+): void {
+  if (Array.isArray(node)) {
+    for (const item of node) substituteText(item, replacements);
+    return;
+  }
+  if (node && typeof node === "object") {
+    const obj = node as Record<string, unknown>;
+    for (const [k, v] of Object.entries(obj)) {
+      if (k === "text" && typeof v === "string") {
+        let next = v;
+        for (const [needle, replacement] of Object.entries(replacements)) {
+          next = next.split(needle).join(replacement);
+        }
+        obj[k] = next;
+      } else {
+        substituteText(v, replacements);
+      }
+    }
+  }
+}
+
+function rewriteUriActions(
+  node: unknown,
+  rewrite: (uri: string) => string,
+): void {
+  if (Array.isArray(node)) {
+    for (const item of node) rewriteUriActions(item, rewrite);
+    return;
+  }
+  if (node && typeof node === "object") {
+    const obj = node as Record<string, unknown>;
+    const action = obj.action as Record<string, unknown> | undefined;
+    if (action && action.type === "uri" && typeof action.uri === "string") {
+      action.uri = rewrite(action.uri);
+    }
+    if (typeof obj.uri === "string" && obj.type === "uri") {
+      obj.uri = rewrite(obj.uri);
+    }
+    for (const v of Object.values(obj)) rewriteUriActions(v, rewrite);
+  }
 }

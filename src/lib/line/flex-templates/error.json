@@ -1,0 +1,159 @@
+{
+  "type": "flex",
+  "altText": "เชื่อมต่อไม่สำเร็จ — LungNote",
+  "contents": {
+    "type": "bubble",
+    "size": "giga",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "!",
+              "size": "3xl",
+              "weight": "bold",
+              "color": "#d4685a",
+              "align": "center"
+            }
+          ],
+          "width": "64px",
+          "height": "64px",
+          "backgroundColor": "#fce8e5",
+          "cornerRadius": "50px",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "offsetStart": "calc(50% - 32px)"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "ERROR",
+              "size": "xxs",
+              "color": "#d4685a",
+              "weight": "bold"
+            }
+          ],
+          "backgroundColor": "#fce8e5",
+          "cornerRadius": "sm",
+          "paddingAll": "4px",
+          "paddingStart": "8px",
+          "paddingEnd": "8px",
+          "width": "60px",
+          "margin": "md",
+          "offsetStart": "calc(50% - 30px)"
+        },
+        {
+          "type": "text",
+          "text": "เชื่อมต่อไม่สำเร็จ",
+          "weight": "bold",
+          "size": "xl",
+          "margin": "md",
+          "color": "#2c2a25",
+          "align": "center"
+        },
+        {
+          "type": "text",
+          "text": "ไม่สามารถ sync โน้ตของคุณได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
+          "size": "sm",
+          "color": "#8a8578",
+          "wrap": true,
+          "margin": "sm",
+          "align": "center"
+        }
+      ],
+      "paddingAll": "20px",
+      "paddingTop": "24px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "Error Code",
+              "size": "xs",
+              "color": "#8a8578",
+              "flex": 3
+            },
+            {
+              "type": "text",
+              "text": "SYNC_TIMEOUT_408",
+              "size": "xs",
+              "weight": "bold",
+              "color": "#d4685a",
+              "align": "end",
+              "flex": 4
+            }
+          ],
+          "paddingBottom": "8px"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "เวลา",
+              "size": "xs",
+              "color": "#8a8578",
+              "flex": 3
+            },
+            {
+              "type": "text",
+              "text": "8 พ.ค. 69, 14:32",
+              "size": "xs",
+              "weight": "bold",
+              "color": "#2c2a25",
+              "align": "end",
+              "flex": 4
+            }
+          ]
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "8px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "sm",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#6aab8e",
+          "action": {
+            "type": "postback",
+            "label": "ลองใหม่อีกครั้ง",
+            "data": "action=retry_sync"
+          },
+          "height": "md"
+        },
+        {
+          "type": "button",
+          "style": "secondary",
+          "color": "#fce8e5",
+          "action": {
+            "type": "uri",
+            "label": "แจ้งปัญหา",
+            "uri": "https://lungnote.app/support"
+          },
+          "height": "md"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}

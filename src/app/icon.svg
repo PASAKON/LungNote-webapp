@@ -1,5 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="32" height="32">
-  <rect width="48" height="48" rx="8" fill="#faf8f4"/>
-  <rect x="6" y="6" width="36" height="36" rx="4" fill="none" stroke="#2c2a25" stroke-width="3"/>
-  <path d="M14 24 L21 31 L34 16" fill="none" stroke="#6aab8e" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="#faf8f4"/>
+
+  <!-- Checkbox square — hand-drawn style with slight irregularity -->
+  <rect x="192" y="192" width="640" height="640" rx="48"
+        fill="none" stroke="#2c2a25" stroke-width="56"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Checkmark — bold, hand-drawn feel -->
+  <path d="M340 520 L440 630 L700 340"
+        fill="none" stroke="#2c2a25" stroke-width="72"
+        stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

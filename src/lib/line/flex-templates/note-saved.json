@@ -1,0 +1,188 @@
+{
+  "type": "flex",
+  "altText": "บันทึกโน้ตเรียบร้อยแล้ว — LungNote",
+  "contents": {
+    "type": "bubble",
+    "size": "giga",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "✓",
+              "size": "3xl",
+              "weight": "bold",
+              "color": "#6aab8e",
+              "align": "center"
+            }
+          ],
+          "width": "56px",
+          "height": "56px",
+          "backgroundColor": "#e8f4ed",
+          "cornerRadius": "50px",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "offsetStart": "calc(50% - 28px)"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "SAVED",
+              "size": "xxs",
+              "color": "#6aab8e",
+              "weight": "bold"
+            }
+          ],
+          "backgroundColor": "#e8f4ed",
+          "cornerRadius": "sm",
+          "paddingAll": "4px",
+          "paddingStart": "8px",
+          "paddingEnd": "8px",
+          "width": "60px",
+          "margin": "md",
+          "offsetStart": "calc(50% - 30px)"
+        },
+        {
+          "type": "text",
+          "text": "บันทึกเรียบร้อยแล้ว!",
+          "weight": "bold",
+          "size": "xl",
+          "margin": "md",
+          "color": "#2c2a25",
+          "align": "center"
+        },
+        {
+          "type": "text",
+          "text": "โน้ตของคุณถูกบันทึกและ sync เรียบร้อยแล้ว",
+          "size": "sm",
+          "color": "#8a8578",
+          "wrap": true,
+          "margin": "sm",
+          "align": "center"
+        }
+      ],
+      "paddingAll": "20px",
+      "paddingTop": "24px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "separator",
+          "color": "#e0ddd4"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "ชื่อโน้ต",
+              "size": "xs",
+              "color": "#8a8578",
+              "flex": 3
+            },
+            {
+              "type": "text",
+              "text": "{{note_title}}",
+              "size": "xs",
+              "weight": "bold",
+              "color": "#2c2a25",
+              "align": "end",
+              "flex": 5,
+              "wrap": true
+            }
+          ],
+          "margin": "lg",
+          "paddingBottom": "8px"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "โฟลเดอร์",
+              "size": "xs",
+              "color": "#8a8578",
+              "flex": 3
+            },
+            {
+              "type": "text",
+              "text": "{{folder_name}}",
+              "size": "xs",
+              "weight": "bold",
+              "color": "#2c2a25",
+              "align": "end",
+              "flex": 5
+            }
+          ],
+          "paddingBottom": "8px"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "บันทึกเมื่อ",
+              "size": "xs",
+              "color": "#8a8578",
+              "flex": 3
+            },
+            {
+              "type": "text",
+              "text": "{{saved_at}}",
+              "size": "xs",
+              "weight": "bold",
+              "color": "#2c2a25",
+              "align": "end",
+              "flex": 5
+            }
+          ]
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "8px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "sm",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#6aab8e",
+          "action": {
+            "type": "uri",
+            "label": "เปิดดูโน้ต",
+            "uri": "https://liff.line.me/YOUR_LIFF_ID/note/{{note_id}}"
+          },
+          "height": "md"
+        },
+        {
+          "type": "button",
+          "style": "link",
+          "color": "#8a8578",
+          "action": {
+            "type": "uri",
+            "label": "กลับหน้า Dashboard",
+            "uri": "https://liff.line.me/YOUR_LIFF_ID/dashboard"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}
