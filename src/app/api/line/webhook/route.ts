@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { verifySignature } from "@/lib/line/verify";
 import { replyMessage } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
+import { createNoteFromLine } from "@/lib/notes/create";
 import { dashboardLinkMessage, welcomeMessage } from "@/lib/line/flex";
 import { mintToken } from "@/lib/auth/line-link";
 import type {
@@ -16,6 +17,9 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://lungnote.com";
 const DASHBOARD_KEYWORDS = /^(dashboard|dash|เปิด|ลิงก์|link|\/login|\/dash)$/i;
+// Note creation prefix: "จด <content>", "บันทึก <content>", "note <content>", "save <content>".
+// Content can span multiple lines (use [\s\S] not . because . won't cross newlines).
+const NOTE_PREFIX = /^(?:จด|บันทึก|note|save)\s+([\s\S]+)$/i;
 
 export async function POST(req: NextRequest) {
   const secret = process.env.LINE_CHANNEL_SECRET;
@@ -93,13 +97,22 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
     return sendDashboardLink(ev.replyToken, userId);
   }
 
-  // 2. Regex commands (free, deterministic)
+  // 2. Note creation prefix (free regex; profile lookup + insert happens server-side)
+  const noteMatch = NOTE_PREFIX.exec(text);
+  if (noteMatch && userId) {
+    const noteText = noteMatch[1].trim();
+    if (noteText) {
+      return handleNoteCreate(ev.replyToken, userId, noteText);
+    }
+  }
+
+  // 3. Regex commands (free, deterministic)
   const regexReply = matchRegex(text);
   if (regexReply !== null) {
     return replyMessage(ev.replyToken, [{ type: "text", text: regexReply }]);
   }
 
-  // 3. AI fallback (v0: stateless; no rate limit)
+  // 4. AI fallback (now with rolling 5+5 conversation memory, see ADR-0009)
   const aiUserId = userId ?? "anonymous";
   const aiResult = await generateChatReply(aiUserId, text);
   const replyText = aiResult.ok
@@ -107,6 +120,39 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
     : `รับข้อความแล้ว: "${text}"\nพิมพ์ 'ช่วย' เพื่อดูคำสั่ง`;
 
   return replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
+}
+
+async function handleNoteCreate(
+  replyToken: string,
+  lineUserId: string,
+  text: string,
+): Promise<unknown> {
+  const result = await createNoteFromLine(lineUserId, text);
+
+  if (!result.ok && result.reason === "not_linked") {
+    return replyMessage(replyToken, [
+      {
+        type: "text",
+        text: "ต้องลิงก์ account ก่อนถึงจะจดโน้ตได้\nพิมพ์ 'dashboard' เพื่อรับลิงก์",
+      },
+    ]);
+  }
+
+  if (!result.ok) {
+    return replyMessage(replyToken, [
+      {
+        type: "text",
+        text: "ขอโทษ จดโน้ตไม่สำเร็จ ลองอีกครั้งภายหลังนะ",
+      },
+    ]);
+  }
+
+  return replyMessage(replyToken, [
+    {
+      type: "text",
+      text: `บันทึกแล้ว ✓ "${result.title}"\nดูที่ ${SITE_URL}/dashboard`,
+    },
+  ]);
 }
 
 async function sendDashboardLink(
@@ -149,10 +195,11 @@ function helpText(): string {
   return [
     "คำสั่งที่ใช้ได้:",
     "• dashboard — รับลิงก์เปิด Dashboard",
+    "• จด <ข้อความ> — บันทึกโน้ตเข้า dashboard (ต้องลิงก์ account ก่อน)",
     "• สวัสดี — ทักทาย",
     "• เว็บ — ลิงก์ไปเว็บ",
     "• เกี่ยวกับ — เกี่ยวกับ LungNote",
     "",
-    "💡 ข้อความอื่นๆ จะถูก AI ช่วยตอบ",
+    "💡 ข้อความอื่นๆ จะถูก AI ช่วยตอบ (จำได้ 5 ข้อความล่าสุด)",
   ].join("\n");
 }

@@ -215,6 +215,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      lungnote_conversation_memory: {
+        Row: {
+          line_user_id: string;
+          messages: unknown; // jsonb — typed as ChatMessage[] in app code
+          updated_at: string;
+        };
+        Insert: {
+          line_user_id: string;
+          messages?: unknown;
+          updated_at?: string;
+        };
+        Update: {
+          line_user_id?: string;
+          messages?: unknown;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
