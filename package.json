@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup": "./scripts/setup-workspace.sh",
+    "env:pull": "./scripts/pull-env.sh",
+    "env:pull:prod": "./scripts/pull-env.sh production",
+    "git:sync": "./scripts/sync-all.sh",
+    "git:status": "./scripts/status-all.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
