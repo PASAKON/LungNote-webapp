@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifySignature } from "@/lib/line/verify";
 import { replyMessage } from "@/lib/line/client";
+import { generateChatReply } from "@/lib/ai/reply";
 import type {
   LineEvent,
   LineWebhookBody,
@@ -11,6 +12,9 @@ import type {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const WELCOME_MESSAGE =
+  "ยินดีต้อนรับสู่ LungNote 📓\nจดโน้ต เช็คลิสต์ จัดระเบียบชีวิต\n\n💡 ข้อความของคุณอาจถูกประมวลผลโดย AI เพื่อช่วยตอบ";
+
 export async function POST(req: NextRequest) {
   const secret = process.env.LINE_CHANNEL_SECRET;
   if (!secret) {
@@ -19,8 +23,8 @@ export async function POST(req: NextRequest) {
 
   const rawBody = await req.text();
   const signature = req.headers.get("x-line-signature");
-
   const valid = await verifySignature(rawBody, signature, secret);
+
   if (!valid) {
     return NextResponse.json({ error: "invalid signature" }, { status: 401 });
   }
@@ -44,34 +48,43 @@ export async function GET() {
   });
 }
 
-async function handleEvent(event: LineEvent): Promise<void> {
+async function handleEvent(event: LineEvent): Promise<unknown> {
   if (event.type === "message") {
     const ev = event as LineTextMessageEvent;
-    if (ev.message?.type === "text") {
-      await handleText(ev);
-    }
-    return;
+    if (ev.message?.type === "text") return handleText(ev);
+    return null;
   }
 
   if (event.type === "follow") {
     const ev = event as LineFollowEvent;
-    await replyMessage(ev.replyToken, [
-      {
-        type: "text",
-        text: "ยินดีต้อนรับสู่ LungNote 📓\nจดโน้ต เช็คลิสต์ จัดระเบียบชีวิต",
-      },
-    ]);
-    return;
+    return replyMessage(ev.replyToken, [{ type: "text", text: WELCOME_MESSAGE }]);
   }
+
+  return null;
 }
 
-async function handleText(ev: LineTextMessageEvent): Promise<void> {
+async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   const text = ev.message.text.trim();
-  const reply = buildReply(text);
-  await replyMessage(ev.replyToken, [{ type: "text", text: reply }]);
+
+  // 1. Try regex first (free, deterministic)
+  const regexReply = matchRegex(text);
+  if (regexReply !== null) {
+    return replyMessage(ev.replyToken, [{ type: "text", text: regexReply }]);
+  }
+
+  // 2. AI path (v0: stateless; no rate limit)
+  const userId =
+    ev.source.type === "user" ? ev.source.userId : ev.source.userId ?? "anonymous";
+  const aiResult = await generateChatReply(userId, text);
+
+  const replyText = aiResult.ok
+    ? aiResult.text
+    : `รับข้อความแล้ว: "${text}"\nพิมพ์ 'ช่วย' เพื่อดูคำสั่ง`;
+
+  return replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
 }
 
-function buildReply(text: string): string {
+function matchRegex(text: string): string | null {
   const lower = text.toLowerCase();
   if (/(สวัสดี|hello|hi)/i.test(lower)) {
     return "สวัสดีครับ! ผมคือ LungNote bot 📓\nพิมพ์ 'ช่วย' เพื่อดูคำสั่ง";
@@ -91,5 +104,5 @@ function buildReply(text: string): string {
   if (/(เกี่ยว|about)/i.test(lower)) {
     return "LungNote — แอปจดโน้ตเรียบง่ายสำหรับนักเรียนไทย\nhttps://lungnote.com";
   }
-  return `รับข้อความแล้ว: "${text}"\nพิมพ์ 'ช่วย' เพื่อดูคำสั่ง`;
+  return null;
 }
