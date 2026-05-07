@@ -1,4 +1,6 @@
-export function Hero() {
+import type { LandingContent } from "./content";
+
+export function Hero({ content }: { content: LandingContent["hero"] }) {
   return (
     <section className="hero wrap" id="hero">
       <svg
@@ -44,19 +46,17 @@ export function Hero() {
         <path d="M44 6 L52 12 L44 18" filter="url(#sketchy)" />
       </svg>
 
-      <div className="hero-eyebrow">Note-taking for students</div>
+      <div className="hero-eyebrow">{content.eyebrow}</div>
       <h1>
-        จดทุกอย่าง
+        {content.titleLine1}
         <br />
-        ด้วย<span className="highlight-tape">ลายมือ</span>ของคุณ
+        {content.titleBefore}
+        <span className="highlight-tape">{content.titleHighlight}</span>
+        {content.titleAfter}
       </h1>
-      <p className="subtitle">
-        โน้ต เช็คลิสต์ และไอเดีย — ทุกอย่างอยู่ในที่เดียว
-        <br />
-        เรียบง่ายเหมือนเปิดสมุดโน้ตเล่มใหม่
-      </p>
+      <p className="subtitle">{content.subtitle}</p>
       <a href="#download" className="btn-sketchy">
-        เริ่มจดฟรี →
+        {content.cta}
       </a>
 
       <div className="notebook-preview">
@@ -65,26 +65,18 @@ export function Hero() {
             <div key={top} className="spiral-hole" style={{ top }} />
           ))}
         </div>
-        <div className="notebook-header">บันทึกของฉัน — วันนี้</div>
+        <div className="notebook-header">{content.notebookHeader}</div>
         <div className="notebook-body">
-          <div className="todo-item">
-            <span className="todo-box done" />
-            <span className="todo-done-text">อ่านบท 5 วิชาฟิสิกส์</span>
-          </div>
-          <div className="todo-item">
-            <span className="todo-box done" />
-            <span className="todo-done-text">ส่งรายงานกลุ่ม</span>
-          </div>
-          <div className="todo-item">
-            <span className="todo-box" />
-            <span>ทบทวนศัพท์ภาษาอังกฤษ 20 คำ</span>
-          </div>
-          <div className="todo-item">
-            <span className="todo-box" />
-            <span>เตรียมพรีเซนต์วันพุธ</span>
-          </div>
+          {content.todos.map((todo) => (
+            <div key={todo.text} className="todo-item">
+              <span className={`todo-box${todo.done ? " done" : ""}`} />
+              <span className={todo.done ? "todo-done-text" : undefined}>
+                {todo.text}
+              </span>
+            </div>
+          ))}
           <div className="note-line" style={{ marginTop: 8 }}>
-            อย่าลืมถามอาจารย์เรื่องเกรด...
+            {content.noteLine}
           </div>
         </div>
       </div>

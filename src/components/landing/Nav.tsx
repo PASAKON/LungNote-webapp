@@ -1,6 +1,7 @@
 import { LogoMark } from "./LogoMark";
+import type { LandingContent } from "./content";
 
-export function Nav() {
+export function Nav({ content }: { content: LandingContent["nav"] }) {
   return (
     <header className="wrap">
       <nav className="top-nav">
@@ -12,20 +13,20 @@ export function Nav() {
         </a>
         <ul>
           <li>
-            <a href="#features">จุดเด่น</a>
+            <a href="#features">{content.features}</a>
           </li>
           <li>
-            <a href="#how">วิธีใช้</a>
+            <a href="#how">{content.how}</a>
           </li>
           <li>
-            <a href="#reviews">รีวิว</a>
+            <a href="#reviews">{content.reviews}</a>
           </li>
           <li>
-            <a href="#faq">คำถาม</a>
+            <a href="#faq">{content.faq}</a>
           </li>
           <li>
             <a href="#download" className="btn-sketchy btn-nav">
-              ดาวน์โหลด
+              {content.download}
             </a>
           </li>
         </ul>

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import "@/components/landing/landing.css";
+import { getLandingContent } from "@/components/landing/content";
 import { SketchyFilter } from "@/components/landing/SketchyFilter";
 import { Nav } from "@/components/landing/Nav";
 import { Hero } from "@/components/landing/Hero";
@@ -15,23 +16,24 @@ import { WavyDivider } from "@/components/landing/WavyDivider";
 export default async function Home({ params }: PageProps<"/[locale]">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  const content = getLandingContent(locale);
 
   return (
     <div className="lungnote-landing flex-1">
       <SketchyFilter />
-      <Nav />
-      <Hero />
+      <Nav content={content.nav} />
+      <Hero content={content.hero} />
       <WavyDivider />
-      <Features />
+      <Features content={content.features} />
       <WavyDivider />
-      <HowItWorks />
+      <HowItWorks content={content.how} />
       <WavyDivider />
-      <Testimonials />
+      <Testimonials content={content.testimonials} />
       <WavyDivider />
-      <DownloadCTA />
+      <DownloadCTA content={content.download} />
       <WavyDivider />
-      <Faq />
-      <Footer />
+      <Faq content={content.faq} />
+      <Footer content={content.footer} />
     </div>
   );
 }

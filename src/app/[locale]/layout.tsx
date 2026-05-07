@@ -28,39 +28,64 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://lungnote.com"),
-  title: {
-    default: "LungNote — จดโน้ต เช็คลิสต์ จัดระเบียบชีวิต",
-    template: "%s · LungNote",
-  },
-  description:
-    "LungNote — แอปจดโน้ต เช็คลิสต์ และไอเดีย ออกแบบสำหรับนักเรียนไทย เปิดมาก็จดได้เลย ไม่ต้องเรียนรู้อะไรซับซ้อน",
-  applicationName: "LungNote",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "LungNote",
-  },
-  formatDetection: { telephone: false },
-  openGraph: {
-    type: "website",
-    siteName: "LungNote",
+const META_BY_LOCALE = {
+  th: {
     title: "LungNote — จดโน้ต เช็คลิสต์ จัดระเบียบชีวิต",
     description:
-      "แอปจดโน้ตเรียบง่ายสำหรับนักเรียนไทย โน้ต เช็คลิสต์ ไอเดีย ทุกอย่างอยู่ในที่เดียว",
-    url: "/",
-    locale: "th_TH",
-    alternateLocale: ["en_US"],
+      "LungNote — แอปจดโน้ต เช็คลิสต์ และไอเดีย ออกแบบสำหรับนักเรียนไทย เปิดมาก็จดได้เลย ไม่ต้องเรียนรู้อะไรซับซ้อน",
+    ogLocale: "th_TH",
+    ogAlt: ["en_US"],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "LungNote",
+  en: {
+    title: "LungNote — Notes, checklists, organized life",
     description:
-      "แอปจดโน้ตเรียบง่ายสำหรับนักเรียนไทย โน้ต เช็คลิสต์ ไอเดีย ทุกอย่างอยู่ในที่เดียว",
+      "LungNote — a simple note-taking app for Thai students. Notes, checklists, and ideas — all in one place.",
+    ogLocale: "en_US",
+    ogAlt: ["th_TH"],
   },
-};
+} as const;
+
+export async function generateMetadata({
+  params,
+}: LayoutProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await params;
+  const meta = isLocale(locale) ? META_BY_LOCALE[locale] : META_BY_LOCALE.th;
+
+  return {
+    metadataBase: new URL("https://lungnote.com"),
+    title: { default: meta.title, template: "%s · LungNote" },
+    description: meta.description,
+    applicationName: "LungNote",
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "LungNote",
+    },
+    formatDetection: { telephone: false },
+    alternates: {
+      canonical: `/${locale}`,
+      languages: {
+        th: "/th",
+        en: "/en",
+      },
+    },
+    openGraph: {
+      type: "website",
+      siteName: "LungNote",
+      title: meta.title,
+      description: meta.description,
+      url: `/${locale}`,
+      locale: meta.ogLocale,
+      alternateLocale: [...meta.ogAlt],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [

@@ -1,6 +1,7 @@
 import { LogoMark } from "./LogoMark";
+import type { LandingContent } from "./content";
 
-export function Footer() {
+export function Footer({ content }: { content: LandingContent["footer"] }) {
   const year = new Date().getFullYear();
   return (
     <footer>
@@ -28,10 +29,10 @@ export function Footer() {
             <span style={{ color: "var(--accent)" }}>Note</span>
           </span>
         </div>
-        <p>สร้างด้วยความตั้งใจ สำหรับนักเรียนที่ชอบจดโน้ต</p>
+        <p>{content.tagline}</p>
         <p style={{ marginTop: 8 }}>
-          © {year} LungNote · <a href="#">ข้อกำหนด</a> ·{" "}
-          <a href="#">ความเป็นส่วนตัว</a> · <a href="#">ติดต่อเรา</a>
+          {content.copyright(year)} · <a href="#">{content.terms}</a> ·{" "}
+          <a href="#">{content.privacy}</a> · <a href="#">{content.contact}</a>
         </p>
       </div>
     </footer>

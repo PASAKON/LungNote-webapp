@@ -1,11 +1,17 @@
-export function DownloadCTA() {
+import type { LandingContent } from "./content";
+
+export function DownloadCTA({
+  content,
+}: {
+  content: LandingContent["download"];
+}) {
   return (
     <section className="download-cta wrap" id="download">
       <div className="download-card">
         <h2>
-          ดาวน์โหลด <span className="highlight-tape">LungNote</span>
+          {content.title} <span className="highlight-tape">{content.titleHighlight}</span>
         </h2>
-        <p>ใช้ได้ทุกอุปกรณ์ ฟรีไม่มีค่าใช้จ่าย เปิดสมุดเล่มแรกได้วันนี้</p>
+        <p>{content.desc}</p>
         <div className="download-buttons">
           <a href="#" className="btn-download">
             <svg
@@ -21,7 +27,7 @@ export function DownloadCTA() {
               <path d="M15 8.5c0-1.4-1.1-2.5-2.5-2.5S10 7.1 10 8.5c0 2.5 2 2.5 2 5" />
               <circle cx={12} cy={16} r={0.5} fill="currentColor" />
             </svg>
-            App Store
+            {content.appStore}
           </a>
           <a href="#" className="btn-download">
             <svg
@@ -35,7 +41,7 @@ export function DownloadCTA() {
             >
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            Google Play
+            {content.playStore}
           </a>
           <a href="#" className="btn-download">
             <svg
@@ -51,10 +57,10 @@ export function DownloadCTA() {
               <line x1={8} y1={21} x2={16} y2={21} />
               <line x1={12} y1={17} x2={12} y2={21} />
             </svg>
-            เปิดบนเว็บ
+            {content.web}
           </a>
         </div>
-        <p className="download-note">ฟรีตลอด ไม่ต้องใส่บัตรเครดิต</p>
+        <p className="download-note">{content.note}</p>
       </div>
     </section>
   );
