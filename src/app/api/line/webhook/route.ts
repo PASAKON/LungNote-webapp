@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { verifySignature } from "@/lib/line/verify";
 import { replyMessage } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
+import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import { createNoteFromLine } from "@/lib/notes/create";
 import { dashboardLinkMessage, welcomeMessage } from "@/lib/line/flex";
 import { mintToken } from "@/lib/auth/line-link";
@@ -102,7 +103,8 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   if (noteMatch && userId) {
     const noteText = noteMatch[1].trim();
     if (noteText) {
-      return handleNoteCreate(ev.replyToken, userId, noteText);
+      // Pass full text (incl. "จด" prefix) so memory reflects what user actually typed.
+      return handleNoteCreate(ev.replyToken, userId, noteText, text);
     }
   }
 
@@ -125,34 +127,40 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
 async function handleNoteCreate(
   replyToken: string,
   lineUserId: string,
-  text: string,
+  noteText: string,
+  fullUserMessage: string,
 ): Promise<unknown> {
-  const result = await createNoteFromLine(lineUserId, text);
+  const result = await createNoteFromLine(lineUserId, noteText);
 
+  let replyText: string;
   if (!result.ok && result.reason === "not_linked") {
-    return replyMessage(replyToken, [
-      {
-        type: "text",
-        text: "ต้องลิงก์ account ก่อนถึงจะจดโน้ตได้\nพิมพ์ 'dashboard' เพื่อรับลิงก์",
-      },
-    ]);
+    replyText =
+      "ต้องลิงก์ account ก่อนถึงจะจดโน้ตได้\nพิมพ์ 'dashboard' เพื่อรับลิงก์";
+  } else if (!result.ok) {
+    replyText = "ขอโทษ จดโน้ตไม่สำเร็จ ลองอีกครั้งภายหลังนะ";
+  } else {
+    replyText = `บันทึกแล้ว ✓ "${result.title}"\nดูที่ ${SITE_URL}/dashboard`;
   }
 
-  if (!result.ok) {
-    return replyMessage(replyToken, [
-      {
-        type: "text",
-        text: "ขอโทษ จดโน้ตไม่สำเร็จ ลองอีกครั้งภายหลังนะ",
-      },
-    ]);
-  }
+  // Persist this turn into conversation memory so the AI fallback path remembers
+  // note-creation context (e.g. user later asks "เมื่อกี้พิมไรไป"). Best-effort —
+  // memory failure must not block the reply.
+  void persistTurn(lineUserId, fullUserMessage, replyText);
 
-  return replyMessage(replyToken, [
-    {
-      type: "text",
-      text: `บันทึกแล้ว ✓ "${result.title}"\nดูที่ ${SITE_URL}/dashboard`,
-    },
-  ]);
+  return replyMessage(replyToken, [{ type: "text", text: replyText }]);
+}
+
+async function persistTurn(
+  lineUserId: string,
+  userMessage: string,
+  assistantReply: string,
+): Promise<void> {
+  try {
+    const prior = await loadMemory(lineUserId);
+    await saveMemory(lineUserId, prior, userMessage, assistantReply);
+  } catch (err) {
+    console.error("persistTurn failed", { lineUserId, err });
+  }
 }
 
 async function sendDashboardLink(

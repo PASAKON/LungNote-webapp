@@ -15,15 +15,22 @@ vi.mock("@/lib/notes/create", () => ({
 vi.mock("@/lib/auth/line-link", () => ({
   mintToken: vi.fn(),
 }));
+vi.mock("@/lib/ai/memory", () => ({
+  loadMemory: vi.fn().mockResolvedValue([]),
+  saveMemory: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { POST } from "@/app/api/line/webhook/route";
 import { replyMessage } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
 import { createNoteFromLine } from "@/lib/notes/create";
+import { loadMemory, saveMemory } from "@/lib/ai/memory";
 
 const mockedReply = vi.mocked(replyMessage);
 const mockedAI = vi.mocked(generateChatReply);
 const mockedCreateNote = vi.mocked(createNoteFromLine);
+const mockedLoadMemory = vi.mocked(loadMemory);
+const mockedSaveMemory = vi.mocked(saveMemory);
 
 function makeRequest(body: unknown) {
   return new Request("https://lungnote.com/api/line/webhook", {
@@ -164,6 +171,31 @@ describe("POST /api/line/webhook — note prefix", () => {
       expect.arrayContaining([
         expect.objectContaining({ text: expect.stringContaining("บันทึกแล้ว") }),
       ]),
+    );
+  });
+
+  it("saves note-creation turn to conversation memory", async () => {
+    mockedCreateNote.mockResolvedValue({
+      ok: true,
+      noteId: "note-456",
+      title: "ซื้อนม",
+    });
+    mockedLoadMemory.mockResolvedValue([]);
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-N5", "จด ซื้อนม")],
+    };
+    await POST(makeRequest(body) as never);
+
+    // Wait for fire-and-forget persistTurn to settle.
+    await new Promise((r) => setImmediate(r));
+
+    expect(mockedLoadMemory).toHaveBeenCalledWith("U-abc");
+    expect(mockedSaveMemory).toHaveBeenCalledWith(
+      "U-abc",
+      [],
+      "จด ซื้อนม",
+      expect.stringContaining("บันทึกแล้ว"),
     );
   });
 
