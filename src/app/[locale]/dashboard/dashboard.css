@@ -1,4 +1,6 @@
-/* Mobile dashboard — based on LungNote-design preview-all-states.html */
+/* Dashboard — mobile-first, desktop sidebar at ≥769px
+   based on LungNote-design preview-all-states.html (mobile)
+   + brand/dashboard.html (desktop sidebar + grid) */
 .lungnote-dashboard {
   --bg: #faf8f4;
   --surface: #fffef9;
@@ -19,10 +21,152 @@
   font: 400 16px/1.6 var(--font-body);
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
-  max-width: 480px;
-  margin: 0 auto;
   position: relative;
   overflow-x: hidden;
+}
+
+.dash-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100dvh;
+}
+.dash-shell > .dash-main {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dash-sidebar {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .dash-shell {
+    grid-template-columns: 260px 1fr;
+  }
+  .dash-shell > .dash-main {
+    max-width: 1080px;
+    padding: 0 32px;
+  }
+  .dash-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 24px 16px;
+    background: var(--surface);
+    border-right: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    margin-bottom: 16px;
+    color: var(--fg);
+  }
+  .sidebar-logo-text {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--fg);
+  }
+  .sidebar-logo-text span {
+    color: var(--accent);
+  }
+  .nav-section {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 12px 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--fg);
+    text-decoration: none;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .nav-item:hover {
+    background: var(--accent-light);
+  }
+  .nav-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .nav-item svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  .nav-badge {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .nav-item.active .nav-badge {
+    background: var(--accent);
+    color: var(--surface);
+  }
+  .nav-item-logout {
+    color: var(--red);
+  }
+  .nav-item-logout:hover {
+    background: var(--red-light);
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* hide mobile-only bits on desktop */
+  .lungnote-dashboard .bottom-tabs {
+    display: none;
+  }
+  .lungnote-dashboard .topbar {
+    border-bottom: none;
+    padding: 16px 0;
+    background: transparent;
+  }
+  .lungnote-dashboard .greeting,
+  .lungnote-dashboard .search-bar,
+  .lungnote-dashboard .stats-row,
+  .lungnote-dashboard .section-h,
+  .lungnote-dashboard .recent-section,
+  .lungnote-dashboard .empty-block,
+  .lungnote-dashboard .note-form-wrap {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .lungnote-dashboard .stats-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .lungnote-dashboard .dash-body {
+    padding-bottom: 32px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

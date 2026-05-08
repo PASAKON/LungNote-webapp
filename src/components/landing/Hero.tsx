@@ -55,7 +55,8 @@ export function Hero({ content }: { content: LandingContent["hero"] }) {
         {content.titleAfter}
       </h1>
       <p className="subtitle">{content.subtitle}</p>
-      <a href="#download" className="btn-sketchy">
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      <a href="/api/auth/line/oauth/start" className="btn-sketchy">
         {content.cta}
       </a>
 
