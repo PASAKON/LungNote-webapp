@@ -9,7 +9,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 export async function createTodo(text: string): Promise<ActionResult> {
   const trimmed = text.trim();
   if (!trimmed) return { ok: false, error: "ใส่ข้อความก่อน" };
-  if (trimmed.length > 500) return { ok: false, error: "ยาวเกิน 500 ตัวอักษร" };
+  if (trimmed.length > 2000) return { ok: false, error: "ยาวเกิน 2000 ตัวอักษร" };
 
   const supabase = await createClient();
   const {
@@ -64,7 +64,7 @@ export async function updateTodoText(
 ): Promise<ActionResult> {
   const trimmed = text.trim();
   if (!trimmed) return { ok: false, error: "ใส่ข้อความก่อน" };
-  if (trimmed.length > 500) return { ok: false, error: "ยาวเกิน 500 ตัวอักษร" };
+  if (trimmed.length > 2000) return { ok: false, error: "ยาวเกิน 2000 ตัวอักษร" };
 
   const supabase = await createClient();
   const { error } = await supabase

@@ -13,16 +13,75 @@ export type TodoRow = {
   text: string;
   done: boolean;
   position: number;
+  due_at: string | null;
+  due_text: string | null;
   created_at: string;
   updated_at: string;
 };
 
 type FilterKey = "today" | "open" | "all";
 
-const TODAY_MS = 1000 * 60 * 60 * 24;
+const DAY_MS = 1000 * 60 * 60 * 24;
 
-function isToday(iso: string): boolean {
-  return Date.now() - new Date(iso).getTime() < TODAY_MS;
+/** "today" filter = item due_at is today OR no due_at but created today. */
+function matchesTodayFilter(t: TodoRow): boolean {
+  if (t.due_at) {
+    const due = new Date(t.due_at);
+    const now = new Date();
+    return (
+      due.getFullYear() === now.getFullYear() &&
+      due.getMonth() === now.getMonth() &&
+      due.getDate() === now.getDate()
+    );
+  }
+  return Date.now() - new Date(t.created_at).getTime() < DAY_MS;
+}
+
+/** Render due_at as "วันนี้ 14:00" / "พรุ่งนี้" / "in N วัน" / overdue. */
+function formatDue(iso: string | null): { label: string; tone: "overdue" | "today" | "soon" | "future" } | null {
+  if (!iso) return null;
+  const due = new Date(iso);
+  const now = new Date();
+  if (Number.isNaN(due.getTime())) return null;
+
+  // Day index in local time
+  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diffDays = Math.round((dueDay - today) / DAY_MS);
+
+  const time = due.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  // suppress trivial "00:00"
+  const hasTime = !(due.getHours() === 0 && due.getMinutes() === 0);
+
+  if (due.getTime() < now.getTime() && diffDays < 0) {
+    const past = Math.abs(diffDays);
+    return { label: `เลย ${past} วัน`, tone: "overdue" };
+  }
+  if (diffDays === 0) {
+    return {
+      label: hasTime ? `วันนี้ ${time}` : "วันนี้",
+      tone: "today",
+    };
+  }
+  if (diffDays === 1) {
+    return {
+      label: hasTime ? `พรุ่งนี้ ${time}` : "พรุ่งนี้",
+      tone: "soon",
+    };
+  }
+  if (diffDays > 1 && diffDays <= 7) {
+    return { label: `อีก ${diffDays} วัน`, tone: "soon" };
+  }
+  return {
+    label: due.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+    }),
+    tone: "future",
+  };
 }
 
 export function TodoListClient({ initial }: { initial: TodoRow[] }) {
@@ -41,7 +100,7 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const counts = {
-    today: initial.filter((t) => isToday(t.created_at) && !t.done).length,
+    today: initial.filter((t) => matchesTodayFilter(t) && !t.done).length,
     open: initial.filter((t) => !t.done).length,
     all: initial.length,
   };
@@ -49,14 +108,20 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
   const visible = (() => {
     switch (filter) {
       case "today":
-        return initial.filter((t) => isToday(t.created_at));
+        return initial.filter(matchesTodayFilter);
       case "open":
         return initial.filter((t) => !t.done);
       case "all":
         return initial;
     }
   })().sort((a, b) => {
+    // done last
     if (a.done !== b.done) return a.done ? 1 : -1;
+    // items with due_at first, sorted by soonest
+    if (a.due_at && b.due_at) return a.due_at.localeCompare(b.due_at);
+    if (a.due_at) return -1;
+    if (b.due_at) return 1;
+    // tie-break on created_at desc
     return b.created_at.localeCompare(a.created_at);
   });
 
@@ -133,7 +198,7 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
           onKeyDown={(e) => {
             if (e.key === "Enter") handleAdd();
           }}
-          maxLength={500}
+          maxLength={2000}
         />
         <button
           type="button"
@@ -193,7 +258,7 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
                     type="text"
                     className="todo-text-input"
                     value={drawnText}
-                    maxLength={500}
+                    maxLength={2000}
                     onChange={(e) =>
                       setEdit({
                         id: t.id,
@@ -224,6 +289,18 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
                     }
                   >
                     {t.text}
+                    {(() => {
+                      const due = formatDue(t.due_at);
+                      return due ? (
+                        <span
+                          className={`todo-due-pill todo-due-${due.tone}`}
+                          title={t.due_text ?? undefined}
+                          style={{ marginLeft: 8 }}
+                        >
+                          ⏰ {due.label}
+                        </span>
+                      ) : null;
+                    })()}
                   </button>
                 )}
                 <div className="todo-actions">

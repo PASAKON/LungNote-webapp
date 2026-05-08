@@ -3,7 +3,7 @@ import { verifySignature } from "@/lib/line/verify";
 import { replyMessage } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
-import { createNoteFromLine } from "@/lib/notes/create";
+import { saveMemoryFromLine } from "@/lib/memory/save";
 import { dashboardLinkMessage, welcomeMessage } from "@/lib/line/flex";
 import { mintToken } from "@/lib/auth/line-link";
 import type {
@@ -18,9 +18,11 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://lungnote.com";
 const DASHBOARD_KEYWORDS = /^(dashboard|dash|เปิด|ลิงก์|link|\/login|\/dash)$/i;
-// Note creation prefix: "จด <content>", "บันทึก <content>", "note <content>", "save <content>".
-// Content can span multiple lines (use [\s\S] not . because . won't cross newlines).
-const NOTE_PREFIX = /^(?:จด|บันทึก|note|save)\s+([\s\S]+)$/i;
+// Memory capture prefix (ADR-0012): unified note + todo. Recognizes:
+//   "จด <text>", "บันทึก <text>", "note <text>", "save <text>",
+//   "todo <text>", "ทำ <text>", "เตือน <text>".
+// Content may span multiple lines (use [\s\S] — `.` won't cross newlines).
+const MEMORY_PREFIX = /^(?:จด|บันทึก|note|save|todo|ทำ|เตือน)\s+([\s\S]+)$/i;
 
 export async function POST(req: NextRequest) {
   const secret = process.env.LINE_CHANNEL_SECRET;
@@ -98,13 +100,13 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
     return sendDashboardLink(ev.replyToken, userId);
   }
 
-  // 2. Note creation prefix (free regex; profile lookup + insert happens server-side)
-  const noteMatch = NOTE_PREFIX.exec(text);
-  if (noteMatch && userId) {
-    const noteText = noteMatch[1].trim();
-    if (noteText) {
-      // Pass full text (incl. "จด" prefix) so memory reflects what user actually typed.
-      return handleNoteCreate(ev.replyToken, userId, noteText, text);
+  // 2. Memory capture prefix (ADR-0012) — saves to lungnote_todos with due_at extraction.
+  const memoryMatch = MEMORY_PREFIX.exec(text);
+  if (memoryMatch && userId) {
+    const memoryText = memoryMatch[1].trim();
+    if (memoryText) {
+      // Pass full text (incl. prefix) so conversation memory reflects what user typed.
+      return handleMemoryCreate(ev.replyToken, userId, memoryText, text);
     }
   }
 
@@ -124,30 +126,53 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   return replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
 }
 
-async function handleNoteCreate(
+async function handleMemoryCreate(
   replyToken: string,
   lineUserId: string,
-  noteText: string,
+  memoryText: string,
   fullUserMessage: string,
 ): Promise<unknown> {
-  const result = await createNoteFromLine(lineUserId, noteText);
+  const result = await saveMemoryFromLine(lineUserId, memoryText);
 
   let replyText: string;
   if (!result.ok && result.reason === "not_linked") {
     replyText =
-      "ต้องลิงก์ account ก่อนถึงจะจดโน้ตได้\nพิมพ์ 'dashboard' เพื่อรับลิงก์";
+      "ต้องลิงก์ account ก่อนถึงจะจดได้\nพิมพ์ 'dashboard' เพื่อรับลิงก์";
+  } else if (!result.ok && result.reason === "empty") {
+    replyText = "ข้อความว่างเปล่า ลองพิมพ์เนื้อหาที่จะจดด้วยนะ";
   } else if (!result.ok) {
-    replyText = "ขอโทษ จดโน้ตไม่สำเร็จ ลองอีกครั้งภายหลังนะ";
+    replyText = "ขอโทษ จดไม่สำเร็จ ลองอีกครั้งภายหลังนะ";
   } else {
-    replyText = `บันทึกแล้ว ✓ "${result.title}"\nดูที่ ${SITE_URL}/dashboard`;
+    const dueLine = formatDueLine(result.dueAt, result.dueText);
+    const head = `บันทึกแล้ว ✓ "${result.text}"`;
+    replyText = dueLine
+      ? `${head}\n${dueLine}\nดูที่ ${SITE_URL}/dashboard/todo`
+      : `${head}\nดูที่ ${SITE_URL}/dashboard/todo`;
   }
 
   // Persist this turn into conversation memory so the AI fallback path remembers
-  // note-creation context (e.g. user later asks "เมื่อกี้พิมไรไป"). Best-effort —
+  // capture context (e.g. user later asks "เมื่อกี้พิมไรไป"). Best-effort —
   // memory failure must not block the reply.
   void persistTurn(lineUserId, fullUserMessage, replyText);
 
   return replyMessage(replyToken, [{ type: "text", text: replyText }]);
+}
+
+function formatDueLine(dueAt: string | null, dueText: string | null): string | null {
+  if (!dueAt) return null;
+  const d = new Date(dueAt);
+  if (Number.isNaN(d.getTime())) return null;
+  const formatted = d.toLocaleString("th-TH", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Bangkok",
+  });
+  return dueText
+    ? `⏰ ${dueText} (${formatted})`
+    : `⏰ ${formatted}`;
 }
 
 async function persistTurn(
@@ -203,7 +228,8 @@ function helpText(): string {
   return [
     "คำสั่งที่ใช้ได้:",
     "• dashboard — รับลิงก์เปิด Dashboard",
-    "• จด <ข้อความ> — บันทึกโน้ตเข้า dashboard (ต้องลิงก์ account ก่อน)",
+    "• จด/บันทึก/todo/ทำ/เตือน <ข้อความ> — บันทึกความจำ (ต้องลิงก์ account ก่อน)",
+    "  ใส่วันที่ก็ได้ เช่น 'เตือน พรุ่งนี้ส่งการบ้านฟิสิกส์'",
     "• สวัสดี — ทักทาย",
     "• เว็บ — ลิงก์ไปเว็บ",
     "• เกี่ยวกับ — เกี่ยวกับ LungNote",

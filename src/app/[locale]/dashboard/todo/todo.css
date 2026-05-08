@@ -236,6 +236,37 @@
   border-color: var(--border);
 }
 
+/* Due-date pill (ADR-0012) — appears next to text when item has due_at */
+.lungnote-dashboard .todo-due-pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.lungnote-dashboard .todo-due-overdue {
+  background: rgba(212, 96, 96, 0.15);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+.lungnote-dashboard .todo-due-today {
+  background: var(--orange);
+  color: var(--surface);
+}
+.lungnote-dashboard .todo-due-soon {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.lungnote-dashboard .todo-due-future {
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
 .lungnote-dashboard .todo-empty {
   text-align: center;
   padding: 32px 20px;
