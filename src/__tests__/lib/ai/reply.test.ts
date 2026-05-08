@@ -9,19 +9,26 @@ vi.mock("@/lib/ai/memory", () => ({
   loadMemory: vi.fn(),
   saveMemory: vi.fn(),
 }));
+vi.mock("@/lib/ai/tools", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ai/tools")>();
+  return { ...actual, executeToolCall: vi.fn() };
+});
 
 import { generateChatReply } from "@/lib/ai/reply";
 import { chatCompletion, AIClientError } from "@/lib/ai/client";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
+import { executeToolCall } from "@/lib/ai/tools";
 
 const mockedChatCompletion = vi.mocked(chatCompletion);
 const mockedLoad = vi.mocked(loadMemory);
 const mockedSave = vi.mocked(saveMemory);
+const mockedExecTool = vi.mocked(executeToolCall);
 
 beforeEach(() => {
   mockedChatCompletion.mockReset();
   mockedLoad.mockReset();
   mockedSave.mockReset();
+  mockedExecTool.mockReset();
   mockedLoad.mockResolvedValue([]);
   mockedSave.mockResolvedValue(undefined);
 });
@@ -35,6 +42,7 @@ describe("generateChatReply (memory-aware)", () => {
     ]);
     mockedChatCompletion.mockResolvedValue({
       text: "AI says hi",
+      toolCalls: null,
       model: "google/gemini-2.5-flash",
       latencyMs: 1234,
       tokensIn: 100,
@@ -68,6 +76,7 @@ describe("generateChatReply (memory-aware)", () => {
     mockedLoad.mockResolvedValue([]);
     mockedChatCompletion.mockResolvedValue({
       text: "AI reply",
+      toolCalls: null,
       model: "x",
       latencyMs: 10,
       tokensIn: 1,
@@ -111,6 +120,7 @@ describe("generateChatReply (memory-aware)", () => {
     mockedLoad.mockRejectedValue(new Error("DB unavailable"));
     mockedChatCompletion.mockResolvedValue({
       text: "still ok",
+      toolCalls: null,
       model: "x",
       latencyMs: 5,
       tokensIn: 1,
@@ -126,5 +136,127 @@ describe("generateChatReply (memory-aware)", () => {
     const out = await generateChatReply("U-789", "ดู");
 
     expect(out.ok).toBe(true);
+  });
+});
+
+describe("generateChatReply — tool-calling agentic loop (ADR-0012 Phase 2)", () => {
+  it("executes save_memory tool call then returns final assistant text", async () => {
+    // Iteration 1: model calls save_memory.
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "",
+      toolCalls: [
+        {
+          id: "call-1",
+          type: "function",
+          function: {
+            name: "save_memory",
+            arguments: JSON.stringify({
+              text: "ส่งการบ้านฟิสิกส์",
+              due_at: "2026-05-09T09:00:00+07:00",
+              due_text: "พรุ่งนี้",
+            }),
+          },
+        },
+      ],
+      model: "g",
+      latencyMs: 100,
+      tokensIn: 80,
+      tokensOut: 40,
+      costEstimate: 0.0001,
+    });
+    // Tool returns ok
+    mockedExecTool.mockResolvedValue({
+      tool_call_id: "call-1",
+      content: JSON.stringify({
+        ok: true,
+        todoId: "t-x",
+        text: "ส่งการบ้านฟิสิกส์",
+        dueAt: "2026-05-09T02:00:00.000Z",
+        dueText: "พรุ่งนี้",
+      }),
+    });
+    // Iteration 2: model finalizes with text.
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "บันทึกแล้ว ✓ พรุ่งนี้ส่งการบ้านฟิสิกส์",
+      toolCalls: null,
+      model: "g",
+      latencyMs: 80,
+      tokensIn: 120,
+      tokensOut: 30,
+      costEstimate: 0.0002,
+    });
+
+    const out = await generateChatReply("U-tool", "พรุ่งนี้ส่งการบ้านฟิสิกส์");
+
+    expect(out.ok).toBe(true);
+    if (out.ok) {
+      expect(out.text).toMatch(/บันทึกแล้ว/);
+      // Aggregated metadata across both iterations
+      expect(out.meta.tokensIn).toBe(80 + 120);
+      expect(out.meta.tokensOut).toBe(40 + 30);
+    }
+    expect(mockedExecTool).toHaveBeenCalledTimes(1);
+    expect(mockedChatCompletion).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns ai_error when tool loop exceeds 3 iterations without final text", async () => {
+    const loopingResponse = {
+      text: "",
+      toolCalls: [
+        {
+          id: "call-loop",
+          type: "function" as const,
+          function: { name: "list_pending", arguments: "{}" },
+        },
+      ],
+      model: "g",
+      latencyMs: 50,
+      tokensIn: 10,
+      tokensOut: 5,
+      costEstimate: 0,
+    };
+    mockedChatCompletion.mockResolvedValue(loopingResponse);
+    mockedExecTool.mockResolvedValue({
+      tool_call_id: "call-loop",
+      content: "[]",
+    });
+
+    const out = await generateChatReply("U-loop", "anything");
+    expect(out.ok).toBe(false);
+    if (!out.ok) {
+      expect(out.reason).toBe("ai_error");
+      expect(out.error).toMatch(/tool loop exceeded/i);
+    }
+  });
+
+  it("strips tools for anonymous sessions (no userId to scope)", async () => {
+    mockedChatCompletion.mockResolvedValue({
+      text: "anon reply",
+      toolCalls: null,
+      model: "g",
+      latencyMs: 1,
+      tokensIn: 1,
+      tokensOut: 1,
+      costEstimate: 0,
+    });
+    await generateChatReply("anonymous", "hello");
+    const opts = mockedChatCompletion.mock.calls[0][1];
+    expect(opts?.tools).toBeUndefined();
+  });
+
+  it("passes tools for linked LINE users", async () => {
+    mockedChatCompletion.mockResolvedValue({
+      text: "linked reply",
+      toolCalls: null,
+      model: "g",
+      latencyMs: 1,
+      tokensIn: 1,
+      tokensOut: 1,
+      costEstimate: 0,
+    });
+    await generateChatReply("U-linked", "hello");
+    const opts = mockedChatCompletion.mock.calls[0][1];
+    expect(opts?.tools).toBeDefined();
+    expect(Array.isArray(opts?.tools)).toBe(true);
   });
 });

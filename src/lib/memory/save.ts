@@ -26,9 +26,34 @@ export async function saveMemoryFromLine(
   lineUserId: string,
   rawText: string,
 ): Promise<SaveMemoryResult> {
+  const extraction = await extractMemory(rawText);
+  if (!extraction.text) return { ok: false, reason: "empty" };
+  return saveMemoryRaw({
+    lineUserId,
+    text: extraction.text,
+    dueAt: extraction.due_at,
+    dueText: extraction.due_text,
+  });
+}
+
+/**
+ * Save a pre-extracted memory item — ADR-0012 Phase 2 (tool-calling).
+ *
+ * Used by the AI reply loop when the model calls `save_memory` with a clean
+ * text + already-resolved date. Skips the extra LLM extract round-trip.
+ */
+export async function saveMemoryRaw(opts: {
+  lineUserId: string;
+  text: string;
+  dueAt: string | null;
+  dueText: string | null;
+}): Promise<SaveMemoryResult> {
+  const { lineUserId, text, dueAt, dueText } = opts;
+  const trimmed = text.trim();
+  if (!trimmed) return { ok: false, reason: "empty" };
+
   const sb = createAdminClient();
 
-  // 1. Resolve linked Supabase user.
   const { data: profile, error: profErr } = await sb
     .from("lungnote_profiles")
     .select("id")
@@ -40,25 +65,19 @@ export async function saveMemoryFromLine(
 
   const userId = profile.id;
 
-  // 2. Get/create Inbox container.
   const inboxId = await getOrCreateInboxAdmin(userId);
   if (!inboxId) {
     return { ok: false, reason: "db_error", error: "inbox create failed" };
   }
 
-  // 3. Extract clean text + due date.
-  const extraction = await extractMemory(rawText);
-  if (!extraction.text) return { ok: false, reason: "empty" };
-
-  // 4. Insert todo.
   const { data: row, error: insErr } = await sb
     .from("lungnote_todos")
     .insert({
       user_id: userId,
       note_id: inboxId,
-      text: extraction.text,
-      due_at: extraction.due_at,
-      due_text: extraction.due_text,
+      text: trimmed.slice(0, 2000),
+      due_at: dueAt,
+      due_text: dueText,
       source: "chat",
     })
     .select("id")
@@ -75,9 +94,9 @@ export async function saveMemoryFromLine(
   return {
     ok: true,
     todoId: row.id,
-    text: extraction.text,
-    dueAt: extraction.due_at,
-    dueText: extraction.due_text,
+    text: trimmed,
+    dueAt,
+    dueText,
   };
 }
 
