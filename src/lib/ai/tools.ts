@@ -1,6 +1,7 @@
 import "server-only";
 import { saveMemoryRaw } from "@/lib/memory/save";
 import { listPendingFromLine } from "@/lib/memory/list";
+import { completeMemory, deleteMemory } from "@/lib/memory/mutate";
 
 /**
  * OpenAI/OpenRouter tool definitions for the LungNote chat agent — ADR-0012 Phase 2.
@@ -48,10 +49,46 @@ export const TOOL_DEFS = [
     function: {
       name: "list_pending",
       description:
-        "List the user's pending (not-done) todos/reminders. Call this when the user asks what they have to do, what's left, what's due soon, or what's overdue — e.g. 'งานค้าง', 'ตอนนี้มีงานอะไรบ้าง', 'ดูโน้ต', 'todo อะไรบ้าง'. Returns up to 20 items with their due dates.",
+        "List the user's pending (not-done) todos/reminders. Call this when the user asks what they have to do, what's left, what's due soon, or what's overdue — e.g. 'งานค้าง', 'ตอนนี้มีงานอะไรบ้าง', 'ดูโน้ต', 'todo อะไรบ้าง'. Returns up to 20 items with their `id`, `text`, and `due_at`. Use the returned `id` field for subsequent complete_memory or delete_memory calls.",
       parameters: {
         type: "object",
         properties: {},
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "complete_memory",
+      description:
+        "Mark a todo as done. Call this when the user says they finished a task — e.g. 'ทดสอบเสร็จแล้ว', 'done', 'เสร็จละ', 'ส่งการบ้านแล้ว'. You MUST call list_pending first to get the item id; never invent an id. If the user's reference is ambiguous (more than one item matches), ask them to clarify before calling this tool.",
+      parameters: {
+        type: "object",
+        properties: {
+          todo_id: {
+            type: "string",
+            description: "UUID returned by list_pending for the matching item.",
+          },
+        },
+        required: ["todo_id"],
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "delete_memory",
+      description:
+        "Permanently delete a todo. Call this when the user wants to remove an item — e.g. 'เอาทดสอบออก', 'ลบงาน X', 'remove the meeting'. You MUST call list_pending first to get the item id; never invent an id. If the user's reference is ambiguous, ask them to clarify before calling this tool. Deletion is irreversible — be conservative and confirm in your reply that the named item was removed.",
+      parameters: {
+        type: "object",
+        properties: {
+          todo_id: {
+            type: "string",
+            description: "UUID returned by list_pending for the matching item.",
+          },
+        },
+        required: ["todo_id"],
       },
     },
   },
@@ -116,6 +153,28 @@ export async function executeToolCall(
           tool_call_id: call.id,
           content: JSON.stringify(result),
         };
+      }
+      case "complete_memory": {
+        const todoId = typeof args.todo_id === "string" ? args.todo_id : "";
+        if (!todoId) {
+          return {
+            tool_call_id: call.id,
+            content: JSON.stringify({ ok: false, reason: "missing_id" }),
+          };
+        }
+        const result = await completeMemory(lineUserId, todoId);
+        return { tool_call_id: call.id, content: JSON.stringify(result) };
+      }
+      case "delete_memory": {
+        const todoId = typeof args.todo_id === "string" ? args.todo_id : "";
+        if (!todoId) {
+          return {
+            tool_call_id: call.id,
+            content: JSON.stringify({ ok: false, reason: "missing_id" }),
+          };
+        }
+        const result = await deleteMemory(lineUserId, todoId);
+        return { tool_call_id: call.id, content: JSON.stringify(result) };
       }
       default:
         return {

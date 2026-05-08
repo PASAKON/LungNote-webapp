@@ -5,7 +5,9 @@ import { loadMemory, saveMemory } from "./memory";
 import { TOOL_DEFS, executeToolCall, type ToolCall } from "./tools";
 import type { AIReplyResult } from "./types";
 
-const MAX_TOOL_ITERATIONS = 3;
+// Bumped from 3 → 4 to allow list → mutate → final text without exhausting
+// the loop on multi-step intents like "เอา ทดสอบออก" (delete by name).
+const MAX_TOOL_ITERATIONS = 4;
 
 /**
  * Generate an AI reply for a single user message — ADR-0012 Phase 2.

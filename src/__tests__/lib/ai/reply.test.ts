@@ -199,7 +199,89 @@ describe("generateChatReply — tool-calling agentic loop (ADR-0012 Phase 2)", (
     expect(mockedChatCompletion).toHaveBeenCalledTimes(2);
   });
 
-  it("returns ai_error when tool loop exceeds 3 iterations without final text", async () => {
+  it("supports list → delete → text in one turn (3 iterations)", async () => {
+    // Iter 1: list_pending
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "",
+      toolCalls: [
+        {
+          id: "c-list",
+          type: "function",
+          function: { name: "list_pending", arguments: "{}" },
+        },
+      ],
+      model: "g",
+      latencyMs: 60,
+      tokensIn: 50,
+      tokensOut: 10,
+      costEstimate: 0,
+    });
+    // Iter 2: delete_memory(t-1)
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "",
+      toolCalls: [
+        {
+          id: "c-del",
+          type: "function",
+          function: {
+            name: "delete_memory",
+            arguments: JSON.stringify({ todo_id: "t-1" }),
+          },
+        },
+      ],
+      model: "g",
+      latencyMs: 60,
+      tokensIn: 60,
+      tokensOut: 10,
+      costEstimate: 0,
+    });
+    // Iter 3: final text
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "ลบ 'ทดสอบ' แล้ว ✓",
+      toolCalls: null,
+      model: "g",
+      latencyMs: 60,
+      tokensIn: 70,
+      tokensOut: 15,
+      costEstimate: 0,
+    });
+
+    // Tool calls in order: list returns 1 item, delete succeeds.
+    mockedExecTool
+      .mockResolvedValueOnce({
+        tool_call_id: "c-list",
+        content: JSON.stringify({
+          ok: true,
+          items: [
+            {
+              id: "t-1",
+              text: "ทดสอบ",
+              due_at: null,
+              due_text: null,
+              created_at: new Date().toISOString(),
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        tool_call_id: "c-del",
+        content: JSON.stringify({
+          ok: true,
+          todoId: "t-1",
+          text: "ทดสอบ",
+        }),
+      });
+
+    const out = await generateChatReply("U-mut", "เอา ทดสอบ ออก");
+    expect(out.ok).toBe(true);
+    if (out.ok) {
+      expect(out.text).toMatch(/ลบ.*ทดสอบ/);
+    }
+    expect(mockedExecTool).toHaveBeenCalledTimes(2);
+    expect(mockedChatCompletion).toHaveBeenCalledTimes(3);
+  });
+
+  it("returns ai_error when tool loop exceeds 4 iterations without final text", async () => {
     const loopingResponse = {
       text: "",
       toolCalls: [
@@ -225,7 +307,7 @@ describe("generateChatReply — tool-calling agentic loop (ADR-0012 Phase 2)", (
     expect(out.ok).toBe(false);
     if (!out.ok) {
       expect(out.reason).toBe("ai_error");
-      expect(out.error).toMatch(/tool loop exceeded/i);
+      expect(out.error).toMatch(/tool loop exceeded 4/i);
     }
   });
 
