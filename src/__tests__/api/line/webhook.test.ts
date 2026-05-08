@@ -12,6 +12,9 @@ vi.mock("@/lib/ai/reply", () => ({
 vi.mock("@/lib/memory/save", () => ({
   saveMemoryFromLine: vi.fn(),
 }));
+vi.mock("@/lib/memory/list", () => ({
+  listPendingFromLine: vi.fn(),
+}));
 vi.mock("@/lib/auth/line-link", () => ({
   mintToken: vi.fn(),
 }));
@@ -24,11 +27,13 @@ import { POST } from "@/app/api/line/webhook/route";
 import { replyMessage } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
 import { saveMemoryFromLine } from "@/lib/memory/save";
+import { listPendingFromLine } from "@/lib/memory/list";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 
 const mockedReply = vi.mocked(replyMessage);
 const mockedAI = vi.mocked(generateChatReply);
 const mockedSaveMemory = vi.mocked(saveMemoryFromLine);
+const mockedListMemory = vi.mocked(listPendingFromLine);
 const mockedLoadMemory = vi.mocked(loadMemory);
 const mockedConvSaveMemory = vi.mocked(saveMemory);
 
@@ -278,6 +283,38 @@ describe("POST /api/line/webhook — memory prefix (ADR-0012)", () => {
     );
   });
 
+  it("triggers on compound 'เพิ่มสิ่งที่ต้องทำ <text>'", async () => {
+    mockedSaveMemory.mockResolvedValue({
+      ok: true,
+      todoId: "todo-c",
+      text: "กินข้าวเช้า",
+      dueAt: null,
+      dueText: null,
+    });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-CMP", "เพิ่มสิ่งที่ต้องทำ กินข้าวเช้า")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedSaveMemory).toHaveBeenCalledWith("U-abc", "กินข้าวเช้า");
+  });
+
+  it("triggers on 'อย่าลืม <text>' single prefix", async () => {
+    mockedSaveMemory.mockResolvedValue({
+      ok: true,
+      todoId: "todo-y",
+      text: "ส่งงาน",
+      dueAt: null,
+      dueText: null,
+    });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-Y", "อย่าลืม ส่งงาน")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedSaveMemory).toHaveBeenCalledWith("U-abc", "ส่งงาน");
+  });
+
   it("does NOT trigger memory path when prefix has no content", async () => {
     mockedAI.mockResolvedValue({
       ok: true,
@@ -298,5 +335,91 @@ describe("POST /api/line/webhook — memory prefix (ADR-0012)", () => {
 
     expect(mockedSaveMemory).not.toHaveBeenCalled();
     expect(mockedAI).toHaveBeenCalledWith("U-abc", "จด");
+  });
+});
+
+describe("POST /api/line/webhook — list-pending intent", () => {
+  it("replies with formatted pending list for 'งานค้าง'", async () => {
+    mockedListMemory.mockResolvedValue({
+      ok: true,
+      items: [
+        {
+          id: "t1",
+          text: "ส่งการบ้านฟิสิกส์",
+          due_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+          due_text: "พรุ่งนี้",
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "t2",
+          text: "ซื้อนม",
+          due_at: null,
+          due_text: null,
+          created_at: new Date().toISOString(),
+        },
+      ],
+    });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L1", "งานค้าง")],
+    };
+    await POST(makeRequest(body) as never);
+
+    expect(mockedListMemory).toHaveBeenCalledWith("U-abc");
+    expect(mockedSaveMemory).not.toHaveBeenCalled();
+    expect(mockedAI).not.toHaveBeenCalled();
+    expect(mockedReply).toHaveBeenCalledWith(
+      "RT-L1",
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("งานค้าง 2 รายการ"),
+        }),
+      ]),
+    );
+  });
+
+  it("replies cheerful empty state when no pending items", async () => {
+    mockedListMemory.mockResolvedValue({ ok: true, items: [] });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L2", "ดูโน๊ตหน่อย")],
+    };
+    await POST(makeRequest(body) as never);
+
+    expect(mockedReply).toHaveBeenCalledWith(
+      "RT-L2",
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("ไม่มีงานค้าง"),
+        }),
+      ]),
+    );
+  });
+
+  it("triggers on 'ตอนนี้มีงานอะไรบ้างที่ค้าง' natural phrasing", async () => {
+    mockedListMemory.mockResolvedValue({ ok: true, items: [] });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L3", "ตอนนี้มีงานอะไรบ้างที่ค้าง")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedListMemory).toHaveBeenCalled();
+  });
+
+  it("redirects to dashboard when not linked", async () => {
+    mockedListMemory.mockResolvedValue({ ok: false, reason: "not_linked" });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L4", "งานค้าง")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedReply).toHaveBeenCalledWith(
+      "RT-L4",
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("dashboard"),
+        }),
+      ]),
+    );
   });
 });

@@ -4,6 +4,7 @@ import { replyMessage } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import { saveMemoryFromLine } from "@/lib/memory/save";
+import { listPendingFromLine } from "@/lib/memory/list";
 import { dashboardLinkMessage, welcomeMessage } from "@/lib/line/flex";
 import { mintToken } from "@/lib/auth/line-link";
 import type {
@@ -18,11 +19,20 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://lungnote.com";
 const DASHBOARD_KEYWORDS = /^(dashboard|dash|เปิด|ลิงก์|link|\/login|\/dash)$/i;
-// Memory capture prefix (ADR-0012): unified note + todo. Recognizes:
-//   "จด <text>", "บันทึก <text>", "note <text>", "save <text>",
-//   "todo <text>", "ทำ <text>", "เตือน <text>".
-// Content may span multiple lines (use [\s\S] — `.` won't cross newlines).
-const MEMORY_PREFIX = /^(?:จด|บันทึก|note|save|todo|ทำ|เตือน)\s+([\s\S]+)$/i;
+// Memory capture prefix (ADR-0012, broadened by ADR-0012 follow-up):
+// Single-word prefix: "จด <text>", "บันทึก <text>", "note <text>",
+//   "save <text>", "todo <text>", "ทำ <text>", "เตือน <text>", "อย่าลืม <text>".
+const MEMORY_PREFIX_SINGLE =
+  /^(?:จด|บันทึก|note|save|todo|ทำ|เตือน|อย่าลืม)\s+([\s\S]+)$/i;
+// Compound prefix: "เพิ่ม(สิ่งที่ต้องทำ|todo|งาน) <text>" — matches what
+// users naturally type when they think of LungNote as a todo app. The space
+// between "เพิ่ม" and the noun is optional because Thai often elides it.
+const MEMORY_PREFIX_COMPOUND =
+  /^เพิ่ม\s*(?:สิ่งที่ต้องทำ|todo|งาน|todos)\s+([\s\S]+)$/i;
+// List-pending intent: user asks to see what's pending. Matches whole-message
+// queries; no capture group — we just trigger the list handler.
+const LIST_PENDING_INTENT =
+  /^(?:.*มีงานอะไร.*|.*งานค้าง.*|ดู\s*(?:งาน|โน้ต|โน๊ต|todo).*|todo(?:\s+(?:อะไร|มีไหม|มีอะไร).*)?|รายการ|list)$/i;
 
 export async function POST(req: NextRequest) {
   const secret = process.env.LINE_CHANNEL_SECRET;
@@ -100,8 +110,14 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
     return sendDashboardLink(ev.replyToken, userId);
   }
 
-  // 2. Memory capture prefix (ADR-0012) — saves to lungnote_todos with due_at extraction.
-  const memoryMatch = MEMORY_PREFIX.exec(text);
+  // 2. List-pending intent — surfaces user's open todos.
+  if (LIST_PENDING_INTENT.test(text) && userId) {
+    return handleMemoryList(ev.replyToken, userId, text);
+  }
+
+  // 3. Memory capture prefix (ADR-0012) — saves to lungnote_todos with due_at extraction.
+  const memoryMatch =
+    MEMORY_PREFIX_SINGLE.exec(text) ?? MEMORY_PREFIX_COMPOUND.exec(text);
   if (memoryMatch && userId) {
     const memoryText = memoryMatch[1].trim();
     if (memoryText) {
@@ -156,6 +172,55 @@ async function handleMemoryCreate(
   void persistTurn(lineUserId, fullUserMessage, replyText);
 
   return replyMessage(replyToken, [{ type: "text", text: replyText }]);
+}
+
+async function handleMemoryList(
+  replyToken: string,
+  lineUserId: string,
+  fullUserMessage: string,
+): Promise<unknown> {
+  const result = await listPendingFromLine(lineUserId);
+
+  let replyText: string;
+  if (!result.ok && result.reason === "not_linked") {
+    replyText =
+      "ต้องลิงก์ account ก่อนถึงจะดูงานได้\nพิมพ์ 'dashboard' เพื่อรับลิงก์";
+  } else if (!result.ok) {
+    replyText = "ขอโทษ ดึงงานไม่สำเร็จ ลองอีกครั้งภายหลังนะ";
+  } else if (result.items.length === 0) {
+    replyText = "ไม่มีงานค้างเลย — ดีมาก! 🎉";
+  } else {
+    const lines = result.items.map((it, idx) => {
+      const due = formatDueShort(it.due_at);
+      return due
+        ? `${idx + 1}. ${it.text} — ⏰ ${due}`
+        : `${idx + 1}. ${it.text}`;
+    });
+    const header = `📋 งานค้าง ${result.items.length} รายการ`;
+    const footer = `\nดูทั้งหมดที่ ${SITE_URL}/dashboard/todo`;
+    replyText = [header, ...lines].join("\n") + footer;
+  }
+
+  void persistTurn(lineUserId, fullUserMessage, replyText);
+  return replyMessage(replyToken, [{ type: "text", text: replyText }]);
+}
+
+function formatDueShort(iso: string | null): string | null {
+  if (!iso) return null;
+  const due = new Date(iso);
+  const now = new Date();
+  if (Number.isNaN(due.getTime())) return null;
+
+  const dayMs = 1000 * 60 * 60 * 24;
+  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diff = Math.round((dueDay - today) / dayMs);
+
+  if (diff < 0) return `เลย ${Math.abs(diff)} วัน`;
+  if (diff === 0) return "วันนี้";
+  if (diff === 1) return "พรุ่งนี้";
+  if (diff <= 7) return `อีก ${diff} วัน`;
+  return due.toLocaleDateString("th-TH", { day: "numeric", month: "short" });
 }
 
 function formatDueLine(dueAt: string | null, dueText: string | null): string | null {
@@ -228,8 +293,10 @@ function helpText(): string {
   return [
     "คำสั่งที่ใช้ได้:",
     "• dashboard — รับลิงก์เปิด Dashboard",
-    "• จด/บันทึก/todo/ทำ/เตือน <ข้อความ> — บันทึกความจำ (ต้องลิงก์ account ก่อน)",
+    "• จด/บันทึก/todo/ทำ/เตือน/อย่าลืม <ข้อความ> — บันทึกความจำ",
     "  ใส่วันที่ก็ได้ เช่น 'เตือน พรุ่งนี้ส่งการบ้านฟิสิกส์'",
+    "  หรือพิมพ์ 'เพิ่มสิ่งที่ต้องทำ <ข้อความ>'",
+    "• งานค้าง / ดูงาน / ดูโน้ต — ดูงานที่ค้างอยู่",
     "• สวัสดี — ทักทาย",
     "• เว็บ — ลิงก์ไปเว็บ",
     "• เกี่ยวกับ — เกี่ยวกับ LungNote",
