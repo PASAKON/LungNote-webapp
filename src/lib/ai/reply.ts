@@ -5,9 +5,10 @@ import { loadMemory, saveMemory } from "./memory";
 import { TOOL_DEFS, executeToolCall, type ToolCall } from "./tools";
 import type { AIReplyResult } from "./types";
 
-// Bumped from 3 → 4 to allow list → mutate → final text without exhausting
-// the loop on multi-step intents like "เอา ทดสอบออก" (delete by name).
-const MAX_TOOL_ITERATIONS = 4;
+// 5 iterations covers the worst legit shape: list_done → uncomplete →
+// list_pending (verify) → maybe one more mutation → final text.
+// Most intents finish in 2-3.
+const MAX_TOOL_ITERATIONS = 5;
 
 /**
  * Generate an AI reply for a single user message — ADR-0012 Phase 2.

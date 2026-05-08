@@ -307,8 +307,86 @@ describe("generateChatReply — tool-calling agentic loop (ADR-0012 Phase 2)", (
     expect(out.ok).toBe(false);
     if (!out.ok) {
       expect(out.reason).toBe("ai_error");
-      expect(out.error).toMatch(/tool loop exceeded 4/i);
+      expect(out.error).toMatch(/tool loop exceeded 5/i);
     }
+  });
+
+  it("supports list → update_memory → text (reschedule by name)", async () => {
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "",
+      toolCalls: [
+        {
+          id: "c-list",
+          type: "function",
+          function: { name: "list_pending", arguments: "{}" },
+        },
+      ],
+      model: "g",
+      latencyMs: 50,
+      tokensIn: 40,
+      tokensOut: 10,
+      costEstimate: 0,
+    });
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "",
+      toolCalls: [
+        {
+          id: "c-upd",
+          type: "function",
+          function: {
+            name: "update_memory",
+            arguments: JSON.stringify({
+              todo_id: "t-meet",
+              due_at: "2026-05-15T09:00:00+07:00",
+              due_text: "วันศุกร์",
+            }),
+          },
+        },
+      ],
+      model: "g",
+      latencyMs: 50,
+      tokensIn: 60,
+      tokensOut: 10,
+      costEstimate: 0,
+    });
+    mockedChatCompletion.mockResolvedValueOnce({
+      text: "เลื่อน 'ประชุม' เป็นวันศุกร์แล้ว ✓",
+      toolCalls: null,
+      model: "g",
+      latencyMs: 50,
+      tokensIn: 70,
+      tokensOut: 15,
+      costEstimate: 0,
+    });
+
+    mockedExecTool
+      .mockResolvedValueOnce({
+        tool_call_id: "c-list",
+        content: JSON.stringify({
+          ok: true,
+          items: [
+            {
+              id: "t-meet",
+              text: "ประชุม",
+              due_at: "2026-05-09T02:00:00.000Z",
+              due_text: "พรุ่งนี้",
+              created_at: new Date().toISOString(),
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        tool_call_id: "c-upd",
+        content: JSON.stringify({ ok: true, todoId: "t-meet", text: "ประชุม" }),
+      });
+
+    const out = await generateChatReply("U-upd", "เลื่อน ประชุม เป็นวันศุกร์");
+    expect(out.ok).toBe(true);
+    if (out.ok) {
+      expect(out.text).toMatch(/เลื่อน|ศุกร์/);
+    }
+    expect(mockedExecTool).toHaveBeenCalledTimes(2);
+    expect(mockedChatCompletion).toHaveBeenCalledTimes(3);
   });
 
   it("strips tools for anonymous sessions (no userId to scope)", async () => {

@@ -71,3 +71,35 @@ export async function listPendingFromLine(
 
   return { ok: true, items };
 }
+
+/**
+ * List the most-recently completed memory items for a LINE user.
+ * Used by the AI `list_done` tool — needed because list_pending only returns
+ * open items, so the model can't find an id to uncomplete by name otherwise.
+ * Capped at MAX_ROWS, ordered by updated_at desc (most-recently checked first).
+ */
+export async function listDoneFromLine(
+  lineUserId: string,
+): Promise<ListMemoryResult> {
+  const sb = createAdminClient();
+
+  const { data: profile, error: profErr } = await sb
+    .from("lungnote_profiles")
+    .select("id")
+    .eq("line_user_id", lineUserId)
+    .maybeSingle();
+
+  if (profErr) return { ok: false, reason: "db_error", error: profErr.message };
+  if (!profile) return { ok: false, reason: "not_linked" };
+
+  const { data, error } = await sb
+    .from("lungnote_todos")
+    .select("id, text, due_at, due_text, created_at")
+    .eq("user_id", profile.id)
+    .eq("done", true)
+    .order("updated_at", { ascending: false })
+    .limit(MAX_ROWS);
+
+  if (error) return { ok: false, reason: "db_error", error: error.message };
+  return { ok: true, items: data ?? [] };
+}
