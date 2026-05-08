@@ -81,7 +81,7 @@ export default async function EditNotePage({
           />
         </div>
       </div>
-      <BottomTabs active="notes" />
+      <BottomTabs active="home" />
     </div>
   );
 }

@@ -58,7 +58,7 @@ export default async function NewNotePage({
           />
         </div>
       </div>
-      <BottomTabs active="notes" />
+      <BottomTabs active="home" />
     </div>
   );
 }
