@@ -19,20 +19,24 @@ export default async function SettingsPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("lungnote_profiles")
-    .select("line_display_name, line_picture_url, line_user_id, created_at")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [profileRes, notesCountRes, todoOpenCountRes] = await Promise.all([
+    supabase
+      .from("lungnote_profiles")
+      .select("line_display_name, line_picture_url, line_user_id, created_at")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("lungnote_notes")
+      .select("*", { count: "exact", head: true }),
+    supabase
+      .from("lungnote_todos")
+      .select("*", { count: "exact", head: true })
+      .eq("done", false),
+  ]);
 
-  const { count: notesCount } = await supabase
-    .from("lungnote_notes")
-    .select("*", { count: "exact", head: true });
-
-  const { count: todoOpenCount } = await supabase
-    .from("lungnote_todos")
-    .select("*", { count: "exact", head: true })
-    .eq("done", false);
+  const profile = profileRes.data;
+  const notesCount = notesCountRes.count;
+  const todoOpenCount = todoOpenCountRes.count;
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";

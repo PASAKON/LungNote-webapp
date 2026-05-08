@@ -19,26 +19,33 @@ export default async function DashboardPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("lungnote_profiles")
-    .select("line_display_name, line_picture_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  // 4 queries in parallel — RLS scopes them to user; cuts ~3 round-trips
+  // (sin1↔BKK ≈ 30 ms each) off first paint.
+  const [profileRes, notesCountRes, todoOpenCountRes, notesRes] =
+    await Promise.all([
+      supabase
+        .from("lungnote_profiles")
+        .select("line_display_name, line_picture_url")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("lungnote_notes")
+        .select("*", { count: "exact", head: true }),
+      supabase
+        .from("lungnote_todos")
+        .select("*", { count: "exact", head: true })
+        .eq("done", false),
+      supabase
+        .from("lungnote_notes")
+        .select("id, title, body, updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(20),
+    ]);
 
-  const { count: notesCount } = await supabase
-    .from("lungnote_notes")
-    .select("*", { count: "exact", head: true });
-
-  const { count: todoOpenCount } = await supabase
-    .from("lungnote_todos")
-    .select("*", { count: "exact", head: true })
-    .eq("done", false);
-
-  const { data: notes } = await supabase
-    .from("lungnote_notes")
-    .select("id, title, body, updated_at")
-    .order("updated_at", { ascending: false })
-    .limit(20);
+  const profile = profileRes.data;
+  const notesCount = notesCountRes.count;
+  const todoOpenCount = todoOpenCountRes.count;
+  const notes = notesRes.data;
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
