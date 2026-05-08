@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SketchyFilter } from "./SketchyFilter";
 import { Topbar } from "./Topbar";
 import { BottomTabs } from "./BottomTabs";
+import { Sidebar } from "./Sidebar";
 import "./dashboard.css";
 
 export const dynamic = "force-dynamic";
@@ -51,13 +52,20 @@ export default async function DashboardPage({
   return (
     <div className="lungnote-dashboard">
       <SketchyFilter />
-      <Topbar
-        pictureUrl={profile?.line_picture_url ?? null}
-        initial={initial}
-        locale={locale}
-      />
+      <div className="dash-shell">
+        <Sidebar
+          active="home"
+          notesCount={notesCount ?? undefined}
+          todoCount={todoOpenCount ?? undefined}
+        />
+        <main className="dash-main">
+          <Topbar
+            pictureUrl={profile?.line_picture_url ?? null}
+            initial={initial}
+            locale={locale}
+          />
 
-      <div className="dash-body">
+          <div className="dash-body">
         <div className="greeting">
           <h2>
             สวัสดี, <span className="highlight-tape">{displayName}</span>
@@ -143,8 +151,9 @@ export default async function DashboardPage({
             </div>
           </div>
         )}
+          </div>
+        </main>
       </div>
-
       <BottomTabs
         active="home"
         notesCount={notesCount ?? undefined}

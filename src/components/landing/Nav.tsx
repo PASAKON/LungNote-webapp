@@ -25,7 +25,11 @@ export function Nav({ content }: { content: LandingContent["nav"] }) {
             <a href="#faq">{content.faq}</a>
           </li>
           <li>
-            <a href="#download" className="btn-sketchy btn-nav">
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/api/auth/line/oauth/start"
+              className="btn-sketchy btn-nav"
+            >
               {content.download}
             </a>
           </li>

@@ -77,7 +77,7 @@ const th: LandingContent = {
     how: "วิธีใช้",
     reviews: "รีวิว",
     faq: "คำถาม",
-    download: "ดาวน์โหลด",
+    download: "เริ่มเลย",
   },
   hero: {
     eyebrow: "Note-taking for students",
@@ -87,7 +87,7 @@ const th: LandingContent = {
     titleAfter: "ของคุณ",
     subtitle:
       "โน้ต เช็คลิสต์ และไอเดีย — ทุกอย่างอยู่ในที่เดียว เรียบง่ายเหมือนเปิดสมุดโน้ตเล่มใหม่",
-    cta: "เริ่มจดฟรี →",
+    cta: "เริ่มเลย →",
     notebookHeader: "บันทึกของฉัน — วันนี้",
     todos: [
       { text: "อ่านบท 5 วิชาฟิสิกส์", done: true },
@@ -215,7 +215,7 @@ const en: LandingContent = {
     how: "How it works",
     reviews: "Reviews",
     faq: "FAQ",
-    download: "Download",
+    download: "Start now",
   },
   hero: {
     eyebrow: "Note-taking for students",
@@ -225,7 +225,7 @@ const en: LandingContent = {
     titleAfter: "",
     subtitle:
       "Notes, checklists, and ideas — all in one place. As simple as opening a fresh notebook.",
-    cta: "Start writing — free →",
+    cta: "Start now →",
     notebookHeader: "My notes — today",
     todos: [
       { text: "Read chapter 5 of physics", done: true },
