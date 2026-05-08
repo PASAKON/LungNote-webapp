@@ -2,7 +2,7 @@ import Link from "next/link";
 import { signOut } from "./actions";
 
 type Props = {
-  active: "home" | "notes" | "todo" | "notebooks" | "tags" | "settings";
+  active: "home" | "todo" | "settings" | "notes" | "notebooks" | "tags";
   notesCount?: number;
   todoCount?: number;
 };
@@ -39,46 +39,7 @@ export function Sidebar({ active, notesCount, todoCount }: Props) {
       <span className="nav-section">หลัก</span>
 
       <Link
-        href="/dashboard"
-        className={`nav-item${active === "home" ? " active" : ""}`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <rect x={3} y={3} width={7} height={7} />
-          <rect x={14} y={3} width={7} height={7} />
-          <rect x={3} y={14} width={7} height={7} />
-          <rect x={14} y={14} width={7} height={7} />
-        </svg>
-        <span>หน้าหลัก</span>
-      </Link>
-
-      <Link
-        href="/dashboard/notes/new"
-        className={`nav-item${active === "notes" ? " active" : ""}`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-        </svg>
-        <span>โน้ต</span>
-        {!!notesCount && <span className="nav-badge">{notesCount}</span>}
-      </Link>
-
-      <Link
-        href="/dashboard"
+        href="/dashboard/todo"
         className={`nav-item${active === "todo" ? " active" : ""}`}
       >
         <svg
@@ -96,11 +57,9 @@ export function Sidebar({ active, notesCount, todoCount }: Props) {
         {!!todoCount && <span className="nav-badge">{todoCount}</span>}
       </Link>
 
-      <span className="nav-section">อื่นๆ</span>
-
       <Link
         href="/dashboard"
-        className={`nav-item${active === "notebooks" ? " active" : ""}`}
+        className={`nav-item${active === "home" ? " active" : ""}`}
       >
         <svg
           viewBox="0 0 24 24"
@@ -110,32 +69,17 @@ export function Sidebar({ active, notesCount, todoCount }: Props) {
           strokeLinecap="round"
           aria-hidden="true"
         >
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+          <rect x={3} y={3} width={7} height={7} />
+          <rect x={14} y={3} width={7} height={7} />
+          <rect x={3} y={14} width={7} height={7} />
+          <rect x={14} y={14} width={7} height={7} />
         </svg>
-        <span>สมุดโน้ต</span>
+        <span>ภาพรวม</span>
+        {!!notesCount && <span className="nav-badge">{notesCount}</span>}
       </Link>
 
       <Link
-        href="/dashboard"
-        className={`nav-item${active === "tags" ? " active" : ""}`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-          <line x1={7} y1={7} x2={7.01} y2={7} />
-        </svg>
-        <span>แท็ก</span>
-      </Link>
-
-      <Link
-        href="/dashboard"
+        href="/dashboard/settings"
         className={`nav-item${active === "settings" ? " active" : ""}`}
       >
         <svg

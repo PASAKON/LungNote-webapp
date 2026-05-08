@@ -1,53 +1,16 @@
 import Link from "next/link";
 
 type Props = {
-  active: "home" | "notes" | "todo" | "search" | "settings";
+  active: "home" | "todo" | "settings";
   notesCount?: number;
   todoCount?: number;
 };
 
-export function BottomTabs({ active, notesCount, todoCount }: Props) {
+export function BottomTabs({ active, todoCount }: Props) {
   return (
     <nav className="bottom-tabs" aria-label="primary">
       <Link
-        href="/dashboard"
-        className={`tab-item${active === "home" ? " active" : ""}`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <rect x={3} y={3} width={7} height={7} />
-          <rect x={14} y={3} width={7} height={7} />
-          <rect x={3} y={14} width={7} height={7} />
-          <rect x={14} y={14} width={7} height={7} />
-        </svg>
-        <span>หน้าหลัก</span>
-      </Link>
-      <Link
-        href="/dashboard/notes/new"
-        className={`tab-item${active === "notes" ? " active" : ""}`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-        </svg>
-        <span>โน้ต</span>
-        {!!notesCount && <span className="tab-badge">{notesCount}</span>}
-      </Link>
-      <Link
-        href="/dashboard"
+        href="/dashboard/todo"
         className={`tab-item${active === "todo" ? " active" : ""}`}
       >
         <svg
@@ -66,7 +29,7 @@ export function BottomTabs({ active, notesCount, todoCount }: Props) {
       </Link>
       <Link
         href="/dashboard"
-        className={`tab-item${active === "search" ? " active" : ""}`}
+        className={`tab-item${active === "home" ? " active" : ""}`}
       >
         <svg
           viewBox="0 0 24 24"
@@ -76,13 +39,15 @@ export function BottomTabs({ active, notesCount, todoCount }: Props) {
           strokeLinecap="round"
           aria-hidden="true"
         >
-          <circle cx={11} cy={11} r={7} />
-          <path d="M21 21l-4.35-4.35" />
+          <rect x={3} y={3} width={7} height={7} />
+          <rect x={14} y={3} width={7} height={7} />
+          <rect x={3} y={14} width={7} height={7} />
+          <rect x={14} y={14} width={7} height={7} />
         </svg>
-        <span>ค้นหา</span>
+        <span>ภาพรวม</span>
       </Link>
       <Link
-        href="/dashboard"
+        href="/dashboard/settings"
         className={`tab-item${active === "settings" ? " active" : ""}`}
       >
         <svg
