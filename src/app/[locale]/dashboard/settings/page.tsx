@@ -4,6 +4,7 @@ import { Topbar } from "../Topbar";
 import { BottomTabs } from "../BottomTabs";
 import { Sidebar } from "../Sidebar";
 import { signOut } from "../actions";
+import { PullToRefresh } from "../PullToRefresh";
 import "../dashboard.css";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +64,7 @@ export default async function SettingsPage({
             initial={initial}
             locale={locale}
           />
+          <PullToRefresh>
           <div className="dash-body">
             <div style={{ padding: "20px" }}>
               <h1
@@ -209,6 +211,7 @@ export default async function SettingsPage({
               </form>
             </div>
           </div>
+          </PullToRefresh>
         </main>
       </div>
       <BottomTabs
