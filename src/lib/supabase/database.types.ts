@@ -148,6 +148,9 @@ export type Database = {
           text: string;
           done: boolean;
           position: number;
+          due_at: string | null;
+          due_text: string | null;
+          source: "chat" | "web" | "liff";
           created_at: string;
           updated_at: string;
         };
@@ -158,6 +161,9 @@ export type Database = {
           text: string;
           done?: boolean;
           position?: number;
+          due_at?: string | null;
+          due_text?: string | null;
+          source?: "chat" | "web" | "liff";
           created_at?: string;
           updated_at?: string;
         };
@@ -168,6 +174,9 @@ export type Database = {
           text?: string;
           done?: boolean;
           position?: number;
+          due_at?: string | null;
+          due_text?: string | null;
+          source?: "chat" | "web" | "liff";
           updated_at?: string;
         };
         Relationships: [];

@@ -9,8 +9,11 @@ vi.mock("@/lib/line/client", () => ({
 vi.mock("@/lib/ai/reply", () => ({
   generateChatReply: vi.fn(),
 }));
-vi.mock("@/lib/notes/create", () => ({
-  createNoteFromLine: vi.fn(),
+vi.mock("@/lib/memory/save", () => ({
+  saveMemoryFromLine: vi.fn(),
+}));
+vi.mock("@/lib/memory/list", () => ({
+  listPendingFromLine: vi.fn(),
 }));
 vi.mock("@/lib/auth/line-link", () => ({
   mintToken: vi.fn(),
@@ -23,14 +26,16 @@ vi.mock("@/lib/ai/memory", () => ({
 import { POST } from "@/app/api/line/webhook/route";
 import { replyMessage } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
-import { createNoteFromLine } from "@/lib/notes/create";
+import { saveMemoryFromLine } from "@/lib/memory/save";
+import { listPendingFromLine } from "@/lib/memory/list";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 
 const mockedReply = vi.mocked(replyMessage);
 const mockedAI = vi.mocked(generateChatReply);
-const mockedCreateNote = vi.mocked(createNoteFromLine);
+const mockedSaveMemory = vi.mocked(saveMemoryFromLine);
+const mockedListMemory = vi.mocked(listPendingFromLine);
 const mockedLoadMemory = vi.mocked(loadMemory);
-const mockedSaveMemory = vi.mocked(saveMemory);
+const mockedConvSaveMemory = vi.mocked(saveMemory);
 
 function makeRequest(body: unknown) {
   return new Request("https://lungnote.com/api/line/webhook", {
@@ -59,7 +64,7 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe("POST /api/line/webhook — text events", () => {
-  it("replies with regex menu for 'สวัสดี' (no AI call, no note creation)", async () => {
+  it("replies with regex menu for 'สวัสดี' (no AI call, no memory save)", async () => {
     const body = {
       destination: "U_dest",
       events: [textEvent("RT-1", "สวัสดี")],
@@ -67,7 +72,7 @@ describe("POST /api/line/webhook — text events", () => {
     const res = await POST(makeRequest(body) as never);
     expect(res.status).toBe(200);
     expect(mockedAI).not.toHaveBeenCalled();
-    expect(mockedCreateNote).not.toHaveBeenCalled();
+    expect(mockedSaveMemory).not.toHaveBeenCalled();
     expect(mockedReply).toHaveBeenCalledWith("RT-1", [
       expect.objectContaining({
         type: "text",
@@ -137,26 +142,27 @@ describe("POST /api/line/webhook — text events", () => {
       ],
     };
     await POST(makeRequest(body) as never);
-    // Loose check: a welcome message was sent. Disclosure copy lives in flex.ts
-    // and is verified by its own test (when wired up).
+    // welcomeMessage() returns a flex bubble; altText carries the visible welcome string.
     expect(mockedReply).toHaveBeenCalledWith(
       "RT-5",
       expect.arrayContaining([
         expect.objectContaining({
-          type: "text",
-          text: expect.stringContaining("ยินดีต้อนรับ"),
+          type: "flex",
+          altText: expect.stringContaining("ยินดีต้อนรับ"),
         }),
       ]),
     );
   });
 });
 
-describe("POST /api/line/webhook — note prefix", () => {
-  it("creates a note when prefix matches and profile is linked", async () => {
-    mockedCreateNote.mockResolvedValue({
+describe("POST /api/line/webhook — memory prefix (ADR-0012)", () => {
+  it("saves memory when prefix matches and profile is linked", async () => {
+    mockedSaveMemory.mockResolvedValue({
       ok: true,
-      noteId: "note-123",
-      title: "ซื้อนม",
+      todoId: "todo-123",
+      text: "ซื้อนม\nนม 1 ลิตร",
+      dueAt: null,
+      dueText: null,
     });
     const body = {
       destination: "U_dest",
@@ -165,7 +171,7 @@ describe("POST /api/line/webhook — note prefix", () => {
     await POST(makeRequest(body) as never);
 
     expect(mockedAI).not.toHaveBeenCalled();
-    expect(mockedCreateNote).toHaveBeenCalledWith("U-abc", "ซื้อนม\nนม 1 ลิตร");
+    expect(mockedSaveMemory).toHaveBeenCalledWith("U-abc", "ซื้อนม\nนม 1 ลิตร");
     expect(mockedReply).toHaveBeenCalledWith(
       "RT-N1",
       expect.arrayContaining([
@@ -174,11 +180,54 @@ describe("POST /api/line/webhook — note prefix", () => {
     );
   });
 
-  it("saves note-creation turn to conversation memory", async () => {
-    mockedCreateNote.mockResolvedValue({
+  it("triggers on 'todo' / 'ทำ' / 'เตือน' prefixes (unified handler)", async () => {
+    mockedSaveMemory.mockResolvedValue({
       ok: true,
-      noteId: "note-456",
-      title: "ซื้อนม",
+      todoId: "todo-x",
+      text: "อ่านบทที่ 3",
+      dueAt: null,
+      dueText: null,
+    });
+    for (const text of ["todo อ่านบทที่ 3", "ทำ อ่านบทที่ 3", "เตือน อ่านบทที่ 3"]) {
+      mockedSaveMemory.mockClear();
+      const body = {
+        destination: "U_dest",
+        events: [textEvent("RT-T", text)],
+      };
+      await POST(makeRequest(body) as never);
+      expect(mockedSaveMemory).toHaveBeenCalledWith("U-abc", "อ่านบทที่ 3");
+    }
+  });
+
+  it("includes due-date line in reply when extractor returns due_at", async () => {
+    mockedSaveMemory.mockResolvedValue({
+      ok: true,
+      todoId: "todo-due",
+      text: "ส่งการบ้านฟิสิกส์",
+      dueAt: "2026-05-09T02:00:00.000Z", // 09:00 BKK
+      dueText: "พรุ่งนี้",
+    });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-DUE", "เตือน พรุ่งนี้ส่งการบ้านฟิสิกส์")],
+    };
+    await POST(makeRequest(body) as never);
+
+    expect(mockedReply).toHaveBeenCalledWith(
+      "RT-DUE",
+      expect.arrayContaining([
+        expect.objectContaining({ text: expect.stringContaining("พรุ่งนี้") }),
+      ]),
+    );
+  });
+
+  it("saves memory-creation turn to conversation memory", async () => {
+    mockedSaveMemory.mockResolvedValue({
+      ok: true,
+      todoId: "todo-456",
+      text: "ซื้อนม",
+      dueAt: null,
+      dueText: null,
     });
     mockedLoadMemory.mockResolvedValue([]);
     const body = {
@@ -187,11 +236,10 @@ describe("POST /api/line/webhook — note prefix", () => {
     };
     await POST(makeRequest(body) as never);
 
-    // Wait for fire-and-forget persistTurn to settle.
     await new Promise((r) => setImmediate(r));
 
     expect(mockedLoadMemory).toHaveBeenCalledWith("U-abc");
-    expect(mockedSaveMemory).toHaveBeenCalledWith(
+    expect(mockedConvSaveMemory).toHaveBeenCalledWith(
       "U-abc",
       [],
       "จด ซื้อนม",
@@ -200,7 +248,7 @@ describe("POST /api/line/webhook — note prefix", () => {
   });
 
   it("rejects with dashboard redirect when user is not linked", async () => {
-    mockedCreateNote.mockResolvedValue({ ok: false, reason: "not_linked" });
+    mockedSaveMemory.mockResolvedValue({ ok: false, reason: "not_linked" });
     const body = {
       destination: "U_dest",
       events: [textEvent("RT-N2", "บันทึก ทดสอบ")],
@@ -215,8 +263,8 @@ describe("POST /api/line/webhook — note prefix", () => {
     );
   });
 
-  it("apologizes and falls back when note creation has a db error", async () => {
-    mockedCreateNote.mockResolvedValue({
+  it("apologizes when memory save has a db error", async () => {
+    mockedSaveMemory.mockResolvedValue({
       ok: false,
       reason: "db_error",
       error: "constraint",
@@ -235,8 +283,39 @@ describe("POST /api/line/webhook — note prefix", () => {
     );
   });
 
-  it("does NOT trigger note path when prefix has no content", async () => {
-    // Just "จด" with nothing after → fall through to AI fallback.
+  it("triggers on compound 'เพิ่มสิ่งที่ต้องทำ <text>'", async () => {
+    mockedSaveMemory.mockResolvedValue({
+      ok: true,
+      todoId: "todo-c",
+      text: "กินข้าวเช้า",
+      dueAt: null,
+      dueText: null,
+    });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-CMP", "เพิ่มสิ่งที่ต้องทำ กินข้าวเช้า")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedSaveMemory).toHaveBeenCalledWith("U-abc", "กินข้าวเช้า");
+  });
+
+  it("triggers on 'อย่าลืม <text>' single prefix", async () => {
+    mockedSaveMemory.mockResolvedValue({
+      ok: true,
+      todoId: "todo-y",
+      text: "ส่งงาน",
+      dueAt: null,
+      dueText: null,
+    });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-Y", "อย่าลืม ส่งงาน")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedSaveMemory).toHaveBeenCalledWith("U-abc", "ส่งงาน");
+  });
+
+  it("does NOT trigger memory path when prefix has no content", async () => {
     mockedAI.mockResolvedValue({
       ok: true,
       text: "AI explanation of 'จด'",
@@ -254,7 +333,93 @@ describe("POST /api/line/webhook — note prefix", () => {
     };
     await POST(makeRequest(body) as never);
 
-    expect(mockedCreateNote).not.toHaveBeenCalled();
+    expect(mockedSaveMemory).not.toHaveBeenCalled();
     expect(mockedAI).toHaveBeenCalledWith("U-abc", "จด");
+  });
+});
+
+describe("POST /api/line/webhook — list-pending intent", () => {
+  it("replies with formatted pending list for 'งานค้าง'", async () => {
+    mockedListMemory.mockResolvedValue({
+      ok: true,
+      items: [
+        {
+          id: "t1",
+          text: "ส่งการบ้านฟิสิกส์",
+          due_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+          due_text: "พรุ่งนี้",
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "t2",
+          text: "ซื้อนม",
+          due_at: null,
+          due_text: null,
+          created_at: new Date().toISOString(),
+        },
+      ],
+    });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L1", "งานค้าง")],
+    };
+    await POST(makeRequest(body) as never);
+
+    expect(mockedListMemory).toHaveBeenCalledWith("U-abc");
+    expect(mockedSaveMemory).not.toHaveBeenCalled();
+    expect(mockedAI).not.toHaveBeenCalled();
+    expect(mockedReply).toHaveBeenCalledWith(
+      "RT-L1",
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("งานค้าง 2 รายการ"),
+        }),
+      ]),
+    );
+  });
+
+  it("replies cheerful empty state when no pending items", async () => {
+    mockedListMemory.mockResolvedValue({ ok: true, items: [] });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L2", "ดูโน๊ตหน่อย")],
+    };
+    await POST(makeRequest(body) as never);
+
+    expect(mockedReply).toHaveBeenCalledWith(
+      "RT-L2",
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("ไม่มีงานค้าง"),
+        }),
+      ]),
+    );
+  });
+
+  it("triggers on 'ตอนนี้มีงานอะไรบ้างที่ค้าง' natural phrasing", async () => {
+    mockedListMemory.mockResolvedValue({ ok: true, items: [] });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L3", "ตอนนี้มีงานอะไรบ้างที่ค้าง")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedListMemory).toHaveBeenCalled();
+  });
+
+  it("redirects to dashboard when not linked", async () => {
+    mockedListMemory.mockResolvedValue({ ok: false, reason: "not_linked" });
+    const body = {
+      destination: "U_dest",
+      events: [textEvent("RT-L4", "งานค้าง")],
+    };
+    await POST(makeRequest(body) as never);
+    expect(mockedReply).toHaveBeenCalledWith(
+      "RT-L4",
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("dashboard"),
+        }),
+      ]),
+    );
   });
 });

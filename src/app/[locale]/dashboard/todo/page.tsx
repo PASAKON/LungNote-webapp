@@ -28,7 +28,9 @@ export default async function TodoPage({
       .maybeSingle(),
     supabase
       .from("lungnote_todos")
-      .select("id, text, done, position, created_at, updated_at")
+      .select(
+        "id, text, done, position, due_at, due_text, created_at, updated_at",
+      )
       .order("created_at", { ascending: false })
       .limit(500),
     supabase
