@@ -20,26 +20,30 @@ export default async function TodoPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("lungnote_profiles")
-    .select("line_display_name, line_picture_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [profileRes, todosRes, openCountRes, notesCountRes] = await Promise.all([
+    supabase
+      .from("lungnote_profiles")
+      .select("line_display_name, line_picture_url")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("lungnote_todos")
+      .select("id, text, done, position, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(500),
+    supabase
+      .from("lungnote_todos")
+      .select("*", { count: "exact", head: true })
+      .eq("done", false),
+    supabase
+      .from("lungnote_notes")
+      .select("*", { count: "exact", head: true }),
+  ]);
 
-  const { data: todos } = await supabase
-    .from("lungnote_todos")
-    .select("id, text, done, position, created_at, updated_at")
-    .order("created_at", { ascending: false })
-    .limit(500);
-
-  const { count: openCount } = await supabase
-    .from("lungnote_todos")
-    .select("*", { count: "exact", head: true })
-    .eq("done", false);
-
-  const { count: notesCount } = await supabase
-    .from("lungnote_notes")
-    .select("*", { count: "exact", head: true });
+  const profile = profileRes.data;
+  const todos = todosRes.data;
+  const openCount = openCountRes.count;
+  const notesCount = notesCountRes.count;
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
