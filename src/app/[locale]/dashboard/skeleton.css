@@ -1,0 +1,161 @@
+/* Skeleton — based on LungNote-design lungnote-skeleton-loaders.html */
+.lungnote-dashboard .skel {
+  background: var(--border);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.lungnote-dashboard .skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  background-size: 400px 100%;
+  animation: skel-shimmer 1.5s ease-in-out infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .lungnote-dashboard .skel::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 100%
+    );
+    background-size: 400px 100%;
+  }
+}
+@keyframes skel-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.lungnote-dashboard .skel-line {
+  height: 14px;
+}
+.lungnote-dashboard .skel-line.sm {
+  height: 10px;
+}
+.lungnote-dashboard .skel-line.md {
+  height: 16px;
+}
+.lungnote-dashboard .skel-line.lg {
+  height: 22px;
+}
+.lungnote-dashboard .skel-line.xl {
+  height: 28px;
+}
+
+.lungnote-dashboard .skel-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+.lungnote-dashboard .skel-circle.sm {
+  width: 12px;
+  height: 12px;
+}
+
+.lungnote-dashboard .skel-row {
+  height: 36px;
+  margin: 6px 0;
+  border-radius: 6px;
+}
+
+.lungnote-dashboard .skel-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.lungnote-dashboard .skel-greeting {
+  padding: 20px;
+}
+
+.lungnote-dashboard .skel-search {
+  height: 48px;
+  margin: 0 20px 20px;
+  border-radius: 3px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.lungnote-dashboard .skel-search::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  background-size: 400px 100%;
+  animation: skel-shimmer 1.5s ease-in-out infinite;
+}
+
+.lungnote-dashboard .skel-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+.lungnote-dashboard .skel-stat {
+  height: 70px;
+  border-radius: 3px;
+}
+
+.lungnote-dashboard .skel-section-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  margin-bottom: 12px;
+}
+
+.lungnote-dashboard .skel-list {
+  padding: 0 20px;
+}
+.lungnote-dashboard .skel-row-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.lungnote-dashboard .skel-row-card:last-child {
+  border-bottom: none;
+}
+.lungnote-dashboard .skel-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .lungnote-dashboard .skel-greeting,
+  .lungnote-dashboard .skel-search,
+  .lungnote-dashboard .skel-stats,
+  .lungnote-dashboard .skel-section-h,
+  .lungnote-dashboard .skel-list {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .lungnote-dashboard .skel-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .lungnote-dashboard .skel-search {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
