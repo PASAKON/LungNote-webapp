@@ -4,6 +4,7 @@ import { Topbar } from "../Topbar";
 import { BottomTabs } from "../BottomTabs";
 import { Sidebar } from "../Sidebar";
 import { TodoListClient, type TodoRow } from "./TodoListClient";
+import { PullToRefresh } from "../PullToRefresh";
 import "../dashboard.css";
 import "./todo.css";
 
@@ -65,9 +66,11 @@ export default async function TodoPage({
             initial={initial}
             locale={locale}
           />
-          <div className="dash-body">
-            <TodoListClient initial={(todos ?? []) as TodoRow[]} />
-          </div>
+          <PullToRefresh>
+            <div className="dash-body">
+              <TodoListClient initial={(todos ?? []) as TodoRow[]} />
+            </div>
+          </PullToRefresh>
         </main>
       </div>
       <BottomTabs

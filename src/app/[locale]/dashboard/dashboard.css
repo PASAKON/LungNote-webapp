@@ -625,6 +625,48 @@
   padding-bottom: 80px;
 }
 
+/* ============================================================
+ * Pull-to-refresh indicator
+ *   Sits directly under the Topbar in dashboard / todo / settings.
+ *   Hidden by default; height + opacity scale with drag, then
+ *   shimmers across while router.refresh() resolves.
+ * ============================================================ */
+.ptr-indicator {
+  position: relative;
+  width: 100%;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, height 0.15s ease;
+}
+.ptr-indicator .ptr-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  opacity: 0.85;
+}
+.ptr-indicator.ready .ptr-shimmer {
+  background: var(--accent);
+}
+.ptr-indicator.refreshing .ptr-shimmer {
+  animation: ptr-shimmer 1s linear infinite;
+}
+@keyframes ptr-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 /* Note edit form */
 .note-form-wrap {
   padding: 20px;

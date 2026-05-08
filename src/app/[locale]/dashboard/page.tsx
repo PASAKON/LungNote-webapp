@@ -4,6 +4,7 @@ import { SketchyFilter } from "./SketchyFilter";
 import { Topbar } from "./Topbar";
 import { BottomTabs } from "./BottomTabs";
 import { Sidebar } from "./Sidebar";
+import { PullToRefresh } from "./PullToRefresh";
 import "./dashboard.css";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,7 @@ export default async function DashboardPage({
             locale={locale}
           />
 
+          <PullToRefresh>
           <div className="dash-body">
         <div className="greeting">
           <h2>
@@ -139,6 +141,7 @@ export default async function DashboardPage({
           </div>
         )}
           </div>
+          </PullToRefresh>
         </main>
       </div>
       <BottomTabs
