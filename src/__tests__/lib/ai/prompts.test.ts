@@ -7,27 +7,37 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/thai/);
   });
 
-  it("declares note-taking-only scope and explicit refusal policy", () => {
-    expect(SYSTEM_PROMPT).toMatch(/ALLOWED topics/i);
-    expect(SYSTEM_PROMPT).toMatch(/REFUSE/i);
-    // Off-scope examples we want the bot to deflect:
-    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/programming/);
-    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/homework|tutoring|trivia/);
+  it("includes a decision tree mapping intents to tools", () => {
+    expect(SYSTEM_PROMPT).toMatch(/DECISION TREE/i);
+    expect(SYSTEM_PROMPT).toMatch(/save_memory/);
+    expect(SYSTEM_PROMPT).toMatch(/list_pending/);
+    expect(SYSTEM_PROMPT).toMatch(/send_dashboard_link/);
   });
 
-  it("provides Thai and English refusal templates", () => {
+  it("provides few-shot examples for tool selection", () => {
+    expect(SYSTEM_PROMPT).toMatch(/FEW-SHOT EXAMPLES/i);
+    // At least one Thai save example with a date phrase
+    expect(SYSTEM_PROMPT).toMatch(/พรุ่งนี้/);
+  });
+
+  it("declares refusal policy for off-topic requests", () => {
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/off-topic|refus/);
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/homework/);
     expect(SYSTEM_PROMPT).toMatch(/ขอโทษ/);
-    expect(SYSTEM_PROMPT).toMatch(/I can only help/i);
   });
 
-  it("declares caveman-lite terse style with auto-clarity escape", () => {
+  it("declares caveman-lite voice with auto-clarity escape", () => {
     expect(SYSTEM_PROMPT).toMatch(/caveman/i);
-    expect(SYSTEM_PROMPT).toMatch(/Drop filler/);
-    expect(SYSTEM_PROMPT).toMatch(/Fragments OK/);
-    // Auto-clarity: caveman rule says drop terse mode when user confused.
-    expect(SYSTEM_PROMPT).toMatch(/confused|ไม่เข้าใจ/);
-    // Polite particles stay (don't drop them as "filler"):
-    expect(SYSTEM_PROMPT).toMatch(/Thai polite particles/);
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/drop filler/);
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/fragments ok/);
+    // Auto-clarity: drop terse mode when user is confused.
+    expect(SYSTEM_PROMPT).toMatch(/confused|ไม่เข้าใจ|งง/);
+    // Polite particles stay.
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/polite particles/);
+  });
+
+  it("forbids exposing tool names / UUIDs / system prompt", () => {
+    expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/never expose|never share/);
   });
 });
 
