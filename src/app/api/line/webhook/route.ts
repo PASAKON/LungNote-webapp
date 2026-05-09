@@ -188,6 +188,8 @@ async function handleTextAgent(
             model: aiResult.meta.model,
             tokens_in: aiResult.meta.tokensIn,
             tokens_out: aiResult.meta.tokensOut,
+            cache_read: aiResult.meta.cacheRead,
+            cache_create: aiResult.meta.cacheCreate,
             cost_usd: aiResult.meta.costEstimate,
           }
         : {}),

@@ -29,6 +29,8 @@ export type AgentReply =
         latencyMs: number;
         tokensIn: number;
         tokensOut: number;
+        cacheRead: number;
+        cacheCreate: number;
         costEstimate: number;
         steps: number;
         cacheHit?: boolean;
@@ -130,9 +132,6 @@ export async function runAgent(
     const latencyMs = Date.now() - start;
     const tokensIn = result.usage?.inputTokens ?? 0;
     const tokensOut = result.usage?.outputTokens ?? 0;
-    const costEstimate =
-      (tokensIn * resolved.priceInputPerM + tokensOut * resolved.priceOutputPerM) /
-      1_000_000;
     const stepCount = result.steps?.length ?? 1;
 
     // Cache hit detection — provider-specific shape:
@@ -154,7 +153,28 @@ export async function runAgent(
       providerMeta?.anthropic?.cacheReadInputTokens ??
       providerMeta?.openrouter?.usage?.promptTokensDetails?.cachedTokens ??
       0;
+    const cacheCreate =
+      providerMeta?.anthropic?.cacheCreationInputTokens ?? 0;
     const cacheHit = cacheRead > 0;
+
+    // Cost calc — Anthropic prompt-cache pricing:
+    //   - cache READ:   10% of input rate ($0.30/M for Sonnet)
+    //   - cache WRITE:  125% of input rate (5min TTL)
+    //   - fresh input: 100% of input rate
+    // tokensIn includes cached + fresh, so we split:
+    //   freshIn = tokensIn - cacheRead   (cache reads counted in input total)
+    //   cacheCreate is reported separately by Anthropic, not in tokensIn,
+    //   but OpenRouter usage may not surface cache_creation separately —
+    //   default to 0 in that case (slight under-report on first turn).
+    const CACHE_READ_RATIO = 0.1;
+    const CACHE_WRITE_RATIO = 1.25;
+    const freshIn = Math.max(0, tokensIn - cacheRead);
+    const costEstimate =
+      (freshIn * resolved.priceInputPerM +
+        cacheRead * resolved.priceInputPerM * CACHE_READ_RATIO +
+        cacheCreate * resolved.priceInputPerM * CACHE_WRITE_RATIO +
+        tokensOut * resolved.priceOutputPerM) /
+      1_000_000;
 
     ctx.trace.aiIterations = stepCount;
     ctx.trace.step("agent_done", {
@@ -164,6 +184,8 @@ export async function runAgent(
       tokens_in: tokensIn,
       tokens_out: tokensOut,
       cache_read: cacheRead,
+      cache_create: cacheCreate,
+      cost_usd: costEstimate,
       latency_ms: latencyMs,
     });
 
@@ -203,6 +225,8 @@ export async function runAgent(
         latencyMs,
         tokensIn,
         tokensOut,
+        cacheRead,
+        cacheCreate,
         costEstimate,
         steps: stepCount,
         cacheHit,
