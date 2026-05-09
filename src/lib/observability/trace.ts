@@ -82,6 +82,11 @@ export class TraceCollector {
     this.step("tool_call", { name, args_keys: Object.keys((args as object) ?? {}) });
   }
 
+  /** Read-only view of the tool calls buffered this turn. Used by tests. */
+  getToolCalls(): readonly TraceToolCall[] {
+    return this.toolCalls;
+  }
+
   /**
    * Persist the trace row. Returns synchronously after kicking off the insert.
    * Errors are logged but never thrown — DB outage must not affect the reply.
