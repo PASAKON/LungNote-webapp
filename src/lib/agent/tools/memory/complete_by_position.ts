@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { completeMemory } from "@/lib/memory/mutate";
+import { ensurePendingList } from "../../auto_list";
 import type { AgentTool } from "../../tool";
 
 const args = z.object({
@@ -15,11 +16,13 @@ export const completeByPositionTool: AgentTool<z.infer<typeof args>> = {
   name: "complete_by_position",
   category: "memory",
   description:
-    "Mark a pending todo done by its position (1-based) from the most recent list_pending. Preferred over complete_memory — never confuses position with UUID.",
+    "Mark a pending todo done by 1-based position. If list_pending hasn't been called this turn, the server auto-fetches it before resolving the position.",
   schema: args,
-  requires: ["linked", "pending_listed"],
+  requires: ["linked"],
   async execute(input, ctx) {
     if (!ctx.lineUserId) return { ok: false, reason: "not_linked" };
+    const listErr = await ensurePendingList(ctx);
+    if (listErr) return listErr;
     const item = ctx.getPendingByPosition(input.position);
     if (!item) {
       return {

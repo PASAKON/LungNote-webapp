@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { updateMemory } from "@/lib/memory/mutate";
+import { ensurePendingList } from "../../auto_list";
 import type { AgentTool } from "../../tool";
 
 const args = z.object({
@@ -17,11 +18,13 @@ export const updateByPositionTool: AgentTool<z.infer<typeof args>> = {
   name: "update_by_position",
   category: "memory",
   description:
-    "Edit a pending todo's text and/or due date by position. Pass only fields you're changing. To clear a date set both due_at and due_text to null.",
+    "Edit a pending todo by 1-based position. Pass only changed fields. Clear date = both due_at + due_text null. Server auto-fetches list_pending if needed.",
   schema: args,
-  requires: ["linked", "pending_listed"],
+  requires: ["linked"],
   async execute(input, ctx) {
     if (!ctx.lineUserId) return { ok: false, reason: "not_linked" };
+    const listErr = await ensurePendingList(ctx);
+    if (listErr) return listErr;
     const item = ctx.getPendingByPosition(input.position);
     if (!item) {
       return {
