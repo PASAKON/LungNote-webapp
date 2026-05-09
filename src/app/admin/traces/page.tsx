@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { listTraces, type TraceRow } from "@/lib/admin/traces";
+import { redirect } from "next/navigation";
+import {
+  listTraces,
+  getTraceByTraceId,
+  type TraceRow,
+} from "@/lib/admin/traces";
 import { TracePathPill, formatRelative } from "../_widgets";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +15,7 @@ type SearchParams = {
   path?: TraceRow["path"];
   q?: string;
   page?: string;
+  tid?: string;
 };
 
 const PAGE_SIZE = 50;
@@ -20,6 +26,17 @@ export default async function TracesList({
   searchParams: Promise<SearchParams>;
 }) {
   const sp = await searchParams;
+
+  // ── Trace-id direct lookup ──────────────────────────────────────────
+  // ?tid=<LINE message id> jumps straight to the row's drill-down. Lets
+  // operators (and Claude) skip the SQL editor when triaging a specific
+  // turn the user reported. No UUID guessing required.
+  if (sp.tid && sp.tid.trim()) {
+    const row = await getTraceByTraceId(sp.tid.trim());
+    if (row) redirect(`/traces/${row.id}`);
+    // No match: render the list with a banner. Falls through.
+  }
+
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -36,6 +53,28 @@ export default async function TracesList({
       <h2 style={{ fontFamily: "var(--font-display)", fontSize: 28, marginBottom: 16 }}>
         Traces
       </h2>
+
+      {sp.tid && sp.tid.trim() && (
+        <div className="admin-error-banner" style={{ marginBottom: 16 }}>
+          ไม่พบ trace_id <code>{sp.tid}</code> — ตรวจตัวเลขอีกครั้งหรือ trace อาจถูก auto-prune ไปแล้ว
+        </div>
+      )}
+
+      {/* Direct lookup by LINE message id (trace_id). Submits to ?tid=…
+          which the page handler turns into a redirect to /traces/<row-id>. */}
+      <form
+        method="get"
+        className="admin-filters"
+        style={{ marginBottom: 8 }}
+      >
+        <input
+          name="tid"
+          placeholder="trace_id (LINE message id, e.g. 613205…)"
+          defaultValue={sp.tid ?? ""}
+          style={{ minWidth: 360, fontFamily: "var(--font-mono, monospace)", fontSize: 12 }}
+        />
+        <button type="submit">Open trace</button>
+      </form>
 
       <form method="get" className="admin-filters">
         <input
