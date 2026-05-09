@@ -31,6 +31,9 @@ export const deleteByPositionTool: AgentTool<z.infer<typeof args>> = {
     if (!result.ok) {
       return { ok: false, reason: result.reason, error: result.error };
     }
-    return { ok: true, text: result.text };
+    // remaining_count = pending list size BEFORE this delete, minus 1.
+    // AI uses this for the todo_deleted flex card.
+    const remaining_count = Math.max(0, ctx.pendingCount() - 1);
+    return { ok: true, text: result.text, remaining_count };
   },
 };

@@ -1,0 +1,125 @@
+{
+  "type": "flex",
+  "altText": "บันทึก '{{text}}' แล้ว",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "✓",
+              "size": "lg",
+              "weight": "bold",
+              "color": "#c9a040",
+              "flex": 0
+            },
+            {
+              "type": "text",
+              "text": "SAVED",
+              "size": "xxs",
+              "color": "#c9a040",
+              "weight": "bold",
+              "margin": "sm",
+              "gravity": "center"
+            }
+          ],
+          "backgroundColor": "#f0e4c4",
+          "cornerRadius": "sm",
+          "paddingAll": "6px",
+          "paddingStart": "10px",
+          "paddingEnd": "10px",
+          "width": "90px"
+        },
+        {
+          "type": "text",
+          "text": "{{text}}",
+          "weight": "bold",
+          "size": "xl",
+          "margin": "md",
+          "color": "#3a3020",
+          "wrap": true
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingBottom": "4px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "{{folder_name}}",
+                  "size": "xxs",
+                  "color": "#a08050",
+                  "weight": "bold"
+                }
+              ],
+              "backgroundColor": "#f0e4c4",
+              "cornerRadius": "sm",
+              "paddingAll": "4px",
+              "paddingStart": "8px",
+              "paddingEnd": "8px",
+              "flex": 0
+            }
+          ]
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "⏰",
+              "size": "xs",
+              "flex": 0
+            },
+            {
+              "type": "text",
+              "text": "{{due_text}}",
+              "size": "xs",
+              "color": "#a08050",
+              "margin": "sm"
+            }
+          ],
+          "margin": "md"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "8px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "ดูใน Dashboard",
+            "uri": "{{open_url}}"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}

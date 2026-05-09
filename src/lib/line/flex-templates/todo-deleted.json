@@ -1,0 +1,102 @@
+{
+  "type": "flex",
+  "altText": "ลบ '{{text}}' แล้ว — เหลือ {{remaining_count}} รายการ",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "✕",
+              "size": "lg",
+              "weight": "bold",
+              "color": "#c45a3a",
+              "flex": 0
+            },
+            {
+              "type": "text",
+              "text": "DELETED",
+              "size": "xxs",
+              "color": "#c45a3a",
+              "weight": "bold",
+              "margin": "sm",
+              "gravity": "center"
+            }
+          ],
+          "backgroundColor": "#f0d8d0",
+          "cornerRadius": "sm",
+          "paddingAll": "6px",
+          "paddingStart": "10px",
+          "paddingEnd": "10px",
+          "width": "105px"
+        },
+        {
+          "type": "text",
+          "text": "{{text}}",
+          "weight": "bold",
+          "size": "xl",
+          "margin": "md",
+          "color": "#a08050",
+          "decoration": "line-through",
+          "wrap": true
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingBottom": "4px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "เหลืองานค้าง {{remaining_count}} รายการ",
+          "size": "xs",
+          "color": "#a08050"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "4px",
+      "paddingBottom": "4px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "horizontal",
+      "spacing": "md",
+      "contents": [
+        {
+          "type": "button",
+          "style": "link",
+          "color": "#c45a3a",
+          "action": {
+            "type": "postback",
+            "label": "↶ Undo",
+            "data": "{{undo_postback_data}}"
+          },
+          "height": "sm",
+          "flex": 1
+        },
+        {
+          "type": "button",
+          "style": "link",
+          "color": "#a08050",
+          "action": {
+            "type": "uri",
+            "label": "ดูทั้งหมด",
+            "uri": "{{open_url}}"
+          },
+          "height": "sm",
+          "flex": 1
+        }
+      ],
+      "paddingAll": "12px"
+    }
+  }
+}

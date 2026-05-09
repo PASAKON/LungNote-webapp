@@ -1,5 +1,6 @@
 import "server-only";
 import type { TraceCollector } from "@/lib/observability/trace";
+import type { LineMessage } from "@/lib/line/client";
 
 /**
  * Per-turn working memory for the agent runtime. Holds state that survives
@@ -74,23 +75,43 @@ export class TurnContext {
 
   // ── Reply buffer (multi-bubble) ─────────────────────────────────────
   /**
-   * When the agent calls `send_text_reply` one or more times, each call
-   * pushes a bubble here. The webhook flushes the buffer into a single
-   * LINE reply with multiple text messages. LINE caps a reply payload at
-   * 5 messages — the tool itself rejects calls past that.
+   * When the agent calls `send_text_reply` or `send_flex_reply` one or
+   * more times, each call pushes one LINE message onto this buffer. The
+   * webhook flushes the buffer into a single LINE reply payload (mixed
+   * text + flex). LINE caps a reply at 5 messages — the tools reject
+   * calls past that.
    */
-  private replyBuffer: string[] = [];
+  private replyBuffer: LineMessage[] = [];
   /** LINE allows max 5 messages per replyMessage / pushMessage call. */
   static readonly MAX_BUBBLES = 5;
 
-  pushReply(text: string): { ok: boolean; reason?: string } {
+  /** Push one text bubble. Returns ok:false when cap reached. */
+  pushReplyText(text: string): { ok: boolean; reason?: string } {
     if (this.replyBuffer.length >= TurnContext.MAX_BUBBLES) {
       return { ok: false, reason: "bubble_limit_reached" };
     }
-    this.replyBuffer.push(text);
+    this.replyBuffer.push({ type: "text", text });
     return { ok: true };
   }
-  getReplyBubbles(): string[] {
+
+  /** Push one flex bubble. Returns ok:false when cap reached. */
+  pushReplyFlex(msg: LineMessage): { ok: boolean; reason?: string } {
+    if (this.replyBuffer.length >= TurnContext.MAX_BUBBLES) {
+      return { ok: false, reason: "bubble_limit_reached" };
+    }
+    this.replyBuffer.push(msg);
+    return { ok: true };
+  }
+
+  /**
+   * Back-compat alias — pre-flex code called `pushReply(text)` for text
+   * bubbles. Keep so the old text tool keeps working without churn.
+   */
+  pushReply(text: string): { ok: boolean; reason?: string } {
+    return this.pushReplyText(text);
+  }
+
+  getReplyBubbles(): LineMessage[] {
     return [...this.replyBuffer];
   }
   hasReplyBubbles(): boolean {

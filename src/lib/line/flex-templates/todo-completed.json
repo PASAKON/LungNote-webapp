@@ -1,0 +1,110 @@
+{
+  "type": "flex",
+  "altText": "เสร็จ '{{text}}' ✓ — เหลือ {{pending_count_left}} รายการ",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "text",
+              "text": "✓",
+              "size": "lg",
+              "weight": "bold",
+              "color": "#c9a040",
+              "flex": 0
+            },
+            {
+              "type": "text",
+              "text": "DONE",
+              "size": "xxs",
+              "color": "#c9a040",
+              "weight": "bold",
+              "margin": "sm",
+              "gravity": "center"
+            }
+          ],
+          "backgroundColor": "#f0e4c4",
+          "cornerRadius": "sm",
+          "paddingAll": "6px",
+          "paddingStart": "10px",
+          "paddingEnd": "10px",
+          "width": "80px"
+        },
+        {
+          "type": "text",
+          "text": "{{text}}",
+          "weight": "bold",
+          "size": "xl",
+          "margin": "md",
+          "color": "#a08050",
+          "decoration": "line-through",
+          "wrap": true
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingBottom": "4px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "เหลือ {{pending_count_left}} งาน",
+          "size": "xs",
+          "color": "#a08050"
+        },
+        {
+          "type": "text",
+          "text": "{{streak_msg}}",
+          "size": "sm",
+          "weight": "bold",
+          "color": "#c9a040",
+          "margin": "sm"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "4px",
+      "paddingBottom": "4px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "horizontal",
+      "spacing": "md",
+      "contents": [
+        {
+          "type": "button",
+          "style": "link",
+          "color": "#a08050",
+          "action": {
+            "type": "postback",
+            "label": "↶ Undo",
+            "data": "{{undo_postback_data}}"
+          },
+          "height": "sm",
+          "flex": 1
+        },
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "ดูงานที่เหลือ",
+            "uri": "{{open_url}}"
+          },
+          "height": "sm",
+          "flex": 2
+        }
+      ],
+      "paddingAll": "12px"
+    }
+  }
+}

@@ -166,18 +166,18 @@ async function handleTextAgent(
     ? aiResult.text
     : `ขอโทษ ระบบขัดข้อง — ลองอีกครั้งภายหลังนะ`;
 
-  // Multi-bubble: flush each bubble as its own LINE TextMessage in a
+  // Multi-bubble: bubbles can be text or flex. Flush them all in a
   // single reply call (LINE caps at 5; agent enforces). If runAgent
-  // failed, fall back to the canned error as one bubble.
-  const bubbleTexts = aiResult.ok ? aiResult.bubbles : [replyText];
-  const replyRes = await replyMessage(
-    ev.replyToken,
-    bubbleTexts.map((text) => ({ type: "text", text })),
-  );
+  // failed, fall back to one canned-error text bubble.
+  const bubbles = aiResult.ok
+    ? aiResult.bubbles
+    : [{ type: "text" as const, text: replyText }];
+  const replyRes = await replyMessage(ev.replyToken, bubbles);
   trace.step("reply_sent", {
     status: replyRes.status,
     ok: replyRes.ok,
-    bubble_count: bubbleTexts.length,
+    bubble_count: bubbles.length,
+    flex_count: bubbles.filter((b) => b.type === "flex").length,
   });
   trace.finalize({
     path: "ai",

@@ -11,6 +11,7 @@ import { uncompleteByPositionTool } from "./memory/uncomplete_by_position";
 import { sendDashboardLinkTool } from "./auth/send_dashboard_link";
 import { updateMemoryTool } from "./profile/update_memory";
 import { sendTextReplyTool } from "./reply/send_text_reply";
+import { sendFlexReplyTool } from "./reply/send_flex_reply";
 
 /**
  * All tools available to the agent. Add a new tool by:
@@ -38,6 +39,7 @@ export const ALL_TOOLS: AgentTool<any>[] = [
   updateMemoryTool,
   // Reply (multi-bubble; opt-in)
   sendTextReplyTool,
+  sendFlexReplyTool,
 ];
 
 export {
@@ -51,4 +53,5 @@ export {
   sendDashboardLinkTool,
   updateMemoryTool,
   sendTextReplyTool,
+  sendFlexReplyTool,
 };
