@@ -127,4 +127,17 @@ describe("TurnContext", () => {
     ctx.setPendingList([]);
     expect(ctx.hasPendingList()).toBe(true);
   });
+
+  it("replyBuffer accepts up to MAX_BUBBLES and rejects after", () => {
+    const ctx = makeCtx();
+    expect(ctx.hasReplyBubbles()).toBe(false);
+    for (let i = 0; i < TurnContext.MAX_BUBBLES; i++) {
+      const r = ctx.pushReply(`bubble ${i + 1}`);
+      expect(r.ok).toBe(true);
+    }
+    const overflow = ctx.pushReply("one too many");
+    expect(overflow.ok).toBe(false);
+    expect(overflow.reason).toBe("bubble_limit_reached");
+    expect(ctx.getReplyBubbles()).toHaveLength(TurnContext.MAX_BUBBLES);
+  });
 });

@@ -41,7 +41,10 @@ import { runAgent } from "@/lib/agent/runtime";
 import { TurnContext } from "@/lib/agent/context";
 import { TraceCollector } from "@/lib/observability/trace";
 
-const HAS_KEY = !!process.env.OPENROUTER_API_KEY;
+// Skip the suite if no LLM provider key is available. Either Anthropic
+// direct (preferred — cache-aware) or OpenRouter passthrough works.
+const HAS_KEY =
+  !!process.env.ANTHROPIC_API_KEY || !!process.env.OPENROUTER_API_KEY;
 
 function seedProfile() {
   return {

@@ -9,6 +9,7 @@ import { listPendingFromLine } from "@/lib/memory/list";
 import { dashboardLinkMessage, welcomeMessage } from "@/lib/line/flex";
 import { mintToken } from "@/lib/auth/line-link";
 import { TraceCollector } from "@/lib/observability/trace";
+import { checkAlreadyProcessed } from "@/lib/observability/dedup";
 import type {
   LineEvent,
   LineWebhookBody,
@@ -119,6 +120,19 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   const userId = ev.source.type === "user" ? ev.source.userId : undefined;
   const trace = new TraceCollector(ev.message.id, userId, text);
 
+  // Idempotency — LINE can redeliver the same event on retry. Skip if a
+  // trace for this message.id already landed with a successful reply
+  // within the last 5 min. Best-effort; on DB outage we treat as fresh.
+  const dedup = await checkAlreadyProcessed(ev.message.id);
+  if (dedup.status === "already_processed") {
+    trace.step("dedup_skip", {
+      reason: "already_processed",
+      replied_chars: dedup.replyText?.length ?? 0,
+    });
+    // Don't finalize — that would insert a 2nd trace row for the same id.
+    return null;
+  }
+
   // Fire the LINE typing indicator immediately so the user sees "..." while
   // the AI / DB work runs. Best-effort: failure is silent; the dots auto-
   // clear when our reply lands or after 20s. Skip if no userId (group/room).
@@ -152,10 +166,19 @@ async function handleTextAgent(
     ? aiResult.text
     : `ขอโทษ ระบบขัดข้อง — ลองอีกครั้งภายหลังนะ`;
 
-  const replyRes = await replyMessage(ev.replyToken, [
-    { type: "text", text: replyText },
-  ]);
-  trace.step("reply_sent", { status: replyRes.status, ok: replyRes.ok });
+  // Multi-bubble: flush each bubble as its own LINE TextMessage in a
+  // single reply call (LINE caps at 5; agent enforces). If runAgent
+  // failed, fall back to the canned error as one bubble.
+  const bubbleTexts = aiResult.ok ? aiResult.bubbles : [replyText];
+  const replyRes = await replyMessage(
+    ev.replyToken,
+    bubbleTexts.map((text) => ({ type: "text", text })),
+  );
+  trace.step("reply_sent", {
+    status: replyRes.status,
+    ok: replyRes.ok,
+    bubble_count: bubbleTexts.length,
+  });
   trace.finalize({
     path: "ai",
     replyText,
