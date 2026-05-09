@@ -60,6 +60,10 @@ function textEvent(replyToken: string, text: string, userId = "U-abc") {
 
 beforeEach(() => {
   process.env.LINE_CHANNEL_SECRET = "secret";
+  // Existing tests cover legacy regex routing (path_dashboard / path_list /
+  // path_memory / path_regex). Agent mode (default true in prod) routes
+  // everything through the AI fallback and is exercised by reply.test.ts.
+  process.env.AI_AGENT_MODE = "false";
 });
 afterEach(() => vi.clearAllMocks());
 

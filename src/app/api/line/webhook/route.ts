@@ -102,12 +102,74 @@ async function handleEvent(event: LineEvent): Promise<unknown> {
   return null;
 }
 
+/**
+ * Routing strategy is controlled by AI_AGENT_MODE env:
+ *   "true"  → all messages go to the AI (with tools); regex shortcuts disabled
+ *   "false" → legacy regex shortcuts run first, AI fallback last
+ * Default = "true" (full agent). Toggle to "false" if AI cost / latency
+ * spikes or upstream LLM is down — shortcuts give a deterministic fallback.
+ */
+function isAgentMode(): boolean {
+  return (process.env.AI_AGENT_MODE ?? "true") !== "false";
+}
+
 async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   const text = ev.message.text.trim();
   const userId = ev.source.type === "user" ? ev.source.userId : undefined;
   const trace = new TraceCollector(ev.message.id, userId, text);
 
-  // 1. Dashboard trigger — highest priority (free, deterministic)
+  if (isAgentMode()) {
+    return handleTextAgent(ev, text, userId, trace);
+  }
+  return handleTextLegacy(ev, text, userId, trace);
+}
+
+/**
+ * Full agent mode — AI is the single decision-maker. Every message routes
+ * to generateChatReply with the full tool set. The AI uses tools to save,
+ * list, edit, delete, and even mint dashboard links.
+ */
+async function handleTextAgent(
+  ev: LineTextMessageEvent,
+  text: string,
+  userId: string | undefined,
+  trace: TraceCollector,
+): Promise<unknown> {
+  trace.step("path_ai");
+  const aiUserId = userId ?? "anonymous";
+  const aiResult = await generateChatReply(aiUserId, text, trace);
+  const replyText = aiResult.ok
+    ? aiResult.text
+    : `ขอโทษ ระบบขัดข้อง — ลองอีกครั้งภายหลังนะ`;
+
+  void replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
+  trace.finalize({
+    path: "ai",
+    replyText,
+    meta: aiResult.ok
+      ? {
+          model: aiResult.meta.model,
+          tokens_in: aiResult.meta.tokensIn,
+          tokens_out: aiResult.meta.tokensOut,
+          cost_usd: aiResult.meta.costEstimate,
+        }
+      : undefined,
+    error: !aiResult.ok ? `${aiResult.reason}: ${aiResult.error ?? ""}` : undefined,
+    aiIterations: trace.aiIterations,
+  });
+  return null;
+}
+
+/**
+ * Legacy mode — keep regex shortcuts + AI fallback. Used when AI_AGENT_MODE
+ * is explicitly disabled (rollback safety net).
+ */
+async function handleTextLegacy(
+  ev: LineTextMessageEvent,
+  text: string,
+  userId: string | undefined,
+  trace: TraceCollector,
+): Promise<unknown> {
   if (DASHBOARD_KEYWORDS.test(text) && userId) {
     trace.step("path_dashboard");
     const out = sendDashboardLink(ev.replyToken, userId);
@@ -115,13 +177,11 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
     return out;
   }
 
-  // 2. List-pending intent — surfaces user's open todos.
   if (LIST_PENDING_INTENT.test(text) && userId) {
     trace.step("path_list");
     return handleMemoryList(ev.replyToken, userId, text, trace);
   }
 
-  // 3. Memory capture prefix (ADR-0012) — saves to lungnote_todos with due_at extraction.
   const memoryMatch =
     MEMORY_PREFIX_SINGLE.exec(text) ?? MEMORY_PREFIX_COMPOUND.exec(text);
   if (memoryMatch && userId) {
@@ -134,7 +194,6 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
     }
   }
 
-  // 4. Regex commands (free, deterministic)
   const regexReply = matchRegex(text);
   if (regexReply !== null) {
     trace.step("path_regex");
@@ -143,7 +202,6 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
     return null;
   }
 
-  // 5. AI fallback (now with rolling 5+5 conversation memory, see ADR-0009)
   trace.step("path_ai");
   const aiUserId = userId ?? "anonymous";
   const aiResult = await generateChatReply(aiUserId, text, trace);
