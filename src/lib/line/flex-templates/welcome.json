@@ -29,11 +29,11 @@
               "type": "text",
               "text": "WELCOME",
               "size": "xxs",
-              "color": "#6aab8e",
+              "color": "#c9a040",
               "weight": "bold"
             }
           ],
-          "backgroundColor": "#e8f4ed",
+          "backgroundColor": "#f0e4c4",
           "cornerRadius": "sm",
           "paddingAll": "4px",
           "paddingStart": "8px",
@@ -46,13 +46,13 @@
           "weight": "bold",
           "size": "xl",
           "margin": "md",
-          "color": "#2c2a25"
+          "color": "#3a3020"
         },
         {
           "type": "text",
           "text": "จดโน้ต เช็คลิสต์ และจัดระเบียบชีวิต — ทุกอย่างอยู่ในที่เดียว เริ่มต้นได้เลยวันนี้",
           "size": "sm",
-          "color": "#8a8578",
+          "color": "#a08050",
           "wrap": true,
           "margin": "sm"
         }
@@ -68,7 +68,7 @@
           "type": "text",
           "text": "✎ จดโน้ตด้วยฟอนต์ลายมือ  ☑ Todo List  📁 จัดโฟลเดอร์",
           "size": "xs",
-          "color": "#8a8578",
+          "color": "#a08050",
           "wrap": true
         }
       ],
@@ -83,7 +83,7 @@
         {
           "type": "button",
           "style": "primary",
-          "color": "#6aab8e",
+          "color": "#c9a040",
           "action": {
             "type": "uri",
             "label": "เริ่มใช้งาน LungNote",
@@ -94,7 +94,7 @@
         {
           "type": "button",
           "style": "secondary",
-          "color": "#e8f4ed",
+          "color": "#f0e4c4",
           "action": {
             "type": "uri",
             "label": "ดูวิธีใช้งาน",
@@ -107,7 +107,7 @@
     },
     "styles": {
       "hero": {
-        "backgroundColor": "#e8f4ed"
+        "backgroundColor": "#f0e4c4"
       },
       "footer": {
         "separator": false

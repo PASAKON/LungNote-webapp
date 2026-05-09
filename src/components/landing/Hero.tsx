@@ -9,7 +9,7 @@ export function Hero({ content }: { content: LandingContent["hero"] }) {
         height={48}
         viewBox="0 0 48 48"
         fill="none"
-        stroke="#2c2a25"
+        stroke="#3a3020"
         strokeWidth={2}
         aria-hidden="true"
       >
@@ -25,7 +25,7 @@ export function Hero({ content }: { content: LandingContent["hero"] }) {
         height={40}
         viewBox="0 0 40 40"
         fill="none"
-        stroke="#6aab8e"
+        stroke="#c9a040"
         strokeWidth={2}
         aria-hidden="true"
       >
@@ -37,7 +37,7 @@ export function Hero({ content }: { content: LandingContent["hero"] }) {
         height={40}
         viewBox="0 0 60 40"
         fill="none"
-        stroke="#2c2a25"
+        stroke="#3a3020"
         strokeWidth={2}
         strokeLinecap="round"
         aria-hidden="true"

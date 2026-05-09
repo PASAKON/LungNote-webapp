@@ -16,11 +16,11 @@
               "type": "text",
               "text": "DASHBOARD",
               "size": "xxs",
-              "color": "#6aab8e",
+              "color": "#c9a040",
               "weight": "bold"
             }
           ],
-          "backgroundColor": "#e8f4ed",
+          "backgroundColor": "#f0e4c4",
           "cornerRadius": "sm",
           "paddingAll": "4px",
           "paddingStart": "8px",
@@ -33,13 +33,13 @@
           "weight": "bold",
           "size": "xl",
           "margin": "md",
-          "color": "#2c2a25"
+          "color": "#3a3020"
         },
         {
           "type": "text",
           "text": "อัพเดทล่าสุด วันนี้ 14:30",
           "size": "xs",
-          "color": "#8a8578",
+          "color": "#a08050",
           "margin": "sm"
         }
       ],
@@ -63,14 +63,14 @@
                   "text": "42",
                   "size": "xxl",
                   "weight": "bold",
-                  "color": "#6aab8e",
+                  "color": "#c9a040",
                   "align": "center"
                 },
                 {
                   "type": "text",
                   "text": "โน้ต",
                   "size": "xxs",
-                  "color": "#8a8578",
+                  "color": "#a08050",
                   "align": "center"
                 }
               ],
@@ -78,7 +78,7 @@
             },
             {
               "type": "separator",
-              "color": "#e0ddd4"
+              "color": "#d4c4a0"
             },
             {
               "type": "box",
@@ -89,14 +89,14 @@
                   "text": "7",
                   "size": "xxl",
                   "weight": "bold",
-                  "color": "#e8a946",
+                  "color": "#d4a040",
                   "align": "center"
                 },
                 {
                   "type": "text",
                   "text": "Todo เหลือ",
                   "size": "xxs",
-                  "color": "#8a8578",
+                  "color": "#a08050",
                   "align": "center"
                 }
               ],
@@ -104,7 +104,7 @@
             },
             {
               "type": "separator",
-              "color": "#e0ddd4"
+              "color": "#d4c4a0"
             },
             {
               "type": "box",
@@ -115,14 +115,14 @@
                   "text": "12",
                   "size": "xxl",
                   "weight": "bold",
-                  "color": "#2c2a25",
+                  "color": "#3a3020",
                   "align": "center"
                 },
                 {
                   "type": "text",
                   "text": "วัน Streak",
                   "size": "xxs",
-                  "color": "#8a8578",
+                  "color": "#a08050",
                   "align": "center"
                 }
               ],
@@ -133,7 +133,7 @@
         },
         {
           "type": "separator",
-          "color": "#e0ddd4"
+          "color": "#d4c4a0"
         },
         {
           "type": "box",
@@ -187,13 +187,13 @@
               "text": "☐",
               "size": "sm",
               "flex": 0,
-              "color": "#6aab8e"
+              "color": "#c9a040"
             },
             {
               "type": "text",
               "text": "ทบทวนศัพท์ 20 คำ",
               "size": "sm",
-              "color": "#2c2a25",
+              "color": "#3a3020",
               "margin": "sm"
             }
           ],
@@ -211,7 +211,7 @@
         {
           "type": "button",
           "style": "primary",
-          "color": "#6aab8e",
+          "color": "#c9a040",
           "action": {
             "type": "uri",
             "label": "เปิด Dashboard",
@@ -222,7 +222,7 @@
         {
           "type": "button",
           "style": "link",
-          "color": "#8a8578",
+          "color": "#a08050",
           "action": {
             "type": "uri",
             "label": "สร้างโน้ตใหม่",

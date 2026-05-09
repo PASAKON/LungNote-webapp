@@ -17,13 +17,13 @@
               "text": "!",
               "size": "3xl",
               "weight": "bold",
-              "color": "#d4685a",
+              "color": "#c45a3a",
               "align": "center"
             }
           ],
           "width": "64px",
           "height": "64px",
-          "backgroundColor": "#fce8e5",
+          "backgroundColor": "#f0d8d0",
           "cornerRadius": "50px",
           "justifyContent": "center",
           "alignItems": "center",
@@ -37,11 +37,11 @@
               "type": "text",
               "text": "ERROR",
               "size": "xxs",
-              "color": "#d4685a",
+              "color": "#c45a3a",
               "weight": "bold"
             }
           ],
-          "backgroundColor": "#fce8e5",
+          "backgroundColor": "#f0d8d0",
           "cornerRadius": "sm",
           "paddingAll": "4px",
           "paddingStart": "8px",
@@ -56,14 +56,14 @@
           "weight": "bold",
           "size": "xl",
           "margin": "md",
-          "color": "#2c2a25",
+          "color": "#3a3020",
           "align": "center"
         },
         {
           "type": "text",
           "text": "ไม่สามารถ sync โน้ตของคุณได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
           "size": "sm",
-          "color": "#8a8578",
+          "color": "#a08050",
           "wrap": true,
           "margin": "sm",
           "align": "center"
@@ -84,7 +84,7 @@
               "type": "text",
               "text": "Error Code",
               "size": "xs",
-              "color": "#8a8578",
+              "color": "#a08050",
               "flex": 3
             },
             {
@@ -92,7 +92,7 @@
               "text": "SYNC_TIMEOUT_408",
               "size": "xs",
               "weight": "bold",
-              "color": "#d4685a",
+              "color": "#c45a3a",
               "align": "end",
               "flex": 4
             }
@@ -107,7 +107,7 @@
               "type": "text",
               "text": "เวลา",
               "size": "xs",
-              "color": "#8a8578",
+              "color": "#a08050",
               "flex": 3
             },
             {
@@ -115,7 +115,7 @@
               "text": "8 พ.ค. 69, 14:32",
               "size": "xs",
               "weight": "bold",
-              "color": "#2c2a25",
+              "color": "#3a3020",
               "align": "end",
               "flex": 4
             }
@@ -133,7 +133,7 @@
         {
           "type": "button",
           "style": "primary",
-          "color": "#6aab8e",
+          "color": "#c9a040",
           "action": {
             "type": "postback",
             "label": "ลองใหม่อีกครั้ง",
@@ -144,7 +144,7 @@
         {
           "type": "button",
           "style": "secondary",
-          "color": "#fce8e5",
+          "color": "#f0d8d0",
           "action": {
             "type": "uri",
             "label": "แจ้งปัญหา",

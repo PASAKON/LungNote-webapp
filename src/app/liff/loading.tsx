@@ -3,7 +3,7 @@ export default function LiffLoading() {
     <main
       style={{
         minHeight: "100dvh",
-        background: "#faf8f4",
+        background: "#f5ead4",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -14,8 +14,8 @@ export default function LiffLoading() {
           width: 48,
           height: 48,
           borderRadius: "50%",
-          border: "3px solid #e0ddd4",
-          borderTopColor: "#6aab8e",
+          border: "3px solid #d4c4a0",
+          borderTopColor: "#c9a040",
           animation: "spin 0.8s linear infinite",
         }}
       />
