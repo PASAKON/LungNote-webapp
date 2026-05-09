@@ -1,0 +1,96 @@
+{
+  "type": "flex",
+  "altText": "เสร็จ '{{text}}' ✓ — เหลือ {{pending_count_left}} รายการ",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            { "type": "text", "text": "🎉", "size": "3xl", "align": "center" }
+          ],
+          "width": "48px",
+          "height": "48px",
+          "backgroundColor": "#f0e4c4",
+          "cornerRadius": "50px",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "offsetStart": "calc(50% - 24px)"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "DONE", "size": "xxs", "color": "#c9a040", "weight": "bold", "align": "center" }
+          ],
+          "backgroundColor": "#f0e4c4",
+          "cornerRadius": "sm",
+          "paddingAll": "4px",
+          "paddingStart": "8px",
+          "paddingEnd": "8px",
+          "width": "56px",
+          "margin": "md",
+          "offsetStart": "calc(50% - 28px)"
+        },
+        {
+          "type": "text",
+          "text": "เสร็จเรียบร้อย!",
+          "weight": "bold",
+          "size": "lg",
+          "margin": "md",
+          "color": "#3a3020",
+          "align": "center"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "20px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        { "type": "separator", "color": "#d4c4a0" },
+        {
+          "type": "text",
+          "text": "{{text}}",
+          "size": "md",
+          "weight": "bold",
+          "color": "#a08050",
+          "decoration": "line-through",
+          "wrap": true,
+          "margin": "lg"
+        },
+        {
+          "type": "text",
+          "text": "เหลือ {{pending_count_left}} งาน",
+          "size": "xs",
+          "color": "#a08050",
+          "margin": "sm",
+          "align": "center"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "8px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "sm",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": { "type": "uri", "label": "ดูงานที่เหลือ", "uri": "{{open_url}}" },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "12px"
+    }
+  }
+}

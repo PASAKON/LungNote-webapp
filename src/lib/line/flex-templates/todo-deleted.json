@@ -1,0 +1,96 @@
+{
+  "type": "flex",
+  "altText": "ลบ '{{text}}' แล้ว",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            { "type": "text", "text": "🗑", "size": "3xl", "align": "center" }
+          ],
+          "width": "48px",
+          "height": "48px",
+          "backgroundColor": "#f0e4c4",
+          "cornerRadius": "50px",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "offsetStart": "calc(50% - 24px)"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "DELETED", "size": "xxs", "color": "#c45a3a", "weight": "bold", "align": "center" }
+          ],
+          "backgroundColor": "#f0e4c4",
+          "cornerRadius": "sm",
+          "paddingAll": "4px",
+          "paddingStart": "8px",
+          "paddingEnd": "8px",
+          "width": "72px",
+          "margin": "md",
+          "offsetStart": "calc(50% - 36px)"
+        },
+        {
+          "type": "text",
+          "text": "ลบแล้ว",
+          "weight": "bold",
+          "size": "lg",
+          "margin": "md",
+          "color": "#3a3020",
+          "align": "center"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "20px"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        { "type": "separator", "color": "#d4c4a0" },
+        {
+          "type": "text",
+          "text": "{{text}}",
+          "size": "md",
+          "weight": "bold",
+          "color": "#a08050",
+          "decoration": "line-through",
+          "wrap": true,
+          "margin": "lg"
+        },
+        {
+          "type": "text",
+          "text": "เหลืองานค้าง {{remaining_count}} รายการ",
+          "size": "xs",
+          "color": "#a08050",
+          "margin": "sm",
+          "align": "center"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "8px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "sm",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": { "type": "uri", "label": "ดูทั้งหมด", "uri": "{{open_url}}" },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "12px"
+    }
+  }
+}

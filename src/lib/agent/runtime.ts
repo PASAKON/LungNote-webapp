@@ -1,6 +1,7 @@
 import "server-only";
 import { generateText, type ModelMessage } from "ai";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
+import type { LineMessage } from "@/lib/line/client";
 import { TurnContext } from "./context";
 import { ALL_TOOLS } from "./tools";
 import { buildToolSet } from "./registry";
@@ -18,12 +19,13 @@ export type AgentReply =
       /** Joined bubble text — for trace logs / single-bubble fallback path. */
       text: string;
       /**
-       * One entry per chat bubble. If the agent didn't call
-       * `send_text_reply`, this is a single-element array containing the
-       * model's free-form text reply. Webhook flushes each bubble as its
-       * own LINE TextMessage in one reply call.
+       * One entry per chat bubble — TextMessage or FlexMessage. If the
+       * agent didn't call `send_text_reply` / `send_flex_reply`, this is
+       * a single-element array containing a TextMessage with the model's
+       * free-form text reply. Webhook flushes each bubble as one LINE
+       * message in a single reply call.
        */
-      bubbles: string[];
+      bubbles: LineMessage[];
       meta: {
         model: string;
         latencyMs: number;
@@ -167,17 +169,17 @@ export async function runAgent(
       latency_ms: latencyMs,
     });
 
-    // Multi-bubble: if the agent called send_text_reply, prefer those
-    // bubbles over result.text (which may be empty when the model
-    // routed everything through tool calls). Otherwise fall back to
-    // result.text as a single bubble.
+    // Multi-bubble: if the agent called send_text_reply / send_flex_reply,
+    // prefer those bubbles over result.text (which may be empty when the
+    // model routed everything through tool calls). Otherwise fall back to
+    // result.text as a single text bubble.
     const bufferedBubbles = ctx.getReplyBubbles();
     const fallbackText = (result.text ?? "").trim();
-    const bubbles =
+    const bubbles: LineMessage[] =
       bufferedBubbles.length > 0
         ? bufferedBubbles
         : fallbackText
-          ? [fallbackText]
+          ? [{ type: "text", text: fallbackText }]
           : [];
     if (bubbles.length === 0) {
       return {
@@ -186,7 +188,10 @@ export async function runAgent(
         error: "agent finished without text reply",
       };
     }
-    const finalText = bubbles.join("\n");
+    // For trace logs / saveMemory: collect plain-text view of bubbles.
+    const finalText = bubbles
+      .map((b) => (b.type === "text" ? b.text : `[flex:${b.altText}]`))
+      .join("\n");
 
     void saveMemory(memoryKey, history, userText, finalText).catch(
       (err: unknown) => {

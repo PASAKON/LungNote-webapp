@@ -35,6 +35,14 @@ export const completeByPositionTool: AgentTool<z.infer<typeof args>> = {
     if (!result.ok) {
       return { ok: false, reason: result.reason, error: result.error };
     }
-    return { ok: true, text: result.text, todoId: result.todoId };
+    // pending_count_left = how many pending items remain after marking
+    // this one done. AI uses this for the todo_completed flex card.
+    const pending_count_left = Math.max(0, ctx.pendingCount() - 1);
+    return {
+      ok: true,
+      text: result.text,
+      todoId: result.todoId,
+      pending_count_left,
+    };
   },
 };
