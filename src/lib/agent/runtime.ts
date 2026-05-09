@@ -7,6 +7,7 @@ import { buildToolSet } from "./registry";
 import { buildSystemPrompt, buildStaticSystemPrompt, buildTodayBlock } from "./prompt";
 import { resolveModel } from "./model";
 import { loadUserMemory } from "@/lib/agent/user_memory";
+import { loadAgentSettings } from "./settings";
 
 const MAX_STEPS = 5;
 const MAX_OUTPUT_TOKENS = 1024;
@@ -64,22 +65,27 @@ export async function runAgent(
   }
 
   const memoryKey = ctx.lineUserId ?? "anonymous";
-  const [history, userMemory] = await Promise.all([
+  const [history, userMemory, agentSettings] = await Promise.all([
     loadMemory(memoryKey),
     ctx.lineUserId
       ? loadUserMemory(ctx.lineUserId).catch(() => ({}))
       : Promise.resolve({}),
+    loadAgentSettings(),
   ]);
   ctx.trace.historyCount = history.length;
   ctx.trace.step("memory_load", {
     count: history.length,
     user_memory_keys: Object.keys(userMemory).length,
+    prompt_source: agentSettings.systemPromptOverride ? "db_override" : "code",
   });
 
   const tools = buildToolSet(ALL_TOOLS, ctx);
 
   // Static, cacheable: prompt + tool decision tree (everything not user-specific).
-  const staticPrompt = buildStaticSystemPrompt();
+  // DB override (lungnote_agent_settings.system_prompt_override) wins so admin
+  // can hot-swap without redeploy. Cached in-process 60s.
+  const staticPrompt =
+    agentSettings.systemPromptOverride ?? buildStaticSystemPrompt();
   // Variable, NOT cached: today's date + per-user memory.
   const dynamicPrompt = buildDynamicSystemSuffix(userMemory);
 

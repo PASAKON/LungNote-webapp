@@ -242,6 +242,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      lungnote_agent_settings: {
+        Row: {
+          id: string;
+          system_prompt_override: string | null;
+          notes: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          system_prompt_override?: string | null;
+          notes?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          system_prompt_override?: string | null;
+          notes?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       lungnote_chat_traces: {
         Row: {
           id: string;
