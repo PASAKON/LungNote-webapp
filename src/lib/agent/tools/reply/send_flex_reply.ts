@@ -120,7 +120,7 @@ function validateVars(
         vars: {
           text,
           open_url,
-          due_at_pretty: asString(raw.due_at_pretty) ?? "—",
+          due_text: asString(raw.due_text) ?? "ไม่มีกำหนด",
           folder_name: asString(raw.folder_name) ?? "Inbox",
         },
       };
@@ -135,7 +135,16 @@ function validateVars(
           error: "todo_deleted requires text + remaining_count + open_url",
         };
       }
-      return { ok: true, vars: { text, open_url, remaining_count } };
+      return {
+        ok: true,
+        vars: {
+          text,
+          open_url,
+          remaining_count,
+          undo_postback_data:
+            asString(raw.undo_postback_data) ?? "action=noop",
+        },
+      };
     }
     case "todo_updated": {
       const text = asNonEmpty(raw.text);
@@ -147,7 +156,16 @@ function validateVars(
           error: "todo_updated requires text + change_summary + open_url",
         };
       }
-      return { ok: true, vars: { text, change_summary, open_url } };
+      return {
+        ok: true,
+        vars: {
+          text,
+          change_summary,
+          open_url,
+          old_value: asString(raw.old_value) ?? "",
+          new_value: asString(raw.new_value) ?? "",
+        },
+      };
     }
     case "todo_completed": {
       const text = asNonEmpty(raw.text);
@@ -162,24 +180,31 @@ function validateVars(
       }
       return {
         ok: true,
-        vars: { text, open_url, pending_count_left },
+        vars: {
+          text,
+          open_url,
+          pending_count_left,
+          streak_msg: asString(raw.streak_msg) ?? "",
+          undo_postback_data:
+            asString(raw.undo_postback_data) ?? "action=noop",
+        },
       };
     }
     case "todo_list": {
       const count = asInt(raw.count);
-      const date_pretty = asNonEmpty(raw.date_pretty);
+      const date_display = asNonEmpty(raw.date_display);
       const open_url = asNonEmpty(raw.open_url);
       const itemsRaw = raw.items;
       if (
         count === null ||
-        !date_pretty ||
+        !date_display ||
         !open_url ||
         !Array.isArray(itemsRaw)
       ) {
         return {
           ok: false,
           error:
-            "todo_list requires count + date_pretty + items[] + open_url",
+            "todo_list requires count + date_display + items[] + open_url",
         };
       }
       const parsedItems: TodoListItem[] = [];
@@ -195,7 +220,7 @@ function validateVars(
       }
       return {
         ok: true,
-        vars: { count, date_pretty, items: parsedItems, open_url },
+        vars: { count, date_display, items: parsedItems, open_url },
       };
     }
   }

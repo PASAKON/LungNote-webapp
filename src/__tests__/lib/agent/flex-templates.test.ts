@@ -12,17 +12,27 @@ describe("flex template builders", () => {
     const m = asFlex(
       buildFlexMessage("todo_saved", {
         text: "ส่งการบ้าน",
-        due_at_pretty: "พรุ่งนี้ 09:00",
+        due_text: "พรุ่งนี้",
         folder_name: "ฟิสิกส์",
         open_url: "https://lungnote.com/dashboard/todo",
       }),
     );
     const json = JSON.stringify(m);
-    expect(json).not.toMatch(/\{\{\w+\}\}/);
+    expect(json).not.toMatch(/\{\{[\w[\].]+\}\}/);
     expect(json).toContain("ส่งการบ้าน");
-    expect(json).toContain("พรุ่งนี้ 09:00");
+    expect(json).toContain("พรุ่งนี้");
     expect(json).toContain("ฟิสิกส์");
     expect(m.altText).toContain("ส่งการบ้าน");
+  });
+
+  it("todo_saved defaults due_text + folder_name when omitted", () => {
+    const m = asFlex(
+      buildFlexMessage("todo_saved", {
+        text: "x",
+        open_url: "https://example.com",
+      }),
+    );
+    expect(JSON.stringify(m)).not.toMatch(/\{\{[\w[\].]+\}\}/);
   });
 
   it("todo_deleted carries remaining_count", () => {
@@ -34,22 +44,26 @@ describe("flex template builders", () => {
       }),
     );
     const json = JSON.stringify(m);
-    expect(json).not.toMatch(/\{\{\w+\}\}/);
+    expect(json).not.toMatch(/\{\{[\w[\].]+\}\}/);
     expect(json).toContain("ทดสอบ");
     expect(json).toContain("4 รายการ");
   });
 
-  it("todo_updated shows change_summary", () => {
+  it("todo_updated shows change_summary + old/new diff", () => {
     const m = asFlex(
       buildFlexMessage("todo_updated", {
         text: "ประชุม Exness",
+        old_value: "พรุ่งนี้",
+        new_value: "วันศุกร์ 09:00",
         change_summary: "เลื่อนเป็นวันศุกร์",
         open_url: "https://lungnote.com/dashboard/todo",
       }),
     );
     const json = JSON.stringify(m);
-    expect(json).not.toMatch(/\{\{\w+\}\}/);
+    expect(json).not.toMatch(/\{\{[\w[\].]+\}\}/);
     expect(json).toContain("ประชุม Exness");
+    expect(json).toContain("พรุ่งนี้");
+    expect(json).toContain("วันศุกร์ 09:00");
     expect(json).toContain("เลื่อนเป็นวันศุกร์");
   });
 
@@ -62,63 +76,74 @@ describe("flex template builders", () => {
       }),
     );
     const json = JSON.stringify(m);
-    expect(json).not.toMatch(/\{\{\w+\}\}/);
+    expect(json).not.toMatch(/\{\{[\w[\].]+\}\}/);
     expect(json).toContain("ส่งงาน");
     expect(json).toContain("line-through");
     expect(json).toContain("3 งาน");
   });
 
-  it("todo_list builds items rows + interleaves separators", () => {
+  it("todo_list — full 4 items, no rows pruned", () => {
     const m = asFlex(
       buildFlexMessage("todo_list", {
-        count: 3,
-        date_pretty: "10 พ.ค.",
+        count: 4,
+        date_display: "10 พ.ค. 2026",
         items: [
-          {
-            idx: 1,
-            text: "ส่งการบ้าน",
-            due_short: "พรุ่งนี้",
-            urgency_color: "#e8a946",
-          },
-          {
-            idx: 2,
-            text: "ซื้อนม",
-            due_short: "",
-            urgency_color: "#a08050",
-          },
-          {
-            idx: 3,
-            text: "โทรหาแม่",
-            due_short: "เลย 1 วัน",
-            urgency_color: "#c45a3a",
-          },
+          { idx: 1, text: "ส่งการบ้าน", due_short: "พรุ่งนี้", urgency_color: "#e8a946" },
+          { idx: 2, text: "ซื้อนม", due_short: "", urgency_color: "#a08050" },
+          { idx: 3, text: "โทรหาแม่", due_short: "เลย 1 วัน", urgency_color: "#c45a3a" },
+          { idx: 4, text: "ทบทวน", due_short: "อีก 5 วัน", urgency_color: "#3a3020" },
         ],
         open_url: "https://lungnote.com/dashboard/todo",
       }),
     );
     const json = JSON.stringify(m);
-    expect(json).not.toMatch(/\{\{\w+\}\}/);
+    expect(json).not.toMatch(/\{\{[\w[\].]+\}\}/);
     expect(json).toContain("ส่งการบ้าน");
-    expect(json).toContain("ซื้อนม");
-    expect(json).toContain("โทรหาแม่");
-    expect(json).toContain("3 รายการ");
-    // 3 items → 2 separators between rows.
-    const sepMatches = json.match(/"type":"separator"/g) ?? [];
-    expect(sepMatches.length).toBeGreaterThanOrEqual(3); // 1 top + 2 between
+    expect(json).toContain("ทบทวน");
+    expect(json).toContain("4 รายการ");
   });
 
-  it("todo_list with empty items still builds (zero rows)", () => {
+  it("todo_list — 2 items, 2 unused rows pruned (no leftover items[N])", () => {
     const m = asFlex(
       buildFlexMessage("todo_list", {
-        count: 0,
-        date_pretty: "10 พ.ค.",
-        items: [],
+        count: 2,
+        date_display: "10 พ.ค.",
+        items: [
+          { idx: 1, text: "งาน A", due_short: "พรุ่งนี้", urgency_color: "#e8a946" },
+          { idx: 2, text: "งาน B", due_short: "", urgency_color: "#a08050" },
+        ],
         open_url: "https://lungnote.com/dashboard/todo",
       }),
     );
     const json = JSON.stringify(m);
-    expect(json).not.toMatch(/\{\{ROWS\}\}/);
-    expect(json).toContain("0 รายการ");
+    expect(json).not.toMatch(/\{\{items\[\d+\]/);
+    expect(json).toContain("งาน A");
+    expect(json).toContain("งาน B");
+  });
+
+  it("todo_list — >4 items, only first 4 shown (Phase 1 cap)", () => {
+    const items = Array.from({ length: 7 }, (_, i) => ({
+      idx: i + 1,
+      text: `Item ${i + 1}`,
+      due_short: "",
+      urgency_color: "#3a3020",
+    }));
+    const m = asFlex(
+      buildFlexMessage("todo_list", {
+        count: 7,
+        date_display: "10 พ.ค.",
+        items,
+        open_url: "https://lungnote.com/dashboard/todo",
+      }),
+    );
+    const json = JSON.stringify(m);
+    expect(json).not.toMatch(/\{\{[\w[\].]+\}\}/);
+    expect(json).toContain("Item 1");
+    expect(json).toContain("Item 4");
+    // Items 5-7 not in the bubble (they live in Dashboard).
+    expect(json).not.toContain("Item 5");
+    // Header still shows true total count.
+    expect(json).toContain("7 รายการ");
   });
 
   it("custom altText overrides template default", () => {
@@ -128,8 +153,6 @@ describe("flex template builders", () => {
         {
           text: "x",
           open_url: "https://example.com",
-          due_at_pretty: "—",
-          folder_name: "Inbox",
         },
         "สิ่งที่ฉันคุม",
       ),
@@ -139,10 +162,9 @@ describe("flex template builders", () => {
 
   it("throws on missing required var (defensive)", () => {
     expect(() =>
-      buildFlexMessage("todo_saved", {
+      buildFlexMessage("todo_deleted", {
         text: "x",
-        open_url: "https://example.com",
-        // missing due_at_pretty + folder_name
+        // missing remaining_count + open_url
       } as never),
     ).toThrow(/unsubstituted markers/);
   });

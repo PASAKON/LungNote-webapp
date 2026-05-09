@@ -10,77 +10,94 @@
       "contents": [
         {
           "type": "box",
-          "layout": "vertical",
-          "contents": [
-            { "type": "text", "text": "✓", "size": "3xl", "weight": "bold", "color": "#c9a040", "align": "center" }
-          ],
-          "width": "48px",
-          "height": "48px",
-          "backgroundColor": "#f0e4c4",
-          "cornerRadius": "50px",
-          "justifyContent": "center",
-          "alignItems": "center",
-          "offsetStart": "calc(50% - 24px)"
-        },
-        {
-          "type": "box",
           "layout": "horizontal",
           "contents": [
-            { "type": "text", "text": "SAVED", "size": "xxs", "color": "#c9a040", "weight": "bold", "align": "center" }
+            {
+              "type": "text",
+              "text": "✓",
+              "size": "lg",
+              "weight": "bold",
+              "color": "#c9a040",
+              "flex": 0
+            },
+            {
+              "type": "text",
+              "text": "SAVED",
+              "size": "xxs",
+              "color": "#c9a040",
+              "weight": "bold",
+              "margin": "sm",
+              "gravity": "center"
+            }
           ],
           "backgroundColor": "#f0e4c4",
           "cornerRadius": "sm",
-          "paddingAll": "4px",
-          "paddingStart": "8px",
-          "paddingEnd": "8px",
-          "width": "56px",
-          "margin": "md",
-          "offsetStart": "calc(50% - 28px)"
+          "paddingAll": "6px",
+          "paddingStart": "10px",
+          "paddingEnd": "10px",
+          "width": "90px"
         },
         {
           "type": "text",
-          "text": "บันทึกแล้ว",
+          "text": "{{text}}",
           "weight": "bold",
-          "size": "lg",
+          "size": "xl",
           "margin": "md",
           "color": "#3a3020",
-          "align": "center"
+          "wrap": true
         }
       ],
       "paddingAll": "16px",
-      "paddingTop": "20px"
+      "paddingBottom": "4px"
     },
     "body": {
       "type": "box",
       "layout": "vertical",
       "contents": [
-        { "type": "separator", "color": "#d4c4a0" },
         {
-          "type": "text",
-          "text": "{{text}}",
-          "size": "md",
-          "weight": "bold",
-          "color": "#3a3020",
-          "wrap": true,
-          "margin": "lg"
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "{{folder_name}}",
+                  "size": "xxs",
+                  "color": "#a08050",
+                  "weight": "bold"
+                }
+              ],
+              "backgroundColor": "#f0e4c4",
+              "cornerRadius": "sm",
+              "paddingAll": "4px",
+              "paddingStart": "8px",
+              "paddingEnd": "8px",
+              "flex": 0
+            }
+          ]
         },
         {
           "type": "box",
           "layout": "horizontal",
           "contents": [
-            { "type": "text", "text": "โฟลเดอร์", "size": "xs", "color": "#a08050", "flex": 3 },
-            { "type": "text", "text": "{{folder_name}}", "size": "xs", "weight": "bold", "color": "#3a3020", "align": "end", "flex": 5 }
+            {
+              "type": "text",
+              "text": "⏰",
+              "size": "xs",
+              "flex": 0
+            },
+            {
+              "type": "text",
+              "text": "{{due_text}}",
+              "size": "xs",
+              "color": "#a08050",
+              "margin": "sm"
+            }
           ],
           "margin": "md"
-        },
-        {
-          "type": "box",
-          "layout": "horizontal",
-          "contents": [
-            { "type": "text", "text": "⏰ กำหนด", "size": "xs", "color": "#a08050", "flex": 3 },
-            { "type": "text", "text": "{{due_at_pretty}}", "size": "xs", "weight": "bold", "color": "#3a3020", "align": "end", "flex": 5 }
-          ],
-          "margin": "sm"
         }
       ],
       "paddingAll": "16px",
@@ -89,17 +106,20 @@
     "footer": {
       "type": "box",
       "layout": "vertical",
-      "spacing": "sm",
       "contents": [
         {
           "type": "button",
           "style": "primary",
           "color": "#c9a040",
-          "action": { "type": "uri", "label": "ดูใน Dashboard", "uri": "{{open_url}}" },
+          "action": {
+            "type": "uri",
+            "label": "ดูใน Dashboard",
+            "uri": "{{open_url}}"
+          },
           "height": "sm"
         }
       ],
-      "paddingAll": "12px"
+      "paddingAll": "16px"
     }
   }
 }

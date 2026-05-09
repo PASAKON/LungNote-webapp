@@ -5,18 +5,20 @@ import todoSavedTpl from "@/lib/line/flex-templates/todo-saved.json";
 import todoDeletedTpl from "@/lib/line/flex-templates/todo-deleted.json";
 import todoUpdatedTpl from "@/lib/line/flex-templates/todo-updated.json";
 import todoCompletedTpl from "@/lib/line/flex-templates/todo-completed.json";
-import todoListShellTpl from "@/lib/line/flex-templates/todo-list-shell.json";
-import todoListRowTpl from "@/lib/line/flex-templates/todo-list-row.json";
+import todoListSingleTpl from "@/lib/line/flex-templates/todo-list-single.json";
 
 /**
- * Flex Message templates the agent can pick via `send_flex_reply`.
+ * Flex Message templates the agent picks via `send_flex_reply`.
  *
  * Designer ships JSON in src/lib/line/flex-templates/. Each template
- * uses {{placeholder}} markers; substituteText() does the rewriting at
- * runtime. URLs are resolved against the user's LIFF link via
- * rewriteUriActions(). The list template is special — it uses
- * shell+row pieces to build a variable-length items array.
+ * uses {{key}} markers; we substitute at runtime. The list template
+ * has 4 hardcoded item rows (items[0..3]); we substitute filled rows
+ * + prune any unused rows (and their bracketing separators).
+ *
+ * Phase 1 ships single bubble only (≤4 items shown, footer points to
+ * Dashboard for the rest). Carousel = future when item counts justify.
  */
+
 export const FLEX_TEMPLATE_NAMES = [
   "todo_saved",
   "todo_deleted",
@@ -36,23 +38,21 @@ const SINGLE_TEMPLATES: Record<
   todo_completed: todoCompletedTpl as unknown as FlexMessage,
 };
 
+/** Hardcoded slot count in todo-list-single.json — designer-defined. */
+const LIST_SINGLE_SLOTS = 4;
+
 export type TodoListItem = {
   /** 1-based position the user sees in chat. */
   idx: number;
-  /** Item text. */
   text: string;
-  /** Short due-date phrase, e.g. "พรุ่งนี้" / "อีก 3 วัน" / "เลย 2 วัน" / "". */
   due_short?: string;
-  /** Hex color for the due chip. Defaults to muted. */
   urgency_color?: string;
-  /** Optional second line, e.g. folder / category. */
-  subline?: string;
 };
 
 export type FlexBuildVars = {
   todo_saved: {
     text: string;
-    due_at_pretty?: string;
+    due_text?: string;
     folder_name?: string;
     open_url: string;
   };
@@ -60,29 +60,34 @@ export type FlexBuildVars = {
     text: string;
     remaining_count: number;
     open_url: string;
+    /** LINE postback data for the Undo button. */
+    undo_postback_data?: string;
   };
   todo_updated: {
     text: string;
+    old_value?: string;
+    new_value?: string;
     change_summary: string;
     open_url: string;
   };
   todo_completed: {
     text: string;
     pending_count_left: number;
+    streak_msg?: string;
     open_url: string;
+    undo_postback_data?: string;
   };
   todo_list: {
     count: number;
-    date_pretty: string;
+    date_display: string;
     items: TodoListItem[];
     open_url: string;
   };
 };
 
 /**
- * Build a Flex Message from a template + caller-supplied vars.
- * Throws if any required placeholder remains unsubstituted (defensive
- * against missing template variables).
+ * Build a Flex Message from a template + caller-supplied vars. Throws
+ * if any required placeholder remains unsubstituted (defensive).
  */
 export function buildFlexMessage<K extends FlexTemplateName>(
   template: K,
@@ -92,63 +97,116 @@ export function buildFlexMessage<K extends FlexTemplateName>(
   if (template === "todo_list") {
     return buildTodoList(vars as FlexBuildVars["todo_list"], altText);
   }
-  const tpl = clone(SINGLE_TEMPLATES[template as Exclude<FlexTemplateName, "todo_list">]);
-  applyVars(tpl, vars as Record<string, unknown>);
+  const tpl = clone(
+    SINGLE_TEMPLATES[template as Exclude<FlexTemplateName, "todo_list">],
+  );
+  // Empty-string defaults for optional fields keep substitution from
+  // leaving stray markers when caller omits them.
+  const filled = withDefaults(template, vars as Record<string, unknown>);
+  applyVars(tpl, filled);
   if (altText) tpl.altText = altText;
   assertNoUnsubstituted(tpl, template);
   return tpl;
+}
+
+function withDefaults(
+  template: FlexTemplateName,
+  vars: Record<string, unknown>,
+): Record<string, unknown> {
+  const filled = { ...vars };
+  if (template === "todo_saved") {
+    filled.due_text ??= "";
+    filled.folder_name ??= "Inbox";
+  } else if (template === "todo_deleted") {
+    filled.undo_postback_data ??= "";
+  } else if (template === "todo_updated") {
+    filled.old_value ??= "";
+    filled.new_value ??= "";
+  } else if (template === "todo_completed") {
+    filled.streak_msg ??= "";
+    filled.undo_postback_data ??= "";
+  }
+  return filled;
 }
 
 function buildTodoList(
   vars: FlexBuildVars["todo_list"],
   altText?: string,
 ): LineMessage {
-  const shell = clone(todoListShellTpl as unknown as FlexMessage);
-  const rowTemplate = todoListRowTpl as unknown as Record<string, unknown>;
+  const tpl = clone(todoListSingleTpl as unknown as FlexMessage);
 
-  // Build per-item rows by cloning the row template + substituting.
-  const rows: unknown[] = [];
-  for (const item of vars.items) {
-    if (rows.length > 0) {
-      rows.push({ type: "separator", color: "#d4c4a0" });
-    }
-    const row = clone(rowTemplate);
-    applyVars(row, {
-      idx: String(item.idx),
-      text: item.text,
-      due_short: item.due_short ?? "",
-      urgency_color: item.urgency_color ?? "#a08050",
-      subline: item.subline ?? "",
-    });
-    rows.push(row);
-  }
+  // Designer template has 4 hardcoded item rows. Take up to that many
+  // items; prune the remaining (unused) rows + their bracketing
+  // separators so the bubble doesn't show empty slots.
+  const itemsShown = vars.items.slice(0, LIST_SINGLE_SLOTS);
 
-  // Splice rows into the body.contents array where the "{{ROWS}}" sentinel sits.
-  const body = (shell.contents as Record<string, unknown>).body as
-    | { contents: unknown[] }
-    | undefined;
-  if (body && Array.isArray(body.contents)) {
-    body.contents = body.contents.flatMap((node) =>
-      typeof node === "string" && node === "{{ROWS}}" ? rows : [node],
-    );
-  }
-
-  // Fill shell-level vars (count, date_pretty, open_url) on the cloned tree.
-  applyVars(shell, {
-    count: String(vars.count),
-    date_pretty: vars.date_pretty,
+  // Substitute used items[N].field markers.
+  const flatVars: Record<string, unknown> = {
+    count: vars.count,
+    date_display: vars.date_display,
     open_url: vars.open_url,
-  });
-  if (altText) shell.altText = altText;
-  assertNoUnsubstituted(shell, "todo_list");
-  return shell;
+  };
+  for (let i = 0; i < itemsShown.length; i++) {
+    const item = itemsShown[i];
+    flatVars[`items[${i}].idx`] = String(item.idx);
+    flatVars[`items[${i}].text`] = item.text;
+    flatVars[`items[${i}].due_short`] = item.due_short ?? "";
+    flatVars[`items[${i}].urgency_color`] = item.urgency_color ?? "#a08050";
+  }
+  applyVars(tpl, flatVars);
+
+  // Prune row boxes for unused slots: they still contain `{{items[N].*}}`
+  // markers after substitution. Walk the tree and remove horizontal box
+  // nodes that contain unsubstituted item markers, plus any separator
+  // immediately before them so we don't leave double-separators.
+  pruneEmptyItemRows(tpl);
+
+  if (altText) tpl.altText = altText;
+  assertNoUnsubstituted(tpl, "todo_list");
+  return tpl;
 }
 
 // ── helpers ─────────────────────────────────────────────────────────
 
+const ITEM_MARKER_RE = /\{\{items\[\d+\]\.\w+\}\}/;
+
+function pruneEmptyItemRows(node: unknown): void {
+  if (Array.isArray(node)) {
+    // Prune in-place: drop any box containing unsubstituted items[N].*
+    // markers. Collapse the separator that immediately precedes a
+    // pruned row so the layout doesn't get a hanging line.
+    for (let i = node.length - 1; i >= 0; i--) {
+      const child = node[i] as Record<string, unknown> | unknown;
+      if (
+        child &&
+        typeof child === "object" &&
+        (child as Record<string, unknown>).type === "box" &&
+        boxHasUnsubstitutedItemMarker(child)
+      ) {
+        node.splice(i, 1);
+        // Also drop the separator immediately above (now at index i-1).
+        const prev = i - 1 >= 0 ? (node[i - 1] as Record<string, unknown> | undefined) : undefined;
+        if (prev && prev.type === "separator") {
+          node.splice(i - 1, 1);
+        }
+      } else {
+        pruneEmptyItemRows(child);
+      }
+    }
+    return;
+  }
+  if (node && typeof node === "object") {
+    for (const v of Object.values(node as Record<string, unknown>)) {
+      pruneEmptyItemRows(v);
+    }
+  }
+}
+
+function boxHasUnsubstitutedItemMarker(node: unknown): boolean {
+  return ITEM_MARKER_RE.test(JSON.stringify(node));
+}
+
 function applyVars(node: unknown, vars: Record<string, unknown>): void {
-  // String→string substitution for {{key}} markers in any "text", "uri",
-  // "color" (if templated), and altText fields.
   substituteAll(node, vars);
 }
 
@@ -169,18 +227,21 @@ function substituteAll(node: unknown, vars: Record<string, unknown>): void {
   }
 }
 
+// Match {{key}} where key may include alphanumerics, underscores,
+// brackets, and dots — supports indexed fields like items[0].text.
+const PLACEHOLDER_RE = /\{\{([\w[\].]+)\}\}/g;
+
 function substituteString(s: string, vars: Record<string, unknown>): string {
-  return s.replace(/\{\{(\w+)\}\}/g, (m, key: string) => {
-    if (!(key in vars)) return m; // leave unknown markers; assertNoUnsubstituted catches.
+  return s.replace(PLACEHOLDER_RE, (m, key: string) => {
+    if (!(key in vars)) return m;
     const v = vars[key];
     return v === undefined || v === null ? "" : String(v);
   });
 }
 
 function assertNoUnsubstituted(node: unknown, template: string): void {
-  // Walk + check no "{{...}}" remains. ROWS is consumed at splice time.
   const json = JSON.stringify(node);
-  const leftover = json.match(/\{\{(\w+)\}\}/g);
+  const leftover = json.match(/\{\{[\w[\].]+\}\}/g);
   if (leftover && leftover.length > 0) {
     throw new Error(
       `flex template ${template} has unsubstituted markers: ${leftover.join(", ")}`,
