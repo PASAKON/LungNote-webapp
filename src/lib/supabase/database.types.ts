@@ -224,6 +224,50 @@ export type Database = {
         };
         Relationships: [];
       };
+      lungnote_chat_traces: {
+        Row: {
+          id: string;
+          trace_id: string;
+          line_user_id: string | null;
+          user_text: string;
+          path: "dashboard" | "list" | "memory" | "regex" | "ai" | "error";
+          history_count: number;
+          ai_iterations: number;
+          tool_calls: unknown;
+          reply_text: string | null;
+          meta: unknown;
+          error_text: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trace_id: string;
+          line_user_id?: string | null;
+          user_text: string;
+          path: "dashboard" | "list" | "memory" | "regex" | "ai" | "error";
+          history_count?: number;
+          ai_iterations?: number;
+          tool_calls?: unknown;
+          reply_text?: string | null;
+          meta?: unknown;
+          error_text?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trace_id?: string;
+          line_user_id?: string | null;
+          user_text?: string;
+          path?: "dashboard" | "list" | "memory" | "regex" | "ai" | "error";
+          history_count?: number;
+          ai_iterations?: number;
+          tool_calls?: unknown;
+          reply_text?: string | null;
+          meta?: unknown;
+          error_text?: string | null;
+        };
+        Relationships: [];
+      };
       lungnote_conversation_memory: {
         Row: {
           line_user_id: string;

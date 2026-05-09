@@ -99,7 +99,7 @@ describe("POST /api/line/webhook — text events", () => {
     };
     const res = await POST(makeRequest(body) as never);
     expect(res.status).toBe(200);
-    expect(mockedAI).toHaveBeenCalledWith("U-abc", "อธิบาย Pythagorean");
+    expect(mockedAI).toHaveBeenCalledWith("U-abc", "อธิบาย Pythagorean", expect.anything());
     expect(mockedReply).toHaveBeenCalledWith("RT-2", [
       { type: "text", text: "AI Thai reply" },
     ]);
@@ -334,7 +334,7 @@ describe("POST /api/line/webhook — memory prefix (ADR-0012)", () => {
     await POST(makeRequest(body) as never);
 
     expect(mockedSaveMemory).not.toHaveBeenCalled();
-    expect(mockedAI).toHaveBeenCalledWith("U-abc", "จด");
+    expect(mockedAI).toHaveBeenCalledWith("U-abc", "จด", expect.anything());
   });
 });
 

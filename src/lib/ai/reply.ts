@@ -4,6 +4,7 @@ import { buildPromptMessages } from "./prompts";
 import { loadMemory, saveMemory } from "./memory";
 import { TOOL_DEFS, executeToolCall, type ToolCall } from "./tools";
 import type { AIReplyResult } from "./types";
+import type { TraceCollector } from "@/lib/observability/trace";
 
 // 5 iterations covers the worst legit shape: list_done → uncomplete →
 // list_pending (verify) → maybe one more mutation → final text.
@@ -28,9 +29,14 @@ const MAX_TOOL_ITERATIONS = 5;
 export async function generateChatReply(
   lineUserId: string,
   userText: string,
+  trace?: TraceCollector,
 ): Promise<AIReplyResult> {
   const isAnonymous = lineUserId === "anonymous";
   const memory = await loadMemory(lineUserId);
+  if (trace) {
+    trace.historyCount = memory.length;
+    trace.step("memory_load", { count: memory.length });
+  }
 
   // Seed wire-format conversation from base prompt + memory + this turn.
   const seed = buildPromptMessages(memory, userText);
@@ -59,6 +65,17 @@ export async function generateChatReply(
       totalOut += result.tokensOut;
       totalCost += result.costEstimate;
       lastModel = result.model;
+
+      if (trace) {
+        trace.aiIterations = iter + 1;
+        trace.step("ai_iter", {
+          iter,
+          tokens_in: result.tokensIn,
+          tokens_out: result.tokensOut,
+          latency_ms: result.latencyMs,
+          tool_calls: result.toolCalls?.length ?? 0,
+        });
+      }
 
       // Plain text reply — we're done.
       if (!result.toolCalls) {
@@ -95,6 +112,18 @@ export async function generateChatReply(
         result.toolCalls,
         isAnonymous ? null : lineUserId,
       );
+      // Record per-tool detail in the trace (name + args + parsed result).
+      if (trace) {
+        for (let i = 0; i < result.toolCalls.length; i++) {
+          const call = result.toolCalls[i];
+          const tr = toolResults[i];
+          let argsParsed: unknown = call.function.arguments;
+          let resultParsed: unknown = tr?.content;
+          try { argsParsed = JSON.parse(call.function.arguments); } catch { /* keep raw */ }
+          try { resultParsed = JSON.parse(tr?.content ?? ""); } catch { /* keep raw */ }
+          trace.recordTool(call.function.name, argsParsed, resultParsed);
+        }
+      }
       for (const tr of toolResults) {
         wire.push({ role: "tool", tool_call_id: tr.tool_call_id, content: tr.content });
       }
