@@ -7,6 +7,7 @@ import { saveMemoryFromLine } from "@/lib/memory/save";
 import { listPendingFromLine } from "@/lib/memory/list";
 import { dashboardLinkMessage, welcomeMessage } from "@/lib/line/flex";
 import { mintToken } from "@/lib/auth/line-link";
+import { TraceCollector } from "@/lib/observability/trace";
 import type {
   LineEvent,
   LineWebhookBody,
@@ -104,15 +105,20 @@ async function handleEvent(event: LineEvent): Promise<unknown> {
 async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   const text = ev.message.text.trim();
   const userId = ev.source.type === "user" ? ev.source.userId : undefined;
+  const trace = new TraceCollector(ev.message.id, userId, text);
 
   // 1. Dashboard trigger — highest priority (free, deterministic)
   if (DASHBOARD_KEYWORDS.test(text) && userId) {
-    return sendDashboardLink(ev.replyToken, userId);
+    trace.step("path_dashboard");
+    const out = sendDashboardLink(ev.replyToken, userId);
+    trace.finalize({ path: "dashboard" });
+    return out;
   }
 
   // 2. List-pending intent — surfaces user's open todos.
   if (LIST_PENDING_INTENT.test(text) && userId) {
-    return handleMemoryList(ev.replyToken, userId, text);
+    trace.step("path_list");
+    return handleMemoryList(ev.replyToken, userId, text, trace);
   }
 
   // 3. Memory capture prefix (ADR-0012) — saves to lungnote_todos with due_at extraction.
@@ -121,25 +127,46 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   if (memoryMatch && userId) {
     const memoryText = memoryMatch[1].trim();
     if (memoryText) {
-      // Pass full text (incl. prefix) so conversation memory reflects what user typed.
-      return handleMemoryCreate(ev.replyToken, userId, memoryText, text);
+      trace.step("path_memory", {
+        prefix_kind: MEMORY_PREFIX_SINGLE.test(text) ? "single" : "compound",
+      });
+      return handleMemoryCreate(ev.replyToken, userId, memoryText, text, trace);
     }
   }
 
-  // 3. Regex commands (free, deterministic)
+  // 4. Regex commands (free, deterministic)
   const regexReply = matchRegex(text);
   if (regexReply !== null) {
-    return replyMessage(ev.replyToken, [{ type: "text", text: regexReply }]);
+    trace.step("path_regex");
+    void replyMessage(ev.replyToken, [{ type: "text", text: regexReply }]);
+    trace.finalize({ path: "regex", replyText: regexReply });
+    return null;
   }
 
-  // 4. AI fallback (now with rolling 5+5 conversation memory, see ADR-0009)
+  // 5. AI fallback (now with rolling 5+5 conversation memory, see ADR-0009)
+  trace.step("path_ai");
   const aiUserId = userId ?? "anonymous";
-  const aiResult = await generateChatReply(aiUserId, text);
+  const aiResult = await generateChatReply(aiUserId, text, trace);
   const replyText = aiResult.ok
     ? aiResult.text
     : `รับข้อความแล้ว: "${text}"\nพิมพ์ 'ช่วย' เพื่อดูคำสั่ง`;
 
-  return replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
+  void replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
+  trace.finalize({
+    path: "ai",
+    replyText,
+    meta: aiResult.ok
+      ? {
+          model: aiResult.meta.model,
+          tokens_in: aiResult.meta.tokensIn,
+          tokens_out: aiResult.meta.tokensOut,
+          cost_usd: aiResult.meta.costEstimate,
+        }
+      : undefined,
+    error: !aiResult.ok ? `${aiResult.reason}: ${aiResult.error ?? ""}` : undefined,
+    aiIterations: trace.aiIterations,
+  });
+  return null;
 }
 
 async function handleMemoryCreate(
@@ -147,8 +174,10 @@ async function handleMemoryCreate(
   lineUserId: string,
   memoryText: string,
   fullUserMessage: string,
+  trace: TraceCollector,
 ): Promise<unknown> {
   const result = await saveMemoryFromLine(lineUserId, memoryText);
+  trace.step("memory_save_result", { ok: result.ok, ...(result.ok ? { has_due: !!result.dueAt } : { reason: result.reason }) });
 
   let replyText: string;
   if (!result.ok && result.reason === "not_linked") {
@@ -171,15 +200,23 @@ async function handleMemoryCreate(
   // memory failure must not block the reply.
   void persistTurn(lineUserId, fullUserMessage, replyText);
 
-  return replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  void replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  trace.finalize({
+    path: "memory",
+    replyText,
+    error: !result.ok ? `${result.reason}: ${result.error ?? ""}` : undefined,
+  });
+  return null;
 }
 
 async function handleMemoryList(
   replyToken: string,
   lineUserId: string,
   fullUserMessage: string,
+  trace: TraceCollector,
 ): Promise<unknown> {
   const result = await listPendingFromLine(lineUserId);
+  trace.step("memory_list_result", { ok: result.ok, ...(result.ok ? { count: result.items.length } : { reason: result.reason }) });
 
   let replyText: string;
   if (!result.ok && result.reason === "not_linked") {
@@ -202,7 +239,14 @@ async function handleMemoryList(
   }
 
   void persistTurn(lineUserId, fullUserMessage, replyText);
-  return replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  void replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  trace.finalize({
+    path: "list",
+    replyText,
+    meta: result.ok ? { item_count: result.items.length } : undefined,
+    error: !result.ok ? `${result.reason}: ${result.error ?? ""}` : undefined,
+  });
+  return null;
 }
 
 function formatDueShort(iso: string | null): string | null {
