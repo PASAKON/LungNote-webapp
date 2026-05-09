@@ -5,6 +5,9 @@ vi.mock("@/lib/line/verify", () => ({
 }));
 vi.mock("@/lib/line/client", () => ({
   replyMessage: vi.fn().mockResolvedValue({ ok: true, status: 200 }),
+  displayLoadingAnimation: vi
+    .fn()
+    .mockResolvedValue({ ok: true, status: 202 }),
 }));
 vi.mock("@/lib/ai/reply", () => ({
   generateChatReply: vi.fn(),
