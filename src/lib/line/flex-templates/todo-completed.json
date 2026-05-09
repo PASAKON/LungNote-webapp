@@ -14,10 +14,8 @@
           "contents": [
             {
               "type": "text",
-              "text": "✓",
+              "text": "✅",
               "size": "lg",
-              "weight": "bold",
-              "color": "#c9a040",
               "flex": 0
             },
             {
@@ -85,7 +83,7 @@
           "color": "#a08050",
           "action": {
             "type": "postback",
-            "label": "↶ Undo",
+            "label": "↩️ Undo",
             "data": "{{undo_postback_data}}"
           },
           "height": "sm",

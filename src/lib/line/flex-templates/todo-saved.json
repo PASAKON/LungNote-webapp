@@ -14,10 +14,8 @@
           "contents": [
             {
               "type": "text",
-              "text": "✓",
+              "text": "✅",
               "size": "lg",
-              "weight": "bold",
-              "color": "#c9a040",
               "flex": 0
             },
             {

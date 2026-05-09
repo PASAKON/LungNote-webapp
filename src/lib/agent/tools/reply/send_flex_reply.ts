@@ -120,8 +120,10 @@ function validateVars(
         vars: {
           text,
           open_url,
-          due_text: asString(raw.due_text) ?? "ไม่มีกำหนด",
-          folder_name: asString(raw.folder_name) ?? "Inbox",
+          // LINE Flex rejects empty text nodes — use asNonEmpty to apply
+          // the default whenever the AI sends "" / null / missing.
+          due_text: asNonEmpty(raw.due_text) ?? "ไม่มีกำหนด",
+          folder_name: asNonEmpty(raw.folder_name) ?? "Inbox",
         },
       };
     }
@@ -142,7 +144,7 @@ function validateVars(
           open_url,
           remaining_count,
           undo_postback_data:
-            asString(raw.undo_postback_data) ?? "action=noop",
+            asNonEmpty(raw.undo_postback_data) ?? "action=noop",
         },
       };
     }
@@ -162,8 +164,9 @@ function validateVars(
           text,
           change_summary,
           open_url,
-          old_value: asString(raw.old_value) ?? "",
-          new_value: asString(raw.new_value) ?? "",
+          // Diff bar text nodes — never empty, fall back to em-dash.
+          old_value: asNonEmpty(raw.old_value) ?? "—",
+          new_value: asNonEmpty(raw.new_value) ?? "—",
         },
       };
     }
@@ -184,9 +187,11 @@ function validateVars(
           text,
           open_url,
           pending_count_left,
-          streak_msg: asString(raw.streak_msg) ?? "",
+          // Streak row visible whether streak or not — em-dash default keeps
+          // the bubble valid; AI fills with real streak text when applicable.
+          streak_msg: asNonEmpty(raw.streak_msg) ?? "—",
           undo_postback_data:
-            asString(raw.undo_postback_data) ?? "action=noop",
+            asNonEmpty(raw.undo_postback_data) ?? "action=noop",
         },
       };
     }

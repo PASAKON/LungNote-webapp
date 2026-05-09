@@ -168,4 +168,38 @@ describe("flex template builders", () => {
       } as never),
     ).toThrow(/unsubstituted markers/);
   });
+
+  it("never produces empty text nodes (LINE 400 guard)", () => {
+    // todo_saved with empty due_text → withDefaults swaps in fallback.
+    const m = buildFlexMessage("todo_saved", {
+      text: "x",
+      open_url: "https://example.com",
+      due_text: "",
+      folder_name: "",
+    });
+    const json = JSON.stringify(m);
+    expect(json).not.toMatch(/"text":""/);
+  });
+
+  it("todo_list with empty due_short uses em-dash, no empty text node", () => {
+    const m = buildFlexMessage("todo_list", {
+      count: 1,
+      date_display: "10 พ.ค.",
+      items: [{ idx: 1, text: "x", due_short: "", urgency_color: "#a08050" }],
+      open_url: "https://example.com",
+    });
+    const json = JSON.stringify(m);
+    expect(json).not.toMatch(/"text":""/);
+  });
+
+  it("todo_completed with empty streak_msg fills with em-dash", () => {
+    const m = buildFlexMessage("todo_completed", {
+      text: "x",
+      pending_count_left: 0,
+      streak_msg: "",
+      open_url: "https://example.com",
+    });
+    const json = JSON.stringify(m);
+    expect(json).not.toMatch(/"text":""/);
+  });
 });

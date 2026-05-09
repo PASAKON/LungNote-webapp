@@ -113,18 +113,25 @@ function withDefaults(
   template: FlexTemplateName,
   vars: Record<string, unknown>,
 ): Record<string, unknown> {
+  // Defensive: if a caller bypasses the tool and feeds empty / null /
+  // undefined for an optional text field, force a non-empty fallback so
+  // LINE doesn't reject the bubble for an empty text node.
   const filled = { ...vars };
+  const fillIfEmpty = (key: string, fallback: string) => {
+    const v = filled[key];
+    if (typeof v !== "string" || v.length === 0) filled[key] = fallback;
+  };
   if (template === "todo_saved") {
-    filled.due_text ??= "";
-    filled.folder_name ??= "Inbox";
+    fillIfEmpty("due_text", "ไม่มีกำหนด");
+    fillIfEmpty("folder_name", "Inbox");
   } else if (template === "todo_deleted") {
-    filled.undo_postback_data ??= "";
+    fillIfEmpty("undo_postback_data", "action=noop");
   } else if (template === "todo_updated") {
-    filled.old_value ??= "";
-    filled.new_value ??= "";
+    fillIfEmpty("old_value", "—");
+    fillIfEmpty("new_value", "—");
   } else if (template === "todo_completed") {
-    filled.streak_msg ??= "";
-    filled.undo_postback_data ??= "";
+    fillIfEmpty("streak_msg", "—");
+    fillIfEmpty("undo_postback_data", "action=noop");
   }
   return filled;
 }
@@ -150,7 +157,10 @@ function buildTodoList(
     const item = itemsShown[i];
     flatVars[`items[${i}].idx`] = String(item.idx);
     flatVars[`items[${i}].text`] = item.text;
-    flatVars[`items[${i}].due_short`] = item.due_short ?? "";
+    // Em-dash placeholder when no due — keeps the chip text non-empty
+    // (LINE Flex rejects empty text nodes).
+    flatVars[`items[${i}].due_short`] =
+      item.due_short && item.due_short.length > 0 ? item.due_short : "—";
     flatVars[`items[${i}].urgency_color`] = item.urgency_color ?? "#a08050";
   }
   applyVars(tpl, flatVars);
