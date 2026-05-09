@@ -33,6 +33,10 @@ export type Scenario = {
   name: string;
   /** Optional setup: returns initial todos to seed. */
   seedTodos?: () => MockTodo[];
+  /** Optional conversation history seeded into the LINE user's memory store
+   *  (lungnote_conversation_memory) before the turn runs. Used to simulate
+   *  pollution / stale list replies. */
+  seedMemory?: () => Array<{ role: "user" | "assistant"; content: string }>;
   /** What the user types. */
   userText: string;
   /** Expectations. */
@@ -229,6 +233,29 @@ export const SCENARIOS: Scenario[] = [
     expect: {
       toolCalls: [],
       replyMatches: /ขอโทษ|LungNote|note|จดโน้ต/i,
+    },
+  },
+  {
+    // Production bug regression: AI replied with a stale 6-item list when
+    // DB only had 4 items, because previous numbered-list replies sat in
+    // conversation memory. Fix: memory.ts now summarizes past list replies
+    // so the model can't recite stale items.
+    name: "polluted memory: 'ลิสรายการ' must call list_pending FRESH",
+    seedTodos: () => [todo("X1"), todo("X2"), todo("X3"), todo("X4")],
+    seedMemory: () => [
+      { role: "user", content: "ลิสรายการ" },
+      {
+        role: "assistant",
+        content:
+          "นี่คือรายการที่ต้องทำนะ:\n\n1. STALE_A\n2. STALE_B\n3. STALE_C\n4. STALE_D\n5. STALE_E\n6. STALE_F",
+      },
+    ],
+    userText: "ลิสรายการ",
+    expect: {
+      toolCalls: [{ name: "list_pending" }],
+      // Reply must reflect the LIVE list (X1..X4), not the stale 6-item one.
+      replyMustNotMatch: /STALE_[A-F]/,
+      replyMatches: /X1|X2|X3|X4/,
     },
   },
   {

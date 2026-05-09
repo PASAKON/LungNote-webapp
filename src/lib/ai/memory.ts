@@ -9,6 +9,30 @@ export function trimMemory(messages: ChatMessage[]): ChatMessage[] {
   return messages.slice(-MAX_MEMORY_ENTRIES);
 }
 
+/**
+ * Numbered-list reply pattern (3+ "1. text" lines). When the assistant
+ * replies with a list of pending todos, we DON'T want to keep the raw
+ * items in conversation memory: next turn the model would reuse those
+ * line numbers as if they were still valid, leading to "ลบ 5 6" bugs
+ * where the model lists 6 stale items and the user picks a position
+ * that doesn't exist in the live DB.
+ *
+ * Replace such replies with a placeholder so the model knows a list
+ * happened but cannot recite items from memory — forcing it to call
+ * list_pending fresh.
+ */
+const NUMBERED_LINE_RE = /^\s*\d+\.\s+\S/;
+
+export function summarizeListReply(text: string): string {
+  if (!text) return text;
+  const lines = text.split(/\r?\n/);
+  const numbered = lines.filter((l) => NUMBERED_LINE_RE.test(l));
+  if (numbered.length >= 3) {
+    return `[เคย list ${numbered.length} รายการ — call list_pending ใหม่ถ้าต้องอ้างอิง]`;
+  }
+  return text;
+}
+
 export function mergeAndTrim(
   prior: ChatMessage[],
   newUser: string,
@@ -17,7 +41,7 @@ export function mergeAndTrim(
   return trimMemory([
     ...prior,
     { role: "user", content: newUser },
-    { role: "assistant", content: newAssistant },
+    { role: "assistant", content: summarizeListReply(newAssistant) },
   ]);
 }
 
