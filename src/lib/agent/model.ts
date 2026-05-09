@@ -29,6 +29,13 @@ export type ResolvedModel = {
   model: LanguageModel;
   /** Whether to attach Anthropic prompt cache_control on system blocks. */
   supportsCache: boolean;
+  /**
+   * Provider key under which to nest cacheControl in providerOptions.
+   * - "anthropic" — Anthropic-direct path
+   * - "openrouter" — OpenRouter passthrough for anthropic/* models
+   * - null — caching not supported (e.g. Gemini, GPT)
+   */
+  cacheProviderKey: "anthropic" | "openrouter" | null;
   /** Per-1M-token pricing for cost estimate in trace. */
   priceInputPerM: number;
   priceOutputPerM: number;
@@ -50,7 +57,7 @@ export function resolveModel(): ResolvedModel {
   const price = PRICING[id] ?? { in: 1.0, out: 5.0 };
 
   if (isAnthropic && process.env.ANTHROPIC_API_KEY) {
-    // Direct Anthropic: native prompt cache via providerOptions.
+    // Direct Anthropic: native prompt cache via providerOptions.anthropic.
     const anthropic = createAnthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
@@ -60,15 +67,16 @@ export function resolveModel(): ResolvedModel {
       modelId: id,
       model: anthropic(bareId),
       supportsCache: true,
+      cacheProviderKey: "anthropic",
       priceInputPerM: price.in,
       priceOutputPerM: price.out,
     };
   }
 
   // OpenRouter passthrough — works for any OpenRouter-listed model.
-  // Anthropic models routed via OpenRouter still get auto-cache when prefix
-  // is stable (no explicit cache_control needed), but we mark supportsCache
-  // false so we don't emit anthropic-specific providerOptions on OpenRouter.
+  // For anthropic/* models, OpenRouter forwards Anthropic's cache_control
+  // via providerOptions.openrouter.cacheControl (see @openrouter/ai-sdk-provider
+  // README). Non-anthropic models on OpenRouter get no explicit cache.
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -76,11 +84,15 @@ export function resolveModel(): ResolvedModel {
     );
   }
   const openrouter = createOpenRouter({ apiKey });
+  // usage:{include:true} enables OpenRouter's usage accounting, which gives us
+  // promptTokensDetails.cachedTokens (cache hit detection on anthropic/* via
+  // OpenRouter). Per-call setting on chat(), not provider-level.
   return {
     provider: "openrouter",
     modelId: id,
-    model: openrouter.chat(id),
-    supportsCache: false,
+    model: openrouter.chat(id, { usage: { include: true } }),
+    supportsCache: isAnthropic,
+    cacheProviderKey: isAnthropic ? "openrouter" : null,
     priceInputPerM: price.in,
     priceOutputPerM: price.out,
   };

@@ -89,21 +89,27 @@ export async function runAgent(
   // Variable, NOT cached: today's date + per-user memory.
   const dynamicPrompt = buildDynamicSystemSuffix(userMemory);
 
-  // System messages — for Anthropic, two blocks with cacheControl on the
-  // static one. For OpenRouter, single concatenated string (caching handled
-  // automatically by OpenRouter when prefix is stable).
-  const systemMessages: ModelMessage[] = resolved.supportsCache
-    ? [
-        {
-          role: "system",
-          content: staticPrompt,
-          providerOptions: {
-            anthropic: { cacheControl: { type: "ephemeral" } },
+  // System messages — for Anthropic-flavored caching (direct or via
+  // OpenRouter passthrough), split into two blocks with cacheControl on
+  // the static one. The cache key is provider-specific:
+  //   - anthropic-direct  → providerOptions.anthropic.cacheControl
+  //   - openrouter (any anthropic/* model) → providerOptions.openrouter.cacheControl
+  // For non-cache-capable models, send a single concatenated system block.
+  const systemMessages: ModelMessage[] =
+    resolved.supportsCache && resolved.cacheProviderKey
+      ? [
+          {
+            role: "system",
+            content: staticPrompt,
+            providerOptions: {
+              [resolved.cacheProviderKey]: {
+                cacheControl: { type: "ephemeral" },
+              },
+            },
           },
-        },
-        { role: "system", content: dynamicPrompt },
-      ]
-    : [{ role: "system", content: staticPrompt + "\n\n" + dynamicPrompt }];
+          { role: "system", content: dynamicPrompt },
+        ]
+      : [{ role: "system", content: staticPrompt + "\n\n" + dynamicPrompt }];
 
   const messages: ModelMessage[] = [
     ...systemMessages,
@@ -129,12 +135,25 @@ export async function runAgent(
       1_000_000;
     const stepCount = result.steps?.length ?? 1;
 
-    // Cache hit detection — Anthropic returns cached/uncached token splits.
+    // Cache hit detection — provider-specific shape:
+    //   - Anthropic-direct: providerMetadata.anthropic.cacheReadInputTokens
+    //   - OpenRouter (anthropic/* models): providerMetadata.openrouter.usage.promptTokensDetails.cachedTokens
     const providerMeta =
       (result.providerMetadata as
-        | { anthropic?: { cacheReadInputTokens?: number; cacheCreationInputTokens?: number } }
+        | {
+            anthropic?: {
+              cacheReadInputTokens?: number;
+              cacheCreationInputTokens?: number;
+            };
+            openrouter?: {
+              usage?: { promptTokensDetails?: { cachedTokens?: number } };
+            };
+          }
         | undefined) ?? undefined;
-    const cacheRead = providerMeta?.anthropic?.cacheReadInputTokens ?? 0;
+    const cacheRead =
+      providerMeta?.anthropic?.cacheReadInputTokens ??
+      providerMeta?.openrouter?.usage?.promptTokensDetails?.cachedTokens ??
+      0;
     const cacheHit = cacheRead > 0;
 
     ctx.trace.aiIterations = stepCount;
