@@ -1,4 +1,5 @@
 import type { LandingContent } from "./content";
+import { MascotMark } from "@/components/MascotMark";
 
 const icons = [
   (
@@ -19,21 +20,9 @@ const icons = [
       <circle cx={40} cy={10} r={4} fill="#d4a855" stroke="none" />
     </svg>
   ),
-  (
-    <svg
-      key="check"
-      viewBox="0 0 56 56"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x={10} y={10} width={36} height={36} rx={2} filter="url(#sketchy)" />
-      <path d="M18 28 L24 34 L38 20" strokeWidth={3} filter="url(#sketchy)" />
-    </svg>
-  ),
+  // "Checklist" feature → mascot itself (the box has a check-mouth, doubles
+  // as the checklist visual). ADR-0013 follow-up.
+  <MascotMark key="check" size={56} />,
   (
     <svg
       key="folder"

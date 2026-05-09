@@ -29,6 +29,12 @@ export type LandingContent = {
     todos: { text: string; done: boolean }[];
     noteLine: string;
   };
+  brand: {
+    label: string;
+    name: string;
+    pronunciation: string;
+    body: string;
+  };
   features: {
     label: string;
     titleLine1: string;
@@ -96,6 +102,12 @@ const th: LandingContent = {
       { text: "เตรียมพรีเซนต์วันพุธ", done: false },
     ],
     noteLine: "อย่าลืมถามอาจารย์เรื่องเกรด...",
+  },
+  brand: {
+    label: "~ ทำความรู้จักกับเรา ~",
+    name: "LungNote",
+    pronunciation: "อ่านว่า ลังโน้ต",
+    body: "เราเป็นลัง (กล่องกระดาษสีเหลือง) ที่จะคอยช่วยคุณจดโน้ตและเตือนความจำของคุณ ไม่ว่าโน้ตจะสั้นหรือยาว เราช่วยได้ทั้งหมด — เพื่อให้คุณไม่ลืมสิ่งที่จะต้องทำในอนาคต",
   },
   features: {
     label: "~ จุดเด่น ~",
@@ -234,6 +246,12 @@ const en: LandingContent = {
       { text: "Prep Wednesday presentation", done: false },
     ],
     noteLine: "Don't forget to ask the teacher about grades...",
+  },
+  brand: {
+    label: "~ Meet LungNote ~",
+    name: "LungNote",
+    pronunciation: 'pronounced "Lung-Note" — Lung means "box" in Thai',
+    body: "We're the cardboard box (a yellow one) that helps you jot down notes and remember things — short notes, long notes, we hold them all. So you never forget what you need to do next.",
   },
   features: {
     label: "~ Features ~",

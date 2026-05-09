@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { MascotMark } from "@/components/MascotMark";
 import { LiffSketchyFilter } from "./LiffSketchyFilter";
 import "./liff.css";
 
@@ -93,27 +94,8 @@ function LiffInner({ liffId }: { liffId: string }) {
 
 function Logo() {
   return (
-    <div className="liff-logo">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <rect
-          x={6}
-          y={6}
-          width={36}
-          height={36}
-          rx={4}
-          stroke="#3a3020"
-          strokeWidth={3}
-          fill="none"
-        />
-        <path
-          d="M14 24 L21 31 L34 16"
-          stroke="#3a3020"
-          strokeWidth={3.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-      </svg>
+    <div className="liff-logo" style={{ color: "#3a3020" }}>
+      <MascotMark size={64} />
     </div>
   );
 }

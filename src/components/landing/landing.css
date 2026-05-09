@@ -182,6 +182,57 @@
   color: var(--border);
 }
 
+/* ── Brand story (Meet LungNote) ─────────────────────────────────── */
+.lungnote-landing .brand-story {
+  padding: 48px 0;
+}
+.lungnote-landing .brand-story-inner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 40px;
+  align-items: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.lungnote-landing .brand-story-mascot {
+  color: var(--fg);
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 0 var(--accent-light));
+}
+.lungnote-landing .brand-story-name {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 7vw, 60px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fg);
+  margin-bottom: 6px;
+}
+.lungnote-landing .brand-story-pron {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.lungnote-landing .brand-story-body {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--fg);
+  max-width: 480px;
+}
+@media (max-width: 640px) {
+  .lungnote-landing .brand-story-inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 20px;
+  }
+  .lungnote-landing .brand-story-mascot {
+    margin: 0 auto;
+  }
+  .lungnote-landing .brand-story-body {
+    margin: 0 auto;
+  }
+}
+
 .lungnote-landing .doodle-star,
 .lungnote-landing .doodle-arrow,
 .lungnote-landing .doodle-circle {

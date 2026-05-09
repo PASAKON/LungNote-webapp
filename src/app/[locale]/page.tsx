@@ -5,6 +5,7 @@ import { getLandingContent } from "@/components/landing/content";
 import { SketchyFilter } from "@/components/landing/SketchyFilter";
 import { Nav } from "@/components/landing/Nav";
 import { Hero } from "@/components/landing/Hero";
+import { BrandStory } from "@/components/landing/BrandStory";
 import { Features } from "@/components/landing/Features";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Testimonials } from "@/components/landing/Testimonials";
@@ -23,6 +24,8 @@ export default async function Home({ params }: PageProps<"/[locale]">) {
       <SketchyFilter />
       <Nav content={content.nav} />
       <Hero content={content.hero} />
+      <WavyDivider />
+      <BrandStory content={content.brand} />
       <WavyDivider />
       <Features content={content.features} />
       <WavyDivider />
