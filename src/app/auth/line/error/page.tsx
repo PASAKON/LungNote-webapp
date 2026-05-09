@@ -8,6 +8,8 @@ const MESSAGES: Record<string, string> = {
     "ลิงก์หมดอายุหรือถูกใช้ไปแล้ว — กลับไปที่ LINE OA แล้วพิมพ์ 'dashboard' เพื่อรับลิงก์ใหม่",
   create_user_failed: "สร้างบัญชีไม่สำเร็จ — ลองอีกครั้งภายหลัง",
   magic_link_failed: "สร้าง session ไม่สำเร็จ — ลองอีกครั้งภายหลัง",
+  admin_required:
+    "หน้า admin จำกัดเฉพาะผู้ดูแลระบบ — login ด้วย LINE userId ที่อยู่ใน allowlist เท่านั้น",
 };
 
 export default async function AuthLineErrorPage({
