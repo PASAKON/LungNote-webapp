@@ -28,6 +28,16 @@ export class TurnContext {
   /** Done todos cached by the most recent list_done call this turn. */
   private doneList: AgentTodoItem[] | null = null;
 
+  /**
+   * In-flight auto-list promises. When two parallel *_by_position tool
+   * calls race to populate the cache (e.g. delete_by_position(3) and
+   * delete_by_position(5) in the same model response), they share one
+   * underlying list_pending fetch. Each tool awaits the same promise;
+   * whoever finishes first stores the result.
+   */
+  pendingListPromise: Promise<unknown> | null = null;
+  doneListPromise: Promise<unknown> | null = null;
+
   constructor(
     public readonly lineUserId: string | null,
     public readonly trace: TraceCollector,
