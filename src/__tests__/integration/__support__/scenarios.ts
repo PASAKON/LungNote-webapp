@@ -171,16 +171,20 @@ export const SCENARIOS: Scenario[] = [
     },
   },
   {
-    name: "complete by position",
+    name: "complete by name match",
     seedTodos: () => [
       todo("งาน A"),
       todo("งาน B"),
     ],
     userText: "งาน B เสร็จแล้ว",
     expect: {
+      // list_pending may or may not be explicit (server auto-lists).
+      // Require at least: complete_by_position with position 2 (งาน B).
       toolCalls: [
-        // First list_pending may or may not be explicit (server auto-lists).
-        // Just require at least one complete_by_position.
+        {
+          name: "complete_by_position",
+          argsMatch: (a) => a.position === 2,
+        },
       ],
       replyMatches: /เสร็จ|✓|B/,
       finalState: (todos) => {
