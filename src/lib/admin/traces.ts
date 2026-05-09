@@ -45,6 +45,22 @@ export async function listTraces(filters: TraceFilters = {}): Promise<TraceRow[]
   return (data ?? []) as TraceRow[];
 }
 
+/** Fetch one trace row by LINE message trace_id (NOT the row uuid). */
+export async function getTraceByTraceId(
+  traceId: string,
+): Promise<TraceRow | null> {
+  const sb = createAdminClient();
+  const { data, error } = await sb
+    .from("lungnote_chat_traces")
+    .select("*")
+    .eq("trace_id", traceId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return null;
+  return (data as TraceRow | null) ?? null;
+}
+
 /** Fetch one trace by id (uuid). */
 export async function getTrace(id: string): Promise<TraceRow | null> {
   const sb = createAdminClient();
