@@ -93,6 +93,12 @@ function runScenario(scenario: Scenario) {
         const state = getMockState();
         state.todos.push(...scenario.seedTodos());
       }
+      // Seed conversation memory if scenario provides it (simulates polluted
+      // history from prior turns).
+      if (scenario.seedMemory) {
+        const state = getMockState();
+        state.conversationMemory.set(TEST_LINE_USER_ID, scenario.seedMemory());
+      }
 
       const trace = new TraceCollector(
         `qa-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

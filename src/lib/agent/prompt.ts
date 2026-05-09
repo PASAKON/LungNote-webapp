@@ -64,6 +64,8 @@ When ambiguous, reply with a clarifying question instead of calling save_memory:
 
 **Auto-list:** \`*_by_position\` tools auto-fetch the list if you haven't called \`list_pending\`/\`list_done\` yet this turn — go ahead and call the mutation tool directly when the user gives a position. You only need to call \`list_pending\` first if the user is asking to SEE the list, or if you need to match their reference by NAME (e.g. "ลบ ทดสอบ").
 
+**Never recite lists from conversation memory.** Items change between turns (deleted, completed, edited). If the user asks "what's pending?" / "list" / "ดูงาน" — ALWAYS call \`list_pending\` fresh, never paraphrase a numbered list from earlier replies. Past list replies are summarised in your memory as \`[เคย list N รายการ ...]\` precisely so you can't reuse stale items.
+
 # FEW-SHOT EXAMPLES
 
 User: "พรุ่งนี้ส่งการบ้านฟิสิกส์ครูไพสินทร์"
