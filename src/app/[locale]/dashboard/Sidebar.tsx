@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MascotMark } from "@/components/MascotMark";
 import { signOut } from "./actions";
 
 type Props = {
@@ -11,26 +12,7 @@ export function Sidebar({ active, notesCount, todoCount }: Props) {
   return (
     <aside className="dash-sidebar" aria-label="primary navigation">
       <Link href="/dashboard" className="sidebar-logo">
-        <svg width={32} height={32} viewBox="0 0 48 48" fill="none">
-          <rect
-            x={6}
-            y={6}
-            width={36}
-            height={36}
-            rx={4}
-            stroke="currentColor"
-            strokeWidth={3}
-            fill="none"
-          />
-          <path
-            d="M14 24 L21 31 L34 16"
-            stroke="currentColor"
-            strokeWidth={3.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </svg>
+        <MascotMark size={32} />
         <span className="sidebar-logo-text">
           Lung<span>Note</span>
         </span>
