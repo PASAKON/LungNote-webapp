@@ -15,6 +15,40 @@ const args = z.object({
     .describe("User's raw temporal phrase (e.g. 'พรุ่งนี้')."),
 });
 
+/**
+ * Ambiguous strings that should never become a saved todo on their own.
+ * These get blocked at the tool level (not just by prompt) because
+ * conversation memory can poison the model — once it has seen "ทดสอบ →
+ * บันทึก" once, it tends to repeat the pattern even after we add the
+ * "ask for clarification" rule to the system prompt. Belt-and-suspenders.
+ */
+const AMBIGUOUS_SAVE_TEXTS = new Set<string>([
+  "ทดสอบ",
+  "ทดสอบบอท",
+  "test",
+  "testing",
+  "hi",
+  "hello",
+  "สวัสดี",
+  "หวัดดี",
+  "งาน",
+  "todo",
+  "อะไร",
+  "ทำ",
+  "บันทึก",
+  "จด",
+  "เตือน",
+  "ลบ",
+  "ลิส",
+]);
+
+function isAmbiguousSaveText(raw: string): boolean {
+  const t = raw.trim().toLowerCase();
+  if (t.length < 2) return true;
+  if (AMBIGUOUS_SAVE_TEXTS.has(t)) return true;
+  return false;
+}
+
 export const saveMemoryTool: AgentTool<z.infer<typeof args>> = {
   name: "save_memory",
   category: "memory",
@@ -24,6 +58,14 @@ export const saveMemoryTool: AgentTool<z.infer<typeof args>> = {
   async execute(input, ctx) {
     if (!ctx.lineUserId) {
       return { ok: false, reason: "not_linked" };
+    }
+    if (isAmbiguousSaveText(input.text)) {
+      return {
+        ok: false,
+        reason: "ambiguous_text",
+        message:
+          "Text is too short or generic to save as a todo (e.g. 'ทดสอบ', 'test', 'งาน'). Ask the user for more detail (a verb + object or a date) instead of saving. DON'T retry save_memory with the same text.",
+      };
     }
     const result = await saveMemoryRaw({
       lineUserId: ctx.lineUserId,

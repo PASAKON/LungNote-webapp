@@ -79,12 +79,32 @@ export const SCENARIOS: Scenario[] = [
     userText: "ทดสอบ",
     expect: {
       toolCalls: [],
-      replyMatches: /ทดสอบ|ลองพิมพ์|รายละเอียด|งานค้าง|จดเตือน/,
+      replyMatches: /ทดสอบ|ลองพิมพ์|รายละเอียด|งานค้าง|จดเตือน|พิมพ์/,
       replyMustNotMatch: /^บันทึกแล้ว/,
       finalState: (todos) => {
         if (todos.length !== 0) {
           throw new Error(
             `expected no todos saved, got ${todos.length}: ${JSON.stringify(todos.map((t) => t.text))}`,
+          );
+        }
+      },
+    },
+  },
+  {
+    // Production bug regression: even after PR #37 prompt fix, conversation
+    // memory polluted with past "ทดสอบ → บันทึก" turns made Gemini keep
+    // saving. PR adds a code-level block in save_memory so this can't
+    // happen even if the model tries.
+    name: "'ทดสอบ' BLOCKED at tool level (no save even if model tries)",
+    userText: "ทดสอบ",
+    expect: {
+      // We don't care if AI tries save_memory — code blocks it.
+      // We DO care that the final todos are empty.
+      replyMustNotMatch: /^บันทึกแล้ว/,
+      finalState: (todos) => {
+        if (todos.length !== 0) {
+          throw new Error(
+            `expected NO save (code-level block), got: ${todos.map((t) => t.text).join(",")}`,
           );
         }
       },
