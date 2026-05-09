@@ -17,13 +17,13 @@
               "text": "✓",
               "size": "3xl",
               "weight": "bold",
-              "color": "#6aab8e",
+              "color": "#c9a040",
               "align": "center"
             }
           ],
           "width": "56px",
           "height": "56px",
-          "backgroundColor": "#e8f4ed",
+          "backgroundColor": "#f0e4c4",
           "cornerRadius": "50px",
           "justifyContent": "center",
           "alignItems": "center",
@@ -37,11 +37,11 @@
               "type": "text",
               "text": "SAVED",
               "size": "xxs",
-              "color": "#6aab8e",
+              "color": "#c9a040",
               "weight": "bold"
             }
           ],
-          "backgroundColor": "#e8f4ed",
+          "backgroundColor": "#f0e4c4",
           "cornerRadius": "sm",
           "paddingAll": "4px",
           "paddingStart": "8px",
@@ -56,14 +56,14 @@
           "weight": "bold",
           "size": "xl",
           "margin": "md",
-          "color": "#2c2a25",
+          "color": "#3a3020",
           "align": "center"
         },
         {
           "type": "text",
           "text": "โน้ตของคุณถูกบันทึกและ sync เรียบร้อยแล้ว",
           "size": "sm",
-          "color": "#8a8578",
+          "color": "#a08050",
           "wrap": true,
           "margin": "sm",
           "align": "center"
@@ -78,7 +78,7 @@
       "contents": [
         {
           "type": "separator",
-          "color": "#e0ddd4"
+          "color": "#d4c4a0"
         },
         {
           "type": "box",
@@ -88,7 +88,7 @@
               "type": "text",
               "text": "ชื่อโน้ต",
               "size": "xs",
-              "color": "#8a8578",
+              "color": "#a08050",
               "flex": 3
             },
             {
@@ -96,7 +96,7 @@
               "text": "{{note_title}}",
               "size": "xs",
               "weight": "bold",
-              "color": "#2c2a25",
+              "color": "#3a3020",
               "align": "end",
               "flex": 5,
               "wrap": true
@@ -113,7 +113,7 @@
               "type": "text",
               "text": "โฟลเดอร์",
               "size": "xs",
-              "color": "#8a8578",
+              "color": "#a08050",
               "flex": 3
             },
             {
@@ -121,7 +121,7 @@
               "text": "{{folder_name}}",
               "size": "xs",
               "weight": "bold",
-              "color": "#2c2a25",
+              "color": "#3a3020",
               "align": "end",
               "flex": 5
             }
@@ -136,7 +136,7 @@
               "type": "text",
               "text": "บันทึกเมื่อ",
               "size": "xs",
-              "color": "#8a8578",
+              "color": "#a08050",
               "flex": 3
             },
             {
@@ -144,7 +144,7 @@
               "text": "{{saved_at}}",
               "size": "xs",
               "weight": "bold",
-              "color": "#2c2a25",
+              "color": "#3a3020",
               "align": "end",
               "flex": 5
             }
@@ -162,7 +162,7 @@
         {
           "type": "button",
           "style": "primary",
-          "color": "#6aab8e",
+          "color": "#c9a040",
           "action": {
             "type": "uri",
             "label": "เปิดดูโน้ต",
@@ -173,7 +173,7 @@
         {
           "type": "button",
           "style": "link",
-          "color": "#8a8578",
+          "color": "#a08050",
           "action": {
             "type": "uri",
             "label": "กลับหน้า Dashboard",

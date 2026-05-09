@@ -16,7 +16,7 @@ function LiffSkeleton() {
     <main
       style={{
         minHeight: "100dvh",
-        background: "#faf8f4",
+        background: "#f5ead4",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

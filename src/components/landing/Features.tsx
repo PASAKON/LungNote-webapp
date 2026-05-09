@@ -16,7 +16,7 @@ const icons = [
       <path d="M18 22 Q24 20 30 22 T42 22" filter="url(#sketchy)" />
       <path d="M18 30 Q22 28 26 30" filter="url(#sketchy)" />
       <path d="M18 38 Q26 36 34 38 T40 38" filter="url(#sketchy)" />
-      <circle cx={40} cy={10} r={4} fill="#f0d87a" stroke="none" />
+      <circle cx={40} cy={10} r={4} fill="#d4a855" stroke="none" />
     </svg>
   ),
   (
@@ -49,7 +49,7 @@ const icons = [
         d="M8 44 L8 14 C8 12 10 10 12 10 L22 10 L26 16 L44 16 C46 16 48 18 48 20 L48 44 C48 46 46 48 44 48 L12 48 C10 48 8 46 8 44Z"
         filter="url(#sketchy)"
       />
-      <circle cx={28} cy={34} r={3} fill="#6aab8e" stroke="none" />
+      <circle cx={28} cy={34} r={3} fill="#c9a040" stroke="none" />
     </svg>
   ),
 ];

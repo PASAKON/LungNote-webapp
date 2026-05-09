@@ -101,13 +101,13 @@ function Logo() {
           width={36}
           height={36}
           rx={4}
-          stroke="#2c2a25"
+          stroke="#3a3020"
           strokeWidth={3}
           fill="none"
         />
         <path
           d="M14 24 L21 31 L34 16"
-          stroke="#2c2a25"
+          stroke="#3a3020"
           strokeWidth={3.5}
           strokeLinecap="round"
           strokeLinejoin="round"

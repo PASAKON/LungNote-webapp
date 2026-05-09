@@ -1,16 +1,17 @@
 /* LIFF login flow — based on LungNote-design login states */
 .liff-state {
-  --bg: #faf8f4;
-  --surface: #fffef9;
-  --border: #e0ddd4;
-  --muted: #8a8578;
-  --fg: #2c2a25;
-  --accent: #6aab8e;
-  --accent-light: #e8f4ed;
-  --yellow: #f0d87a;
-  --yellow-light: #fdf6dc;
-  --red: #d4685a;
-  --red-light: #fce8e5;
+  /* Cardboard theme — ADR-0013. Mirrors dashboard.css tokens. */
+  --bg: #f5ead4;
+  --surface: #faf5e8;
+  --border: #d4c4a0;
+  --muted: #a08050;
+  --fg: #3a3020;
+  --accent: #c9a040;
+  --accent-light: #f0e4c4;
+  --yellow: #d4a855;
+  --yellow-light: #f0e4c4;
+  --red: #c45a3a;
+  --red-light: #f0d8d0;
 
   background: var(--bg);
   color: var(--fg);
@@ -30,12 +31,13 @@
 
 @media (prefers-color-scheme: dark) {
   .liff-state {
-    --bg: #1e1e1c;
-    --surface: #2a2a28;
-    --border: #3a3835;
-    --fg: #e8e6e0;
-    --accent-light: #1a3328;
-    --red-light: #3d2a26;
+    --bg: #1a1810;
+    --surface: #2a2618;
+    --border: #3d3828;
+    --muted: #8a7850;
+    --fg: #e8e2d0;
+    --accent-light: #3d3420;
+    --red-light: #3d2820;
   }
 }
 
