@@ -151,19 +151,31 @@ async function handleTextAgent(
     ? aiResult.text
     : `ขอโทษ ระบบขัดข้อง — ลองอีกครั้งภายหลังนะ`;
 
-  void replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
+  const replyRes = await replyMessage(ev.replyToken, [
+    { type: "text", text: replyText },
+  ]);
+  trace.step("reply_sent", { status: replyRes.status, ok: replyRes.ok });
   trace.finalize({
     path: "ai",
     replyText,
-    meta: aiResult.ok
-      ? {
-          model: aiResult.meta.model,
-          tokens_in: aiResult.meta.tokensIn,
-          tokens_out: aiResult.meta.tokensOut,
-          cost_usd: aiResult.meta.costEstimate,
-        }
-      : undefined,
-    error: !aiResult.ok ? `${aiResult.reason}: ${aiResult.error ?? ""}` : undefined,
+    meta: {
+      ...(aiResult.ok
+        ? {
+            model: aiResult.meta.model,
+            tokens_in: aiResult.meta.tokensIn,
+            tokens_out: aiResult.meta.tokensOut,
+            cost_usd: aiResult.meta.costEstimate,
+          }
+        : {}),
+      reply_status: replyRes.status,
+      reply_ok: replyRes.ok,
+      ...(replyRes.detail ? { reply_detail: replyRes.detail.slice(0, 500) } : {}),
+    },
+    error: !aiResult.ok
+      ? `${aiResult.reason}: ${aiResult.error ?? ""}`
+      : !replyRes.ok
+        ? `reply_failed: HTTP ${replyRes.status} ${replyRes.detail ?? ""}`.slice(0, 500)
+        : undefined,
     aiIterations: trace.aiIterations,
   });
   return null;
@@ -206,8 +218,16 @@ async function handleTextLegacy(
   const regexReply = matchRegex(text);
   if (regexReply !== null) {
     trace.step("path_regex");
-    void replyMessage(ev.replyToken, [{ type: "text", text: regexReply }]);
-    trace.finalize({ path: "regex", replyText: regexReply });
+    const r = await replyMessage(ev.replyToken, [
+      { type: "text", text: regexReply },
+    ]);
+    trace.step("reply_sent", { status: r.status, ok: r.ok });
+    trace.finalize({
+      path: "regex",
+      replyText: regexReply,
+      meta: { reply_status: r.status, reply_ok: r.ok },
+      error: !r.ok ? `reply_failed: HTTP ${r.status}` : undefined,
+    });
     return null;
   }
 
@@ -218,19 +238,31 @@ async function handleTextLegacy(
     ? aiResult.text
     : `รับข้อความแล้ว: "${text}"\nพิมพ์ 'ช่วย' เพื่อดูคำสั่ง`;
 
-  void replyMessage(ev.replyToken, [{ type: "text", text: replyText }]);
+  const replyRes2 = await replyMessage(ev.replyToken, [
+    { type: "text", text: replyText },
+  ]);
+  trace.step("reply_sent", { status: replyRes2.status, ok: replyRes2.ok });
   trace.finalize({
     path: "ai",
     replyText,
-    meta: aiResult.ok
-      ? {
-          model: aiResult.meta.model,
-          tokens_in: aiResult.meta.tokensIn,
-          tokens_out: aiResult.meta.tokensOut,
-          cost_usd: aiResult.meta.costEstimate,
-        }
-      : undefined,
-    error: !aiResult.ok ? `${aiResult.reason}: ${aiResult.error ?? ""}` : undefined,
+    meta: {
+      ...(aiResult.ok
+        ? {
+            model: aiResult.meta.model,
+            tokens_in: aiResult.meta.tokensIn,
+            tokens_out: aiResult.meta.tokensOut,
+            cost_usd: aiResult.meta.costEstimate,
+          }
+        : {}),
+      reply_status: replyRes2.status,
+      reply_ok: replyRes2.ok,
+      ...(replyRes2.detail ? { reply_detail: replyRes2.detail.slice(0, 500) } : {}),
+    },
+    error: !aiResult.ok
+      ? `${aiResult.reason}: ${aiResult.error ?? ""}`
+      : !replyRes2.ok
+        ? `reply_failed: HTTP ${replyRes2.status} ${replyRes2.detail ?? ""}`.slice(0, 500)
+        : undefined,
     aiIterations: trace.aiIterations,
   });
   return null;
@@ -267,11 +299,17 @@ async function handleMemoryCreate(
   // memory failure must not block the reply.
   void persistTurn(lineUserId, fullUserMessage, replyText);
 
-  void replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  const r = await replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  trace.step("reply_sent", { status: r.status, ok: r.ok });
   trace.finalize({
     path: "memory",
     replyText,
-    error: !result.ok ? `${result.reason}: ${result.error ?? ""}` : undefined,
+    meta: { reply_status: r.status, reply_ok: r.ok },
+    error: !result.ok
+      ? `${result.reason}: ${result.error ?? ""}`
+      : !r.ok
+        ? `reply_failed: HTTP ${r.status} ${r.detail ?? ""}`.slice(0, 500)
+        : undefined,
   });
   return null;
 }
@@ -306,12 +344,21 @@ async function handleMemoryList(
   }
 
   void persistTurn(lineUserId, fullUserMessage, replyText);
-  void replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  const r = await replyMessage(replyToken, [{ type: "text", text: replyText }]);
+  trace.step("reply_sent", { status: r.status, ok: r.ok });
   trace.finalize({
     path: "list",
     replyText,
-    meta: result.ok ? { item_count: result.items.length } : undefined,
-    error: !result.ok ? `${result.reason}: ${result.error ?? ""}` : undefined,
+    meta: {
+      ...(result.ok ? { item_count: result.items.length } : {}),
+      reply_status: r.status,
+      reply_ok: r.ok,
+    },
+    error: !result.ok
+      ? `${result.reason}: ${result.error ?? ""}`
+      : !r.ok
+        ? `reply_failed: HTTP ${r.status} ${r.detail ?? ""}`.slice(0, 500)
+        : undefined,
   });
   return null;
 }
