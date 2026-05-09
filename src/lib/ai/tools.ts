@@ -197,6 +197,8 @@ export async function executeToolCall(
             content: JSON.stringify({ ok: false, reason: "missing_id" }),
           };
         }
+        const invalid = ensureUuidId(call, todoId);
+        if (invalid) return invalid;
         const result = await completeMemory(lineUserId, todoId);
         return { tool_call_id: call.id, content: JSON.stringify(result) };
       }
@@ -208,6 +210,8 @@ export async function executeToolCall(
             content: JSON.stringify({ ok: false, reason: "missing_id" }),
           };
         }
+        const invalid = ensureUuidId(call, todoId);
+        if (invalid) return invalid;
         const result = await deleteMemory(lineUserId, todoId);
         return { tool_call_id: call.id, content: JSON.stringify(result) };
       }
@@ -223,6 +227,8 @@ export async function executeToolCall(
             content: JSON.stringify({ ok: false, reason: "missing_id" }),
           };
         }
+        const invalid = ensureUuidId(call, todoId);
+        if (invalid) return invalid;
         const result = await uncompleteMemory(lineUserId, todoId);
         return { tool_call_id: call.id, content: JSON.stringify(result) };
       }
@@ -256,6 +262,8 @@ export async function executeToolCall(
             content: JSON.stringify({ ok: false, reason: "missing_id" }),
           };
         }
+        const invalid = ensureUuidId(call, todoId);
+        if (invalid) return invalid;
         const patch: {
           text?: string;
           due_at?: string | null;
@@ -290,6 +298,27 @@ export async function executeToolCall(
       content: JSON.stringify({ ok: false, reason: "tool_error", error: message }),
     };
   }
+}
+
+// UUID v4 / v5 / etc. — supabase gen_random_uuid() is v4.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate that the model passed an actual UUID, not a 1-based list index
+ * like "3" (Gemini sometimes confuses the numbered position the user sees
+ * in our reply with the underlying database id). Returns a structured tool
+ * error the model can understand and recover from in the next loop iter.
+ */
+function ensureUuidId(call: ToolCall, todoId: string): ToolResult | null {
+  if (UUID_RE.test(todoId)) return null;
+  return {
+    tool_call_id: call.id,
+    content: JSON.stringify({
+      ok: false,
+      reason: "invalid_id",
+      message: `todo_id must be a UUID (like "550e8400-e29b-41d4-a716-446655440000"), got "${todoId.slice(0, 60)}". The number in a numbered reply is a position, NOT the id. Call list_pending again, look at each item's "id" field, and pass that exact UUID.`,
+    }),
+  };
 }
 
 function parseArgs(raw: string): Record<string, unknown> {
