@@ -71,4 +71,29 @@ export class TurnContext {
     if (!Number.isInteger(position) || position < 1) return null;
     return this.doneList[position - 1] ?? null;
   }
+
+  // ── Reply buffer (multi-bubble) ─────────────────────────────────────
+  /**
+   * When the agent calls `send_text_reply` one or more times, each call
+   * pushes a bubble here. The webhook flushes the buffer into a single
+   * LINE reply with multiple text messages. LINE caps a reply payload at
+   * 5 messages — the tool itself rejects calls past that.
+   */
+  private replyBuffer: string[] = [];
+  /** LINE allows max 5 messages per replyMessage / pushMessage call. */
+  static readonly MAX_BUBBLES = 5;
+
+  pushReply(text: string): { ok: boolean; reason?: string } {
+    if (this.replyBuffer.length >= TurnContext.MAX_BUBBLES) {
+      return { ok: false, reason: "bubble_limit_reached" };
+    }
+    this.replyBuffer.push(text);
+    return { ok: true };
+  }
+  getReplyBubbles(): string[] {
+    return [...this.replyBuffer];
+  }
+  hasReplyBubbles(): boolean {
+    return this.replyBuffer.length > 0;
+  }
 }

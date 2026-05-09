@@ -51,8 +51,14 @@ export const TEST_LINE_USER_ID = LINE_USER_ID;
 export const TEST_USER_ID = USER_ID;
 export const TEST_INBOX_NOTE_ID = NOTE_ID;
 
+// Monotonic counter so each todo() call gets a strictly later created_at
+// than the previous. Without this, same-tick seeds collide on ms timestamps
+// and list_pending's ORDER BY created_at DESC returns a non-deterministic
+// order, which breaks position-based assertions.
+let _todoCounter = 0;
 function todo(text: string, opts: Partial<MockTodo> = {}): MockTodo {
-  const now = new Date().toISOString();
+  _todoCounter += 1;
+  const now = new Date(Date.now() + _todoCounter).toISOString();
   return {
     id: opts.id ?? crypto.randomUUID(),
     user_id: USER_ID,

@@ -14,7 +14,15 @@ const MAX_OUTPUT_TOKENS = 1024;
 export type AgentReply =
   | {
       ok: true;
+      /** Joined bubble text — for trace logs / single-bubble fallback path. */
       text: string;
+      /**
+       * One entry per chat bubble. If the agent didn't call
+       * `send_text_reply`, this is a single-element array containing the
+       * model's free-form text reply. Webhook flushes each bubble as its
+       * own LINE TextMessage in one reply call.
+       */
+      bubbles: string[];
       meta: {
         model: string;
         latencyMs: number;
@@ -134,14 +142,26 @@ export async function runAgent(
       latency_ms: latencyMs,
     });
 
-    const finalText = (result.text ?? "").trim();
-    if (!finalText) {
+    // Multi-bubble: if the agent called send_text_reply, prefer those
+    // bubbles over result.text (which may be empty when the model
+    // routed everything through tool calls). Otherwise fall back to
+    // result.text as a single bubble.
+    const bufferedBubbles = ctx.getReplyBubbles();
+    const fallbackText = (result.text ?? "").trim();
+    const bubbles =
+      bufferedBubbles.length > 0
+        ? bufferedBubbles
+        : fallbackText
+          ? [fallbackText]
+          : [];
+    if (bubbles.length === 0) {
       return {
         ok: false,
         reason: "ai_error",
         error: "agent finished without text reply",
       };
     }
+    const finalText = bubbles.join("\n");
 
     void saveMemory(memoryKey, history, userText, finalText).catch(
       (err: unknown) => {
@@ -152,6 +172,7 @@ export async function runAgent(
     return {
       ok: true,
       text: finalText,
+      bubbles,
       meta: {
         model: resolved.modelId,
         latencyMs,
