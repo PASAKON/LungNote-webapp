@@ -48,8 +48,17 @@ export default async function TraceDetail({
         {typeof meta.tokens_in === "number" && (
           <KV label="Tokens" value={`${meta.tokens_in} in / ${meta.tokens_out} out`} />
         )}
+        {typeof meta.cache_read === "number" && (meta.cache_read as number) > 0 && (
+          <KV
+            label="Cache"
+            value={`${meta.cache_read} read${typeof meta.cache_create === "number" && (meta.cache_create as number) > 0 ? ` / ${meta.cache_create} write` : ""} (${Math.round(((meta.cache_read as number) / (meta.tokens_in as number)) * 100)}% of input)`}
+          />
+        )}
         {typeof meta.cost_usd === "number" && (
-          <KV label="Cost" value={`$${(meta.cost_usd as number).toFixed(6)}`} />
+          <KV
+            label="Cost"
+            value={`$${(meta.cost_usd as number).toFixed(6)}${typeof meta.cache_read === "number" && (meta.cache_read as number) > 0 ? " (cache-aware)" : ""}`}
+          />
         )}
         {typeof meta.latency_ms === "number" && (
           <KV label="Latency" value={`${meta.latency_ms} ms`} />
