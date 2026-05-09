@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { verifySignature } from "@/lib/line/verify";
 import { replyMessage, displayLoadingAnimation } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
+import { runAgent, TurnContext } from "@/lib/agent/runtime";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import { saveMemoryFromLine } from "@/lib/memory/save";
 import { listPendingFromLine } from "@/lib/memory/list";
@@ -134,9 +135,9 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
 }
 
 /**
- * Full agent mode — AI is the single decision-maker. Every message routes
- * to generateChatReply with the full tool set. The AI uses tools to save,
- * list, edit, delete, and even mint dashboard links.
+ * Full agent mode (v2) — Vercel AI SDK + custom TurnContext + position-aware
+ * tools. Each turn instantiates a fresh TurnContext so the agent's working
+ * memory (cached pending/done lists) cannot leak across users or turns.
  */
 async function handleTextAgent(
   ev: LineTextMessageEvent,
@@ -145,8 +146,8 @@ async function handleTextAgent(
   trace: TraceCollector,
 ): Promise<unknown> {
   trace.step("path_ai");
-  const aiUserId = userId ?? "anonymous";
-  const aiResult = await generateChatReply(aiUserId, text, trace);
+  const ctx = new TurnContext(userId ?? null, trace);
+  const aiResult = await runAgent(text, ctx);
   const replyText = aiResult.ok
     ? aiResult.text
     : `ขอโทษ ระบบขัดข้อง — ลองอีกครั้งภายหลังนะ`;
