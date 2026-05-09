@@ -83,11 +83,7 @@ export default async function TracesList({
               const meta = (t.meta as { tokens_in?: number; tokens_out?: number; latency_ms?: number }) ?? {};
               const tokenSum = (meta.tokens_in ?? 0) + (meta.tokens_out ?? 0);
               return (
-                <tr
-                  key={t.id}
-                  onClick={() => {}}
-                  // Click anywhere on the row → drill-down
-                >
+                <tr key={t.id}>
                   <td>{formatRelative(t.created_at)}</td>
                   <td><TracePathPill path={t.path} /></td>
                   <td title={t.line_user_id ?? ""} style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 11 }}>
