@@ -7,6 +7,9 @@ import {
   uncompleteMemory,
   updateMemory,
 } from "@/lib/memory/mutate";
+import { mintToken } from "@/lib/auth/line-link";
+
+const SITE_URL = "https://lungnote.com";
 
 /**
  * OpenAI/OpenRouter tool definitions for the LungNote chat agent — ADR-0012 Phase 2.
@@ -142,6 +145,15 @@ export const TOOL_DEFS = [
   {
     type: "function" as const,
     function: {
+      name: "send_dashboard_link",
+      description:
+        "Mint a one-time login URL for the user's web dashboard at lungnote.com. Call this when the user asks to open the dashboard / website / wants to log in / wants to manage their notes on the web — e.g. 'dashboard', 'เปิดเว็บ', 'ลิงก์', 'login', 'เข้าระบบ', 'เปิดแอป'. Also call when an unlinked user needs to link their account before save/list/edit/delete tools will work. The tool returns a URL — include it verbatim in your reply (don't shorten, don't paraphrase). Each link is single-use and expires in 5 minutes.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
       name: "delete_memory",
       description:
         "Permanently delete a todo. Call this when the user wants to remove an item — e.g. 'เอาทดสอบออก', 'ลบงาน X', 'remove the meeting'. You MUST call list_pending first to get the item id; never invent an id. If the user's reference is ambiguous, ask them to clarify before calling this tool. Deletion is irreversible — be conservative and confirm in your reply that the named item was removed.",
@@ -255,6 +267,28 @@ export async function executeToolCall(
         }
         const result = await uncompleteMemory(lineUserId, todoId);
         return { tool_call_id: call.id, content: JSON.stringify(result) };
+      }
+      case "send_dashboard_link": {
+        try {
+          const { token } = await mintToken(lineUserId);
+          const url = `${SITE_URL}/auth/line?t=${token}`;
+          return {
+            tool_call_id: call.id,
+            content: JSON.stringify({
+              ok: true,
+              url,
+              expires_in_minutes: 5,
+              instructions:
+                "Reply naturally and include this URL on its own line so LINE auto-renders the link preview.",
+            }),
+          };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "unknown";
+          return {
+            tool_call_id: call.id,
+            content: JSON.stringify({ ok: false, reason: "mint_failed", error: msg }),
+          };
+        }
       }
       case "update_memory": {
         const todoId = typeof args.todo_id === "string" ? args.todo_id : "";
