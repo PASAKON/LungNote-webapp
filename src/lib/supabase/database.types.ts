@@ -224,6 +224,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      lungnote_user_memory: {
+        Row: {
+          line_user_id: string;
+          memory: unknown;
+          updated_at: string;
+        };
+        Insert: {
+          line_user_id: string;
+          memory?: unknown;
+          updated_at?: string;
+        };
+        Update: {
+          line_user_id?: string;
+          memory?: unknown;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       lungnote_chat_traces: {
         Row: {
           id: string;

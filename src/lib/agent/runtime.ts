@@ -1,19 +1,15 @@
 import "server-only";
-import { generateText } from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText, type ModelMessage } from "ai";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import { TurnContext } from "./context";
 import { ALL_TOOLS } from "./tools";
 import { buildToolSet } from "./registry";
-import { buildSystemPrompt } from "./prompt";
+import { buildSystemPrompt, buildStaticSystemPrompt, buildTodayBlock } from "./prompt";
+import { resolveModel } from "./model";
+import { loadUserMemory } from "@/lib/agent/user_memory";
 
-const DEFAULT_MODEL = "google/gemini-2.5-flash";
 const MAX_STEPS = 5;
-const MAX_OUTPUT_TOKENS = 400;
-
-// Approximate Gemini 2.5 Flash pricing (USD per 1M tokens). Update if model changes.
-const PRICE_INPUT_PER_M = 0.075;
-const PRICE_OUTPUT_PER_M = 0.3;
+const MAX_OUTPUT_TOKENS = 1024;
 
 export type AgentReply =
   | {
@@ -26,6 +22,7 @@ export type AgentReply =
         tokensOut: number;
         costEstimate: number;
         steps: number;
+        cacheHit?: boolean;
       };
     }
   | {
@@ -35,41 +32,75 @@ export type AgentReply =
     };
 
 /**
- * Run one agent turn. Pulls conversation memory, builds the tool set bound
- * to a TurnContext, calls Vercel AI SDK with maxSteps=5, then persists the
- * user + final-assistant pair into rolling memory.
+ * Run one agent turn. Pulls conversation memory + persistent user memory,
+ * builds the tool set bound to a TurnContext, calls Vercel AI SDK with
+ * maxSteps=5, then persists the user + final-assistant pair into rolling
+ * memory.
  *
- * Tool calls/results are NOT persisted into conversation memory — they're
- * intermediate scaffolding and would inflate every subsequent turn's prompt.
- * The trace store (lungnote_chat_traces) keeps the full record for admin.
+ * Caching: when the resolved provider is Anthropic-direct, the static
+ * system prompt is sent as a separate cacheable block via providerOptions.
+ * Today's date + per-user memory are sent as a non-cached block so the
+ * cache key stays stable across all users for the static portion. With
+ * Sonnet, this trims input tokens ~50-60% on cache hits.
  */
 export async function runAgent(
   userText: string,
   ctx: TurnContext,
 ): Promise<AgentReply> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return { ok: false, reason: "ai_error", error: "OPENROUTER_API_KEY missing" };
+  let resolved;
+  try {
+    resolved = resolveModel();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, reason: "ai_error", error: msg };
   }
-  const memoryKey = ctx.lineUserId ?? "anonymous";
-  const memory = await loadMemory(memoryKey);
-  ctx.trace.historyCount = memory.length;
-  ctx.trace.step("memory_load", { count: memory.length });
 
-  const openrouter = createOpenRouter({ apiKey });
-  const model = openrouter.chat(DEFAULT_MODEL);
+  const memoryKey = ctx.lineUserId ?? "anonymous";
+  const [history, userMemory] = await Promise.all([
+    loadMemory(memoryKey),
+    ctx.lineUserId
+      ? loadUserMemory(ctx.lineUserId).catch(() => ({}))
+      : Promise.resolve({}),
+  ]);
+  ctx.trace.historyCount = history.length;
+  ctx.trace.step("memory_load", {
+    count: history.length,
+    user_memory_keys: Object.keys(userMemory).length,
+  });
+
   const tools = buildToolSet(ALL_TOOLS, ctx);
 
-  const messages = [
-    { role: "system" as const, content: buildSystemPrompt(new Date()) },
-    ...memory.map((m) => ({ role: m.role, content: m.content })),
-    { role: "user" as const, content: userText },
+  // Static, cacheable: prompt + tool decision tree (everything not user-specific).
+  const staticPrompt = buildStaticSystemPrompt();
+  // Variable, NOT cached: today's date + per-user memory.
+  const dynamicPrompt = buildDynamicSystemSuffix(userMemory);
+
+  // System messages — for Anthropic, two blocks with cacheControl on the
+  // static one. For OpenRouter, single concatenated string (caching handled
+  // automatically by OpenRouter when prefix is stable).
+  const systemMessages: ModelMessage[] = resolved.supportsCache
+    ? [
+        {
+          role: "system",
+          content: staticPrompt,
+          providerOptions: {
+            anthropic: { cacheControl: { type: "ephemeral" } },
+          },
+        },
+        { role: "system", content: dynamicPrompt },
+      ]
+    : [{ role: "system", content: staticPrompt + "\n\n" + dynamicPrompt }];
+
+  const messages: ModelMessage[] = [
+    ...systemMessages,
+    ...history.map((m) => ({ role: m.role, content: m.content }) as ModelMessage),
+    { role: "user", content: userText },
   ];
 
   const start = Date.now();
   try {
     const result = await generateText({
-      model,
+      model: resolved.model,
       messages,
       tools,
       stopWhen: ({ steps }) => steps.length >= MAX_STEPS,
@@ -80,15 +111,26 @@ export async function runAgent(
     const tokensIn = result.usage?.inputTokens ?? 0;
     const tokensOut = result.usage?.outputTokens ?? 0;
     const costEstimate =
-      (tokensIn * PRICE_INPUT_PER_M + tokensOut * PRICE_OUTPUT_PER_M) /
+      (tokensIn * resolved.priceInputPerM + tokensOut * resolved.priceOutputPerM) /
       1_000_000;
     const stepCount = result.steps?.length ?? 1;
 
+    // Cache hit detection — Anthropic returns cached/uncached token splits.
+    const providerMeta =
+      (result.providerMetadata as
+        | { anthropic?: { cacheReadInputTokens?: number; cacheCreationInputTokens?: number } }
+        | undefined) ?? undefined;
+    const cacheRead = providerMeta?.anthropic?.cacheReadInputTokens ?? 0;
+    const cacheHit = cacheRead > 0;
+
     ctx.trace.aiIterations = stepCount;
     ctx.trace.step("agent_done", {
+      provider: resolved.provider,
+      model: resolved.modelId,
       steps: stepCount,
       tokens_in: tokensIn,
       tokens_out: tokensOut,
+      cache_read: cacheRead,
       latency_ms: latencyMs,
     });
 
@@ -101,8 +143,7 @@ export async function runAgent(
       };
     }
 
-    // Persist user + final assistant turn (skip tool scaffolding).
-    void saveMemory(memoryKey, memory, userText, finalText).catch(
+    void saveMemory(memoryKey, history, userText, finalText).catch(
       (err: unknown) => {
         console.error("saveMemory rejected", { memoryKey, err });
       },
@@ -112,12 +153,13 @@ export async function runAgent(
       ok: true,
       text: finalText,
       meta: {
-        model: DEFAULT_MODEL,
+        model: resolved.modelId,
         latencyMs,
         tokensIn,
         tokensOut,
         costEstimate,
         steps: stepCount,
+        cacheHit,
       },
     };
   } catch (err) {
@@ -136,5 +178,16 @@ export async function runAgent(
   }
 }
 
+function buildDynamicSystemSuffix(userMemory: Record<string, unknown>): string {
+  const today = buildTodayBlock(new Date());
+  const memBlock =
+    Object.keys(userMemory).length > 0
+      ? `\n\n# USER MEMORY (persistent facts about this user — use freely; never expose JSON)\n${JSON.stringify(userMemory, null, 0)}`
+      : "";
+  return `${today}${memBlock}`;
+}
+
 // Re-export for tests / external use.
 export { TurnContext };
+// Quiet unused warning if buildSystemPrompt no longer used here directly.
+void buildSystemPrompt;

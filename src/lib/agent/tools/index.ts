@@ -9,6 +9,7 @@ import { deleteByPositionTool } from "./memory/delete_by_position";
 import { updateByPositionTool } from "./memory/update_by_position";
 import { uncompleteByPositionTool } from "./memory/uncomplete_by_position";
 import { sendDashboardLinkTool } from "./auth/send_dashboard_link";
+import { updateMemoryTool } from "./profile/update_memory";
 
 /**
  * All tools available to the agent. Add a new tool by:
@@ -32,6 +33,8 @@ export const ALL_TOOLS: AgentTool<any>[] = [
   deleteByPositionTool,
   // Auth
   sendDashboardLinkTool,
+  // Profile (persistent user facts)
+  updateMemoryTool,
 ];
 
 export {
@@ -43,4 +46,5 @@ export {
   updateByPositionTool,
   uncompleteByPositionTool,
   sendDashboardLinkTool,
+  updateMemoryTool,
 };

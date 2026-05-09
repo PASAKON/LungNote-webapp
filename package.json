@@ -19,6 +19,7 @@
     "line:rich-menu": "./scripts/setup-line-rich-menu.sh"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.76",
     "@base-ui/react": "^1.4.1",
     "@line/liff": "^2.28.0",
     "@openrouter/ai-sdk-provider": "^2.9.0",
