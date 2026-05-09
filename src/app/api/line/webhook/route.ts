@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifySignature } from "@/lib/line/verify";
-import { replyMessage } from "@/lib/line/client";
+import { replyMessage, displayLoadingAnimation } from "@/lib/line/client";
 import { generateChatReply } from "@/lib/ai/reply";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import { saveMemoryFromLine } from "@/lib/memory/save";
@@ -117,6 +117,15 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   const text = ev.message.text.trim();
   const userId = ev.source.type === "user" ? ev.source.userId : undefined;
   const trace = new TraceCollector(ev.message.id, userId, text);
+
+  // Fire the LINE typing indicator immediately so the user sees "..." while
+  // the AI / DB work runs. Best-effort: failure is silent; the dots auto-
+  // clear when our reply lands or after 20s. Skip if no userId (group/room).
+  if (userId) {
+    void displayLoadingAnimation(userId, 20).catch((err: unknown) => {
+      console.error("displayLoadingAnimation failed", { userId, err });
+    });
+  }
 
   if (isAgentMode()) {
     return handleTextAgent(ev, text, userId, trace);
