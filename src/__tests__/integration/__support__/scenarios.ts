@@ -259,6 +259,116 @@ export const SCENARIOS: Scenario[] = [
     },
   },
   {
+    // User screenshot 21:01 reported "ลบ 4 5 7" deleted positions 3,4,6
+    // (off-by-one or stale list). Verify positions match exactly.
+    name: "delete 3 items 'ลบ 4 5 7' — exact positions",
+    seedTodos: () => [
+      todo("คุยกับ Exness 5555"),
+      todo("ประชุมกับ Exness"),
+      todo("ทดสอบ admin viewer"),
+      todo("เพิ่มเพื่อ"),       // pos 4 — should delete
+      todo("ทดสอบ"),           // pos 5 — should delete
+      todo("สร้าง Branding"),
+      todo("ทดสอบ extra"),     // pos 7 — should delete
+    ],
+    userText: "ลบ 4 5 7",
+    expect: {
+      toolCalls: [
+        { name: "delete_by_position", argsMatch: (a) => a.position === 4 },
+        { name: "delete_by_position", argsMatch: (a) => a.position === 5 },
+        { name: "delete_by_position", argsMatch: (a) => a.position === 7 },
+      ],
+      finalState: (todos) => {
+        const remaining = todos.map((t) => t.text).sort();
+        const expected = [
+          "คุยกับ Exness 5555",
+          "ประชุมกับ Exness",
+          "ทดสอบ admin viewer",
+          "สร้าง Branding",
+        ].sort();
+        if (
+          remaining.length !== 4 ||
+          JSON.stringify(remaining) !== JSON.stringify(expected)
+        ) {
+          throw new Error(
+            `expected 4 remaining matching ${expected.join(",")}, got ${remaining.join(",")}`,
+          );
+        }
+      },
+    },
+  },
+  {
+    // "ลบ 5 6" when only 4 items exist (out_of_range path)
+    name: "delete out-of-range — apologize, no DB change",
+    seedTodos: () => [todo("A"), todo("B"), todo("C"), todo("D")],
+    userText: "ลบ 5 6",
+    expect: {
+      replyMatches: /4|ไม่เจอ|ขอโทษ|ตำแหน่ง/,
+      finalState: (todos) => {
+        if (todos.length !== 4) {
+          throw new Error(
+            `expected NO deletes (out of range), got ${todos.length} remaining`,
+          );
+        }
+      },
+    },
+  },
+  {
+    // Reschedule with relative date phrase
+    name: "reschedule by name 'เลื่อน ประชุม เป็นวันศุกร์'",
+    seedTodos: () => [
+      todo("ประชุมทีม", { due_at: null, due_text: null }),
+    ],
+    userText: "เลื่อน ประชุม เป็นวันศุกร์",
+    expect: {
+      toolCalls: [
+        {
+          name: "update_by_position",
+          argsMatch: (a) =>
+            a.position === 1 &&
+            (typeof a.due_at === "string" || a.due_at === null) &&
+            (typeof a.due_text === "string" || a.due_text === null),
+        },
+      ],
+      replyMatches: /เลื่อน|ศุกร์|✓/,
+      finalState: (todos) => {
+        const m = todos.find((t) => t.text === "ประชุมทีม");
+        if (!m || !m.due_at) {
+          throw new Error(`expected due_at set, got ${m?.due_at}`);
+        }
+      },
+    },
+  },
+  {
+    // Multi-save in one user message
+    name: "multi-save 'จด กินข้าว, ออกกำลัง, นอน'",
+    userText: "จด กินข้าว, ออกกำลัง, นอน",
+    expect: {
+      toolCalls: [
+        {
+          name: "save_memory",
+          argsMatch: (a) =>
+            typeof a.text === "string" && /กินข้าว/.test(a.text),
+        },
+        {
+          name: "save_memory",
+          argsMatch: (a) =>
+            typeof a.text === "string" && /ออกกำลัง/.test(a.text),
+        },
+        {
+          name: "save_memory",
+          argsMatch: (a) => typeof a.text === "string" && /นอน/.test(a.text),
+        },
+      ],
+      finalState: (todos) => {
+        const texts = todos.map((t) => t.text).join(" ");
+        if (!/กินข้าว/.test(texts) || !/ออกกำลัง/.test(texts) || !/นอน/.test(texts)) {
+          throw new Error(`expected 3 saved, got: ${texts}`);
+        }
+      },
+    },
+  },
+  {
     name: "explicit save with prefix 'จด ซื้อนม'",
     userText: "จด ซื้อนม",
     expect: {
