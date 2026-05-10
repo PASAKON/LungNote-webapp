@@ -36,7 +36,32 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getUser();
+  // getUser auto-refreshes if access_token expired. If the refresh
+  // token is invalid (rotated / orphaned), Supabase throws and the
+  // middleware would 500 on every page render. Swallow the error +
+  // clear the stale sb-* cookies so the user can re-auth cleanly.
+  try {
+    await supabase.auth.getUser();
+  } catch (err) {
+    console.log(
+      JSON.stringify({
+        tag: "liff_auth",
+        ts: Date.now(),
+        step: "middleware_refresh_error",
+        msg: err instanceof Error ? err.message : String(err),
+      }),
+    );
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith("sb-")) {
+        response.cookies.set(c.name, "", {
+          path: "/",
+          maxAge: 0,
+          ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+        });
+        response.cookies.set(c.name, "", { path: "/", maxAge: 0 });
+      }
+    }
+  }
 
   return response;
 }

@@ -107,10 +107,26 @@ export async function POST(req: NextRequest) {
   // throws "Invalid Refresh Token: Refresh Token Not Found" before our
   // new session can be set. Wiping the sb-* cookies first lets verifyOtp
   // create the new session cleanly.
+  // Domain-aware cookie clear. Production sets sb-* cookies on
+  // .lungnote.com so admin.lungnote.com + www share the session.
+  // cookies().delete(name) without domain only kills host-scoped
+  // cookies, leaving the domain-scoped one. Set value="" + maxAge=0
+  // + matching domain to evict properly. Otherwise the browser keeps
+  // serving the stale refresh_token on the next page render.
   const cookieStore = await cookies();
+  const COOKIE_DOMAIN =
+    process.env.VERCEL_ENV === "production" ? ".lungnote.com" : undefined;
   const stale = cookieStore.getAll().filter((c) => c.name.startsWith("sb-"));
-  for (const c of stale) cookieStore.delete(c.name);
-  dbg("stale_cookies_cleared", { count: stale.length });
+  for (const c of stale) {
+    cookieStore.set(c.name, "", {
+      path: "/",
+      maxAge: 0,
+      ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+    });
+    // Also kill the host-scoped variant if any exists.
+    cookieStore.set(c.name, "", { path: "/", maxAge: 0 });
+  }
+  dbg("stale_cookies_cleared", { count: stale.length, domain: COOKIE_DOMAIN ?? "host" });
 
   const supabase = await createServerClient();
   const { error: verifyErr } = await supabase.auth.verifyOtp({
