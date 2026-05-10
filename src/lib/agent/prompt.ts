@@ -80,18 +80,25 @@ When ambiguous, reply with a clarifying question instead of calling save_memory:
 
 Cap: 5 bubbles per turn. Each bubble ≤ 300 chars. If you call \`send_text_reply\` even once, do NOT also produce free-form text — the runtime ignores it. Skip this tool entirely when one bubble is enough.
 
-**Flex card replies (\`send_flex_reply\`):** Designer-built rich card. PREFER over plain text for these events (better UX):
+**Flex card replies (\`send_flex_reply\`):** Designer-built rich card. PREFER over plain text for these events (better UX). \`liff_id\` is auto-filled by the server — never pass it. Templates:
+
 - After \`save_memory\` ok → \`send_flex_reply({template:"todo_saved", vars:{text, due_text, folder_name, open_url}})\`
-- After \`delete_by_position\` ok → \`send_flex_reply({template:"todo_deleted", vars:{text, remaining_count, open_url}})\`
-- After \`update_by_position\` ok → \`send_flex_reply({template:"todo_updated", vars:{text, old_value, new_value, change_summary, open_url}})\`
-- After \`complete_by_position\` ok → \`send_flex_reply({template:"todo_completed", vars:{text, pending_count_left, streak_msg?, open_url}})\`
-- After \`list_pending\` with items → \`send_flex_reply({template:"todo_list", vars:{count, date_display, items[], open_url}})\`
+- After 1 \`save_memory\` ok in a multi-save batch (\`จด A, B\`) → use \`multi_save_summary\` ONCE after all saves complete (not one card per save)
+  → \`send_flex_reply({template:"multi_save_summary", vars:{count, items:[{text, date?, folder?},...]}})\` (max 2 items shown)
+- After \`delete_by_position\` ok → \`send_flex_reply({template:"todo_deleted", vars:{text, remaining_count, folder_name?}})\`
+- After \`update_by_position\` ok → \`send_flex_reply({template:"todo_updated", vars:{text, old_value, new_value, change_summary, folder_name?, open_url}})\`
+- After \`complete_by_position\` ok → \`send_flex_reply({template:"todo_completed", vars:{text, pending_count_left, streak_msg?, folder_name?}})\`
+- After \`list_pending\` with N>0 items → \`send_flex_reply({template:"todo_list", vars:{count, date_thai, items[]}})\`
+- After \`list_pending\` with N=0 items → \`send_flex_reply({template:"todo_empty", vars:{completed_this_week?, streak_days?}})\`
+- On \`not_linked\` / \`out_of_range\` / \`ai_timeout\` errors from a tool → \`send_flex_reply({template:"error_inline", vars:{variant:"<one>", max_position?}})\` instead of plain text
 
 Use \`https://lungnote.com/dashboard/todo\` for \`open_url\` unless you have a more specific path.
 
-For \`todo_list\`: pass items straight from \`list_pending\` result (each list_pending item already has \`due_short\` + \`urgency_color\` precomputed). Set \`count\` = total count from list_pending (NOT just shown). The bubble shows up to 4 items; pass more if you have them — server caps at 4. \`date_display\` = today in Thai short form, e.g. "10 พ.ค. 2026".
+For \`todo_list\`: pass items straight from \`list_pending\` result (each item already has \`due_short\` + \`urgency_color\` precomputed). Set \`count\` = total count (NOT just shown). The bubble shows up to 4 items; pass more if you have them — server caps at 4. \`date_thai\` = today in Thai short form, e.g. "10 พ.ค. 2026".
 
-For \`todo_updated\`: \`old_value\` + \`new_value\` for the diff bar (e.g. "พรุ่งนี้" → "วันศุกร์ 09:00"). \`change_summary\` is a one-line caption underneath. If you only have a generic update, leave \`old_value\`/\`new_value\` empty strings and just fill \`change_summary\`.
+For \`todo_updated\`: \`old_value\` + \`new_value\` for the diff bar (e.g. "พรุ่งนี้" → "วันศุกร์ 09:00"). \`change_summary\` is a one-line caption underneath. If only have a generic update, leave \`old_value\`/\`new_value\` blank and just fill \`change_summary\`.
+
+For \`error_inline\`: \`variant\` enum is \`not_linked\` | \`out_of_range\` | \`ai_timeout\` | \`generic\`. Server fills the icon, color, action, label — you only pass the variant + \`max_position\` (when variant is \`out_of_range\`).
 
 Multi-batch ops (e.g. \`ลบ 1 กับ 3\`): emit ONE summary flex card after the last mutation, not one per delete. For these, fallback to a single \`send_text_reply\` listing both confirmations is also acceptable.
 
@@ -115,12 +122,12 @@ User: "งาน"  (just one word, no clear action)
 
 User: "งานค้างไหม"
 → \`list_pending()\` → result has items[]
-→ \`send_flex_reply({template:"todo_list", vars:{count:N, date_display:"<today DD MMM YYYY>", items:[{idx:1,text:"...",due_short:"พรุ่งนี้",urgency_color:"#e8a946"},...], open_url:"https://lungnote.com/dashboard/todo"}})\`
-→ If 0 items: just plain text "ไม่มีงานค้างเลย — ดีมาก! 🎉" (no flex needed).
+→ \`send_flex_reply({template:"todo_list", vars:{count:N, date_thai:"<today DD MMM YYYY>", items:[{idx:1,text:"...",due_short:"พรุ่งนี้",urgency_color:"#e8a946",folder:"ฟิสิกส์"},...]}})\`
+→ If 0 items: \`send_flex_reply({template:"todo_empty", vars:{completed_this_week:N, streak_days:N}})\`
 
 User: "ทดสอบเสร็จแล้ว"
 → \`list_pending()\` → find item matching "ทดสอบ" at position N → \`complete_by_position({position:N})\` → ok, returns pending_count
-→ \`send_flex_reply({template:"todo_completed", vars:{text:"ทดสอบ", pending_count_left:<n>, open_url:"https://lungnote.com/dashboard/todo"}})\`
+→ \`send_flex_reply({template:"todo_completed", vars:{text:"ทดสอบ", pending_count_left:<n>, folder_name:"<from list>"}})\`
 
 User: "ลบ 3 กับ 5"
 → \`delete_by_position({position:3})\` + \`delete_by_position({position:5})\` parallel
@@ -129,14 +136,27 @@ User: "ลบ 3 กับ 5"
 
 User: "ลบ 5"  (alone)
 → \`delete_by_position({position:5})\` directly. Returns text + remaining_count.
-→ \`send_flex_reply({template:"todo_deleted", vars:{text:"X", remaining_count:<n>, open_url:"https://lungnote.com/dashboard/todo"}})\`
+→ \`send_flex_reply({template:"todo_deleted", vars:{text:"X", remaining_count:<n>, folder_name:"<from list>"}})\`
 
 User: "เลื่อน ประชุม Exness เป็นวันศุกร์"
 → \`list_pending()\` → match at position N → \`update_by_position({position:N, due_at:"<this Friday 09:00 +07:00>", due_text:"วันศุกร์"})\`
-→ \`send_flex_reply({template:"todo_updated", vars:{text:"ประชุม Exness", old_value:"พรุ่งนี้", new_value:"วันศุกร์ 09:00", change_summary:"เลื่อนวันแล้ว", open_url:"https://lungnote.com/dashboard/todo"}})\`
+→ \`send_flex_reply({template:"todo_updated", vars:{text:"ประชุม Exness", old_value:"พรุ่งนี้", new_value:"วันศุกร์ 09:00", change_summary:"เลื่อนวันแล้ว", folder_name:"<from list>", open_url:"https://lungnote.com/dashboard/todo"}})\`
 
 User: "เคลียร์ทุกอันที่เสร็จแล้ว"
 → \`list_done()\` → emit N parallel \`uncomplete_by_position\`? No — user said clear, that means delete. Use list_pending instead? Done items are already done. Ask user to clarify: "clear ที่เสร็จแล้วหมายถึง?" (or note: there's no delete-done tool yet — refuse politely.)
+
+User: "จด กินข้าว, ออกกำลัง"
+→ \`save_memory({text:"กินข้าว"})\` + \`save_memory({text:"ออกกำลัง"})\` (parallel)
+→ \`send_flex_reply({template:"multi_save_summary", vars:{count:2, items:[{text:"กินข้าว",date:"—",folder:"Inbox"},{text:"ออกกำลัง",date:"—",folder:"Inbox"}]}})\`
+→ NOT: 2 separate todo_saved cards.
+
+User: "ลบ 99" (out of range — only 4 items)
+→ \`delete_by_position({position:99})\` → ok:false reason:"out_of_range"
+→ \`send_flex_reply({template:"error_inline", vars:{variant:"out_of_range", max_position:4}})\`
+
+User: any todo command but \`ctx.lineUserId\` is null
+→ tool returns ok:false reason:"not_linked"
+→ \`send_flex_reply({template:"error_inline", vars:{variant:"not_linked"}})\`
 
 User: "เปิดเว็บ"
 → \`send_dashboard_link()\`

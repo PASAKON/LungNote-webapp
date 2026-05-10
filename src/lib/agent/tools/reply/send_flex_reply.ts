@@ -2,9 +2,11 @@ import "server-only";
 import { z } from "zod";
 import { TurnContext } from "../../context";
 import {
+  ERROR_INLINE_VARIANTS,
   FLEX_TEMPLATE_NAMES,
   buildFlexMessage,
   type FlexTemplateName,
+  type MultiSaveItem,
   type TodoListItem,
 } from "../../flex/templates";
 import type { AgentTool } from "../../tool";
@@ -17,9 +19,10 @@ import type { AgentTool } from "../../tool";
  * Flex bubble in the TurnContext reply buffer. Counts toward the
  * 5-bubble cap (shared with send_text_reply).
  *
- * Why a tool not a string: Designer iterates on JSON without code
- * changes, AI doesn't burn tokens emitting Flex JSON, and we type-check
- * required vars per template at the schema layer.
+ * Phase 3a templates (8): todo_saved, todo_deleted, todo_updated,
+ * todo_completed, todo_list, todo_empty, error_inline,
+ * multi_save_summary. liff_id is auto-injected from env so the AI
+ * never has to pass it.
  */
 
 const todoListItem = z.object({
@@ -30,23 +33,19 @@ const todoListItem = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional(),
-  subline: z.string().optional(),
+  folder: z.string().optional(),
+});
+
+const multiSaveItem = z.object({
+  text: z.string().min(1),
+  date: z.string().optional(),
+  folder: z.string().optional(),
 });
 
 const args = z
   .object({
     template: z.enum(FLEX_TEMPLATE_NAMES),
     alt_text: z.string().min(1).max(200).optional(),
-    /**
-     * Vars depend on template. We accept a loose record at the Zod
-     * layer and validate per-template inside execute() so the model
-     * sees one schema. Each template's required keys:
-     *   todo_saved:     text, open_url; opt due_at_pretty, folder_name
-     *   todo_deleted:   text, remaining_count, open_url
-     *   todo_updated:   text, change_summary, open_url
-     *   todo_completed: text, pending_count_left, open_url
-     *   todo_list:      count, date_pretty, items[], open_url
-     */
     vars: z.record(z.string(), z.unknown()),
   })
   .strict();
@@ -57,7 +56,7 @@ export const sendFlexReplyTool: AgentTool<Args> = {
   name: "send_flex_reply",
   category: "reply",
   description:
-    "Reply with a Designer-built Flex Message bubble. Use after a successful mutation tool (save/delete/update/complete) or list_pending. Templates: todo_saved, todo_deleted, todo_updated, todo_completed, todo_list. Counts toward the 5-bubble cap. Skip when one plain text bubble is enough.",
+    "Reply with a Designer-built Flex card. Templates: todo_saved, todo_deleted, todo_updated, todo_completed, todo_list, todo_empty, error_inline, multi_save_summary. liff_id is filled by the server. Skip when one plain text bubble is enough.",
   schema: args,
   async execute(input, ctx) {
     const validation = validateVars(input.template, input.vars);
@@ -98,7 +97,7 @@ export const sendFlexReplyTool: AgentTool<Args> = {
   },
 };
 
-// ── per-template var validation (runtime, since Zod record is loose) ──
+// ── per-template var validation ─────────────────────────────────────
 
 type ValidationResult =
   | { ok: true; vars: Parameters<typeof buildFlexMessage>[1] }
@@ -120,29 +119,27 @@ function validateVars(
         vars: {
           text,
           open_url,
-          // LINE Flex rejects empty text nodes — use asNonEmpty to apply
-          // the default whenever the AI sends "" / null / missing.
           due_text: asNonEmpty(raw.due_text) ?? "ไม่มีกำหนด",
           folder_name: asNonEmpty(raw.folder_name) ?? "Inbox",
+          id: asNonEmpty(raw.id) ?? "",
         },
       };
     }
     case "todo_deleted": {
       const text = asNonEmpty(raw.text);
-      const open_url = asNonEmpty(raw.open_url);
       const remaining_count = asInt(raw.remaining_count);
-      if (!text || !open_url || remaining_count === null) {
+      if (!text || remaining_count === null) {
         return {
           ok: false,
-          error: "todo_deleted requires text + remaining_count + open_url",
+          error: "todo_deleted requires text + remaining_count",
         };
       }
       return {
         ok: true,
         vars: {
           text,
-          open_url,
           remaining_count,
+          folder_name: asNonEmpty(raw.folder_name) ?? "Inbox",
           undo_postback_data:
             asNonEmpty(raw.undo_postback_data) ?? "action=noop",
         },
@@ -164,7 +161,7 @@ function validateVars(
           text,
           change_summary,
           open_url,
-          // Diff bar text nodes — never empty, fall back to em-dash.
+          folder_name: asNonEmpty(raw.folder_name) ?? "Inbox",
           old_value: asNonEmpty(raw.old_value) ?? "—",
           new_value: asNonEmpty(raw.new_value) ?? "—",
         },
@@ -172,23 +169,19 @@ function validateVars(
     }
     case "todo_completed": {
       const text = asNonEmpty(raw.text);
-      const open_url = asNonEmpty(raw.open_url);
       const pending_count_left = asInt(raw.pending_count_left);
-      if (!text || !open_url || pending_count_left === null) {
+      if (!text || pending_count_left === null) {
         return {
           ok: false,
-          error:
-            "todo_completed requires text + pending_count_left + open_url",
+          error: "todo_completed requires text + pending_count_left",
         };
       }
       return {
         ok: true,
         vars: {
           text,
-          open_url,
           pending_count_left,
-          // Streak row visible whether streak or not — em-dash default keeps
-          // the bubble valid; AI fills with real streak text when applicable.
+          folder_name: asNonEmpty(raw.folder_name) ?? "Inbox",
           streak_msg: asNonEmpty(raw.streak_msg) ?? "—",
           undo_postback_data:
             asNonEmpty(raw.undo_postback_data) ?? "action=noop",
@@ -197,19 +190,12 @@ function validateVars(
     }
     case "todo_list": {
       const count = asInt(raw.count);
-      const date_display = asNonEmpty(raw.date_display);
-      const open_url = asNonEmpty(raw.open_url);
+      const date_thai = asNonEmpty(raw.date_thai);
       const itemsRaw = raw.items;
-      if (
-        count === null ||
-        !date_display ||
-        !open_url ||
-        !Array.isArray(itemsRaw)
-      ) {
+      if (count === null || !date_thai || !Array.isArray(itemsRaw)) {
         return {
           ok: false,
-          error:
-            "todo_list requires count + date_display + items[] + open_url",
+          error: "todo_list requires count + date_thai + items[]",
         };
       }
       const parsedItems: TodoListItem[] = [];
@@ -223,10 +209,57 @@ function validateVars(
         }
         parsedItems.push(parsed.data);
       }
+      return { ok: true, vars: { count, date_thai, items: parsedItems } };
+    }
+    case "todo_empty": {
       return {
         ok: true,
-        vars: { count, date_display, items: parsedItems, open_url },
+        vars: {
+          completed_this_week: asInt(raw.completed_this_week) ?? 0,
+          streak_days: asInt(raw.streak_days) ?? 0,
+        },
       };
+    }
+    case "error_inline": {
+      const variant = raw.variant;
+      if (
+        typeof variant !== "string" ||
+        !(variant in ERROR_INLINE_VARIANTS)
+      ) {
+        return {
+          ok: false,
+          error: `error_inline variant must be one of: ${Object.keys(ERROR_INLINE_VARIANTS).join(", ")}`,
+        };
+      }
+      return {
+        ok: true,
+        vars: {
+          variant: variant as keyof typeof ERROR_INLINE_VARIANTS,
+          max_position: asInt(raw.max_position) ?? 0,
+        },
+      };
+    }
+    case "multi_save_summary": {
+      const count = asInt(raw.count);
+      const itemsRaw = raw.items;
+      if (count === null || !Array.isArray(itemsRaw)) {
+        return {
+          ok: false,
+          error: "multi_save_summary requires count + items[]",
+        };
+      }
+      const parsedItems: MultiSaveItem[] = [];
+      for (const it of itemsRaw) {
+        const parsed = multiSaveItem.safeParse(it);
+        if (!parsed.success) {
+          return {
+            ok: false,
+            error: `multi_save_summary item invalid: ${parsed.error.message}`,
+          };
+        }
+        parsedItems.push(parsed.data);
+      }
+      return { ok: true, vars: { count, items: parsedItems } };
     }
   }
 }

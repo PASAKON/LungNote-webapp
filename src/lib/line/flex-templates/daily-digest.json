@@ -1,0 +1,174 @@
+{
+  "type": "flex",
+  "altText": "☀ สรุปวันนี้ — {{overdue_count}} เลยกำหนด, {{today_count}} วันนี้",
+  "contents": {
+    "type": "bubble",
+    "size": "giga",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "☀ สวัสดีตอนเช้า!",
+          "size": "sm",
+          "weight": "bold",
+          "color": "#c9a040",
+          "align": "center"
+        },
+        {
+          "type": "text",
+          "text": "{{date_thai}}",
+          "size": "xl",
+          "weight": "bold",
+          "color": "#3a3020",
+          "align": "center",
+          "margin": "sm"
+        },
+        {
+          "type": "text",
+          "text": "มีงานค้าง {{total_pending}} รายการ · 🔥 Streak {{streak_days}} วัน",
+          "size": "xs",
+          "color": "#a08050",
+          "align": "center",
+          "margin": "sm",
+          "wrap": true
+        }
+      ],
+      "paddingAll": "20px",
+      "background": {
+        "type": "linearGradient",
+        "angle": "135deg",
+        "startColor": "#f0e4c4",
+        "endColor": "#faf5e8"
+      }
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{overdue_count}}", "size": "xl", "weight": "bold", "color": "#c45a3a", "align": "center" },
+                { "type": "text", "text": "เลยกำหนด", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            },
+            { "type": "separator", "color": "#d4c4a0" },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{today_count}}", "size": "xl", "weight": "bold", "color": "#e8a946", "align": "center" },
+                { "type": "text", "text": "วันนี้", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            },
+            { "type": "separator", "color": "#d4c4a0" },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{streak_days}}", "size": "xl", "weight": "bold", "color": "#c9a040", "align": "center" },
+                { "type": "text", "text": "Streak", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            }
+          ],
+          "paddingAll": "10px"
+        },
+        { "type": "separator", "color": "#d4c4a0", "margin": "md" },
+        {
+          "type": "text",
+          "text": "⚠ เลยกำหนด",
+          "size": "xs",
+          "weight": "bold",
+          "color": "#c45a3a",
+          "margin": "lg"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "!", "size": "xs", "color": "#c45a3a", "weight": "bold", "flex": 0 },
+            { "type": "text", "text": "{{overdue_1_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "margin": "sm", "flex": 3 },
+            { "type": "text", "text": "{{overdue_1_due}}", "size": "xxs", "weight": "bold", "color": "#c45a3a", "align": "end", "flex": 2 }
+          ],
+          "margin": "md"
+        },
+        { "type": "separator", "color": "#d4c4a0", "margin": "lg" },
+        {
+          "type": "text",
+          "text": "📋 วันนี้",
+          "size": "xs",
+          "weight": "bold",
+          "color": "#c9a040",
+          "margin": "lg"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "1", "size": "xs", "color": "#a08050", "flex": 0 },
+            { "type": "text", "text": "{{today_1_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "margin": "sm", "flex": 3 },
+            { "type": "text", "text": "{{today_1_due}}", "size": "xxs", "weight": "bold", "color": "#e8a946", "align": "end", "flex": 2 }
+          ],
+          "margin": "md"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "2", "size": "xs", "color": "#a08050", "flex": 0 },
+            { "type": "text", "text": "{{today_2_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "margin": "sm", "flex": 3 },
+            { "type": "text", "text": "{{today_2_due}}", "size": "xxs", "color": "#3a3020", "align": "end", "flex": 2 }
+          ],
+          "margin": "sm"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "3", "size": "xs", "color": "#a08050", "flex": 0 },
+            { "type": "text", "text": "{{today_3_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "margin": "sm", "flex": 3 },
+            { "type": "text", "text": "{{today_3_due}}", "size": "xxs", "color": "#a08050", "align": "end", "flex": 2 }
+          ],
+          "margin": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "เปิด Dashboard",
+            "uri": "https://liff.line.me/{{liff_id}}/dashboard"
+          },
+          "height": "sm"
+        },
+        {
+          "type": "text",
+          "text": "ทำเสร็จ → ส่งเลขมาบอก",
+          "size": "xxs",
+          "color": "#a08050",
+          "align": "center",
+          "margin": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}
