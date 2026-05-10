@@ -16,7 +16,7 @@ export default async function DashboardLayout({
   const sbCookies = cookieStore
     .getAll()
     .filter((c) => c.name.startsWith("sb-"))
-    .map((c) => ({ name: c.name, len: c.value.length }));
+    .map((c) => ({ name: c.name, len: (c.value ?? "").length }));
   console.log(
     JSON.stringify({
       tag: "dashboard_layout",
