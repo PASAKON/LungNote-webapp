@@ -8,19 +8,27 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function dbg(step: string, data: Record<string, unknown> = {}) {
+  console.log(JSON.stringify({ tag: "liff_auth", ts: Date.now(), step, ...data }));
+}
+
 export async function POST(req: NextRequest) {
+  dbg("start");
   let body: { idToken?: string };
   try {
     body = (await req.json()) as { idToken?: string };
   } catch {
+    dbg("invalid_json");
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
   const idToken = body.idToken;
   if (!idToken) {
+    dbg("missing_id_token");
     return NextResponse.json({ error: "missing_id_token" }, { status: 400 });
   }
 
   const verified = await verifyLineIdToken(idToken);
+  dbg("verify_id_token", { ok: verified.ok, error: verified.ok ? null : verified.error });
   if (!verified.ok) {
     return NextResponse.json({ error: verified.error }, { status: 401 });
   }
@@ -41,6 +49,7 @@ export async function POST(req: NextRequest) {
   let userId: string;
   if (profileRow?.id) {
     userId = profileRow.id;
+    dbg("profile_existing", { userId });
     if (displayName || pictureUrl) {
       await admin
         .from("lungnote_profiles")
@@ -61,12 +70,14 @@ export async function POST(req: NextRequest) {
       },
     });
     if (createErr || !created.user) {
+      dbg("create_user_failed", { error: createErr?.message });
       return NextResponse.json(
         { error: "create_user_failed", detail: createErr?.message },
         { status: 500 },
       );
     }
     userId = created.user.id;
+    dbg("profile_new", { userId });
 
     await admin.from("lungnote_profiles").insert({
       id: userId,
@@ -79,6 +90,10 @@ export async function POST(req: NextRequest) {
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email,
+  });
+  dbg("magic_link", {
+    ok: !linkErr && !!linkData.properties?.hashed_token,
+    error: linkErr?.message,
   });
   if (linkErr || !linkData.properties?.hashed_token) {
     return NextResponse.json(
@@ -93,17 +108,16 @@ export async function POST(req: NextRequest) {
   // new session can be set. Wiping the sb-* cookies first lets verifyOtp
   // create the new session cleanly.
   const cookieStore = await cookies();
-  for (const c of cookieStore.getAll()) {
-    if (c.name.startsWith("sb-")) {
-      cookieStore.delete(c.name);
-    }
-  }
+  const stale = cookieStore.getAll().filter((c) => c.name.startsWith("sb-"));
+  for (const c of stale) cookieStore.delete(c.name);
+  dbg("stale_cookies_cleared", { count: stale.length });
 
   const supabase = await createServerClient();
   const { error: verifyErr } = await supabase.auth.verifyOtp({
     type: "magiclink",
     token_hash: linkData.properties.hashed_token,
   });
+  dbg("verify_otp", { ok: !verifyErr, error: verifyErr?.message });
   if (verifyErr) {
     return NextResponse.json(
       { error: "session_set_failed", detail: verifyErr.message },
@@ -111,5 +125,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  dbg("done", { userId });
   return NextResponse.json({ ok: true, userId });
 }
