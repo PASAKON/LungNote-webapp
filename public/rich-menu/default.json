@@ -9,7 +9,7 @@
       "action": {
         "type": "uri",
         "label": "Todo",
-        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fdashboard%2Ftodo"
+        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fth%2Fdashboard%2Ftodo"
       }
     },
     {
@@ -17,7 +17,7 @@
       "action": {
         "type": "uri",
         "label": "Note",
-        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fdashboard%2Fnotes"
+        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fth%2Fdashboard%2Fnotes"
       }
     },
     {
@@ -25,7 +25,7 @@
       "action": {
         "type": "uri",
         "label": "ตั้งค่า",
-        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fdashboard%2Fsettings"
+        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fth%2Fdashboard%2Fsettings"
       }
     }
   ]
