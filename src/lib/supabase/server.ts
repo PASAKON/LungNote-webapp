@@ -15,6 +15,11 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      // Bypass @supabase/ssr's default base64url encoder — it throws
+      // "Invalid UTF-8 sequence" once a session cookie holds certain
+      // byte patterns (https://github.com/supabase/ssr/issues/67).
+      // Server + browser + middleware must all use the same encoding.
+      cookieEncoding: "raw",
       cookies: {
         getAll() {
           return cookieStore.getAll();

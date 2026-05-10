@@ -16,6 +16,10 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      // See lib/supabase/server.ts and lib/supabase/client.ts —
+      // cookieEncoding "raw" must match across all three clients to
+      // dodge supabase/ssr#67 ("Invalid UTF-8 sequence").
+      cookieEncoding: "raw",
       cookies: {
         getAll() {
           return request.cookies.getAll();
