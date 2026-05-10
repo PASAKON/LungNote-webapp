@@ -1,0 +1,32 @@
+{
+  "size": { "width": 2500, "height": 843 },
+  "selected": true,
+  "name": "lungnote-default",
+  "chatBarText": "เมนู",
+  "areas": [
+    {
+      "bounds": { "x": 0, "y": 0, "width": 833, "height": 843 },
+      "action": {
+        "type": "uri",
+        "label": "Todo",
+        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fdashboard%2Ftodo"
+      }
+    },
+    {
+      "bounds": { "x": 833, "y": 0, "width": 834, "height": 843 },
+      "action": {
+        "type": "uri",
+        "label": "Note",
+        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fdashboard%2Fnotes"
+      }
+    },
+    {
+      "bounds": { "x": 1667, "y": 0, "width": 833, "height": 843 },
+      "action": {
+        "type": "uri",
+        "label": "ตั้งค่า",
+        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fdashboard%2Fsettings"
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "size": { "width": 2500, "height": 843 },
+  "selected": false,
+  "name": "lungnote-welcome",
+  "chatBarText": "เริ่มต้น",
+  "areas": [
+    {
+      "bounds": { "x": 0, "y": 0, "width": 2500, "height": 843 },
+      "action": {
+        "type": "message",
+        "label": "เริ่มต้นใช้งาน",
+        "text": "เริ่มต้นใช้งาน"
+      }
+    }
+  ]
+}

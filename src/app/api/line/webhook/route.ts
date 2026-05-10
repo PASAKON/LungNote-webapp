@@ -7,6 +7,7 @@ import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import { saveMemoryFromLine } from "@/lib/memory/save";
 import { listPendingFromLine } from "@/lib/memory/list";
 import { dashboardLinkMessage, welcomeMessage } from "@/lib/line/flex";
+import { linkUserRichMenu, unlinkUserRichMenu } from "@/lib/line/rich-menu";
 import { mintToken } from "@/lib/auth/line-link";
 import { TraceCollector } from "@/lib/observability/trace";
 import { checkAlreadyProcessed } from "@/lib/observability/dedup";
@@ -79,6 +80,16 @@ async function handleEvent(event: LineEvent): Promise<unknown> {
 
   if (event.type === "follow") {
     const ev = event as LineFollowEvent;
+    const userId = ev.source.type === "user" ? ev.source.userId : undefined;
+    // Link the Welcome rich menu (1-button "เริ่มต้นใช้งาน") for this
+    // user so they see it on first contact. Best-effort — failure
+    // doesn't block the welcome reply.
+    const welcomeMenuId = process.env.LINE_RICHMENU_WELCOME_ID;
+    if (userId && welcomeMenuId) {
+      void linkUserRichMenu(userId, welcomeMenuId).catch((err: unknown) => {
+        console.error("linkUserRichMenu (welcome) failed", { userId, err });
+      });
+    }
     return replyMessage(ev.replyToken, welcomeMessage());
   }
 
@@ -139,6 +150,16 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   if (userId) {
     void displayLoadingAnimation(userId, 20).catch((err: unknown) => {
       console.error("displayLoadingAnimation failed", { userId, err });
+    });
+  }
+
+  // Welcome rich menu graduation: when a new user taps the Welcome
+  // 1-button menu, they send the text "เริ่มต้นใช้งาน". After the AI
+  // intro reply lands, unlink the Welcome menu so the user reverts to
+  // the global Default rich menu. Best-effort, fire-and-forget.
+  if (userId && text === "เริ่มต้นใช้งาน") {
+    void unlinkUserRichMenu(userId).catch((err: unknown) => {
+      console.error("unlinkUserRichMenu failed", { userId, err });
     });
   }
 
