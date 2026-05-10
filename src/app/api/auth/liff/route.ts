@@ -8,28 +8,54 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function dbg(step: string, data: Record<string, unknown> = {}) {
-  console.log(JSON.stringify({ tag: "liff_auth", ts: Date.now(), step, ...data }));
+// Collect breadcrumbs into one array + emit a single console.log line at
+// the end of the handler. Vercel serverless logs can drop intermediate
+// console.log lines on cold start; one final flush is reliable.
+type Crumb = { step: string; t: number; data?: Record<string, unknown> };
+function makeRecorder() {
+  const start = Date.now();
+  const crumbs: Crumb[] = [];
+  return {
+    dbg(step: string, data: Record<string, unknown> = {}) {
+      crumbs.push({ step, t: Date.now() - start, data });
+    },
+    flush(extra: Record<string, unknown> = {}) {
+      console.log(
+        JSON.stringify({
+          tag: "liff_auth",
+          start_ts: start,
+          duration_ms: Date.now() - start,
+          ...extra,
+          crumbs,
+        }),
+      );
+    },
+  };
 }
 
 export async function POST(req: NextRequest) {
+  const rec = makeRecorder();
+  const dbg = rec.dbg;
   dbg("start");
   let body: { idToken?: string };
   try {
     body = (await req.json()) as { idToken?: string };
   } catch {
     dbg("invalid_json");
+    rec.flush({ outcome: "invalid_json" });
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
   const idToken = body.idToken;
   if (!idToken) {
     dbg("missing_id_token");
+    rec.flush({ outcome: "missing_id_token" });
     return NextResponse.json({ error: "missing_id_token" }, { status: 400 });
   }
 
   const verified = await verifyLineIdToken(idToken);
   dbg("verify_id_token", { ok: verified.ok, error: verified.ok ? null : verified.error });
   if (!verified.ok) {
+    rec.flush({ outcome: verified.error });
     return NextResponse.json({ error: verified.error }, { status: 401 });
   }
 
@@ -71,6 +97,7 @@ export async function POST(req: NextRequest) {
     });
     if (createErr || !created.user) {
       dbg("create_user_failed", { error: createErr?.message });
+      rec.flush({ outcome: "create_user_failed" });
       return NextResponse.json(
         { error: "create_user_failed", detail: createErr?.message },
         { status: 500 },
@@ -96,6 +123,7 @@ export async function POST(req: NextRequest) {
     error: linkErr?.message,
   });
   if (linkErr || !linkData.properties?.hashed_token) {
+    rec.flush({ outcome: "magic_link_failed" });
     return NextResponse.json(
       { error: "magic_link_failed", detail: linkErr?.message },
       { status: 500 },
@@ -135,12 +163,22 @@ export async function POST(req: NextRequest) {
   });
   dbg("verify_otp", { ok: !verifyErr, error: verifyErr?.message });
   if (verifyErr) {
+    rec.flush({ outcome: "session_set_failed" });
     return NextResponse.json(
       { error: "session_set_failed", detail: verifyErr.message },
       { status: 500 },
     );
   }
 
+  // Verify cookies actually wrote to the response. If verifyOtp's setAll
+  // callback was suppressed (Server Component try/catch), session cookies
+  // are missing and the dashboard render will refresh-fail.
+  const finalCookies = (await cookies())
+    .getAll()
+    .filter((c) => c.name.startsWith("sb-"))
+    .map((c) => ({ name: c.name, len: c.value.length }));
+  dbg("session_cookies_present", { count: finalCookies.length, cookies: finalCookies });
   dbg("done", { userId });
+  rec.flush({ outcome: "ok", userId });
   return NextResponse.json({ ok: true, userId });
 }
