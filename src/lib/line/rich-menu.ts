@@ -1,4 +1,7 @@
-import "server-only";
+// NOTE: no `import "server-only"` — this file is also imported from
+// scripts/setup-rich-menus.ts run via plain Node/tsx (no Next runtime).
+// Safety: the only secret read is process.env.LINE_CHANNEL_ACCESS_TOKEN,
+// which Next never exposes to client builds (no NEXT_PUBLIC_ prefix).
 
 /**
  * LINE Messaging API — Rich Menu helpers.

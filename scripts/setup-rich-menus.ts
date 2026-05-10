@@ -11,7 +11,7 @@
  * Re-run after Designer ships new images: pass --replace to delete
  * any existing menus with the same name first.
  */
-import "server-only";
+// Run via tsx outside the Next runtime — no "server-only" import.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
