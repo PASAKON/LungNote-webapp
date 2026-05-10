@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import "@/components/landing/landing.css";
 import { getLandingContent } from "@/components/landing/content";
@@ -14,9 +14,24 @@ import { Faq } from "@/components/landing/Faq";
 import { Footer } from "@/components/landing/Footer";
 import { WavyDivider } from "@/components/landing/WavyDivider";
 
-export default async function Home({ params }: PageProps<"/[locale]">) {
+export default async function Home({
+  params,
+  searchParams,
+}: PageProps<"/[locale]">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+
+  // LIFF endpoint fallback: if the LIFF App in LINE Developer Console
+  // points at https://lungnote.com/ instead of /liff, the LIFF launch
+  // URL `?next=…` lands on the landing page. Catch the param here and
+  // forward to the LIFF auth flow so rich-menu buttons still work.
+  const sp = await searchParams;
+  const rawNext = sp?.next;
+  const next = Array.isArray(rawNext) ? rawNext[0] : rawNext;
+  if (typeof next === "string" && next.startsWith("/")) {
+    redirect(`/liff?next=${encodeURIComponent(next)}`);
+  }
+
   const content = getLandingContent(locale);
 
   return (
