@@ -1,53 +1,47 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Admin auth gate — used by every page under app/admin/*.
  *
- * Flow:
- *   1. Read Supabase session via cookie-aware ssr client.
- *   2. Look up the user's lungnote_profiles row (via admin client because
- *      profiles RLS scopes to auth.uid which would block our cross-check).
- *   3. Check `line_user_id` against ADMIN_LINE_USER_IDS env (comma-separated).
+ * Admin auth is independent of LINE LIFF. Admins log in with email +
+ * password via Supabase. Allowlist comes from `ADMIN_EMAILS` env
+ * (comma-separated). This way admin.lungnote.com works in any browser,
+ * cookies stay host-scoped, and there's no overlap with the LIFF flow
+ * that users go through on the apex.
  *
- * Returns the resolved admin profile or null. Pages should redirect to the
- * LIFF/auth-line login flow when null.
+ * Returns the resolved admin profile or null. Pages should redirect to
+ * /admin/login when null.
  */
 export type AdminProfile = {
   userId: string;
-  lineUserId: string;
-  displayName: string | null;
-  pictureUrl: string | null;
+  email: string;
 };
 
-export async function getAdminProfile(): Promise<AdminProfile | null> {
-  const allowList = (process.env.ADMIN_LINE_USER_IDS ?? "")
+function allowlist(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
     .split(",")
-    .map((s) => s.trim())
+    .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  if (allowList.length === 0) return null;
+}
+
+export function isEmailAllowed(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const allow = allowlist();
+  return allow.includes(email.toLowerCase());
+}
+
+export async function getAdminProfile(): Promise<AdminProfile | null> {
+  const allow = allowlist();
+  if (allow.length === 0) return null;
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user?.email) return null;
 
-  const sb = createAdminClient();
-  const { data: profile, error } = await sb
-    .from("lungnote_profiles")
-    .select("id, line_user_id, line_display_name, line_picture_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  if (!allow.includes(user.email.toLowerCase())) return null;
 
-  if (error || !profile) return null;
-  if (!allowList.includes(profile.line_user_id)) return null;
-
-  return {
-    userId: profile.id,
-    lineUserId: profile.line_user_id,
-    displayName: profile.line_display_name,
-    pictureUrl: profile.line_picture_url,
-  };
+  return { userId: user.id, email: user.email };
 }
