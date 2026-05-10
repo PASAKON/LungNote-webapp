@@ -173,9 +173,26 @@
   }
 }
 
+/* Cardboard dark vars — applied either via system preference (when no
+   theme override) or via explicit [data-theme="dark"] from cookie. */
+:where(html[data-theme="dark"]) .lungnote-dashboard {
+  --bg: #1a1810;
+  --surface: #2a2618;
+  --border: #3d3828;
+  --muted: #8a7850;
+  --fg: #e8e2d0;
+  --accent-light: #3d3420;
+  --yellow: #b89030;
+  --yellow-light: #3d3420;
+  --red: #c45a3a;
+  --red-light: #3d2820;
+  --orange: #d4a040;
+  --orange-light: #3d3420;
+}
 @media (prefers-color-scheme: dark) {
-  .lungnote-dashboard {
-    /* Cardboard dark — see design/brand/cardboard-palette.html dark section. */
+  /* Auto-dark only when user hasn't forced a theme. */
+  :where(html:not([data-theme="light"]):not([data-theme="dark"]))
+    .lungnote-dashboard {
     --bg: #1a1810;
     --surface: #2a2618;
     --border: #3d3828;
