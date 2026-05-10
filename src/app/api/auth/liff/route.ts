@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { verifyLineIdToken } from "@/lib/auth/liff-verify";
 import { syntheticEmailFromLineUserId } from "@/lib/auth/synthetic-email";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -84,6 +85,18 @@ export async function POST(req: NextRequest) {
       { error: "magic_link_failed", detail: linkErr?.message },
       { status: 500 },
     );
+  }
+
+  // Clear any stale Supabase auth cookies before verifyOtp. If a previous
+  // LIFF session left an expired refresh token cookie, the SSR client
+  // throws "Invalid Refresh Token: Refresh Token Not Found" before our
+  // new session can be set. Wiping the sb-* cookies first lets verifyOtp
+  // create the new session cleanly.
+  const cookieStore = await cookies();
+  for (const c of cookieStore.getAll()) {
+    if (c.name.startsWith("sb-")) {
+      cookieStore.delete(c.name);
+    }
   }
 
   const supabase = await createServerClient();
