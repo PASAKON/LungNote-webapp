@@ -11,7 +11,7 @@ const COOKIE_DOMAIN =
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  const client = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -34,4 +34,34 @@ export async function createClient() {
       },
     },
   );
+
+  // Wrap auth.getUser so a stale-refresh failure NEVER throws inside a
+  // Server Component page render. Refresh rotation in pages is doomed
+  // (Server Components can't write cookies — setAll above silently
+  // swallows), so when the next call uses the now-invalid refresh_token
+  // Supabase throws AuthApiError. We catch and return { user: null }
+  // so the page's existing redirect/empty-state logic handles re-auth
+  // cleanly. Middleware is the one place where refresh + cookie write
+  // actually works.
+  const originalGetUser = client.auth.getUser.bind(client.auth);
+  client.auth.getUser = (async () => {
+    try {
+      return await originalGetUser();
+    } catch (err) {
+      console.log(
+        JSON.stringify({
+          tag: "supabase_server",
+          ts: Date.now(),
+          step: "get_user_swallowed",
+          msg: err instanceof Error ? err.message : String(err),
+        }),
+      );
+      return {
+        data: { user: null },
+        error: null,
+      } as unknown as Awaited<ReturnType<typeof originalGetUser>>;
+    }
+  }) as typeof client.auth.getUser;
+
+  return client;
 }
