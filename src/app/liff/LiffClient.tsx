@@ -26,6 +26,42 @@ function LiffInner({ liffId }: { liffId: string }) {
   });
   const startedRef = useRef(false);
 
+  // Debug breadcrumb posted to /api/debug/liff — server logs each step
+  // as a single JSON line so we can trace what happens after a rich-
+  // menu tap. Best-effort; failure never blocks the flow.
+  const traceId = useRef<string | null>(null);
+  if (traceId.current === null) {
+    // Lazy init — assigned once on first render. Date.now + Math.random
+    // are technically impure, but inside a useRef-guarded init they
+    // run exactly once per mount — safe per the React useRef pattern.
+    // eslint-disable-next-line react-hooks/purity
+    traceId.current = `liff-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+  }
+  const debug = (step: string, data: Record<string, unknown> = {}) => {
+    try {
+      const body = JSON.stringify({
+        step,
+        data: { trace: traceId.current, ...data },
+      });
+      // sendBeacon survives navigation; fall back to fetch if blocked.
+      if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon("/api/debug/liff", blob);
+      } else {
+        void fetch("/api/debug/liff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
@@ -33,29 +69,50 @@ function LiffInner({ liffId }: { liffId: string }) {
     let cancelled = false;
     void (async () => {
       try {
+        debug("page_load", {
+          href: typeof window !== "undefined" ? window.location.href : "",
+          next: search.get("next"),
+          userAgent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 120) : "",
+        });
+
         const liff = (await import("@line/liff")).default;
         await liff.init({ liffId });
         if (cancelled) return;
 
+        debug("liff_init_ok", {
+          isInClient: typeof liff.isInClient === "function" ? liff.isInClient() : null,
+          isLoggedIn: liff.isLoggedIn(),
+          os: typeof liff.getOS === "function" ? liff.getOS() : null,
+          version: typeof liff.getVersion === "function" ? liff.getVersion() : null,
+        });
+
         if (!liff.isLoggedIn()) {
+          debug("liff_login_redirect", {
+            redirectUri: window.location.href,
+          });
           liff.login({ redirectUri: window.location.href });
           return;
         }
 
         const idToken = liff.getIDToken();
+        debug("liff_id_token", { hasToken: !!idToken, length: idToken?.length ?? 0 });
         if (!idToken) {
           setState({ status: "error", error: "ไม่ได้รับ id_token จาก LINE" });
           return;
         }
 
         setState({ status: "verifying" });
+        debug("auth_post_start", {});
         const res = await fetch("/api/auth/liff", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken }),
         });
+        debug("auth_post_done", { status: res.status, ok: res.ok });
+
         if (!res.ok) {
           const detail = await res.text();
+          debug("auth_post_error", { status: res.status, detail: detail.slice(0, 300) });
           setState({
             status: "error",
             error: `auth ล้มเหลว (${res.status}) ${detail}`,
@@ -66,13 +123,13 @@ function LiffInner({ liffId }: { liffId: string }) {
         if (cancelled) return;
         setState({ status: "ok" });
         const next = search.get("next") || "/dashboard";
+        debug("router_replace", { next });
         router.replace(next);
       } catch (err) {
         if (cancelled) return;
-        setState({
-          status: "error",
-          error: err instanceof Error ? err.message : "unknown",
-        });
+        const msg = err instanceof Error ? err.message : "unknown";
+        debug("exception", { msg });
+        setState({ status: "error", error: msg });
       }
     })();
 

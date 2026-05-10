@@ -29,6 +29,16 @@ export default async function Home({
   const rawNext = sp?.next;
   const next = Array.isArray(rawNext) ? rawNext[0] : rawNext;
   if (typeof next === "string" && next.startsWith("/")) {
+    console.log(
+      JSON.stringify({
+        tag: "liff_debug",
+        // eslint-disable-next-line react-hooks/purity
+        ts: Date.now(),
+        step: "landing_redirect",
+        next,
+        locale,
+      }),
+    );
     redirect(`/liff?next=${encodeURIComponent(next)}`);
   }
 
