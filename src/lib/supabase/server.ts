@@ -3,10 +3,11 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./database.types";
 
-// Auth cookie domain — `.lungnote.com` in production so admin.lungnote.com
-// and lungnote.com share a session. Preview/dev keep cookies host-scoped.
-const COOKIE_DOMAIN =
-  process.env.VERCEL_ENV === "production" ? ".lungnote.com" : undefined;
+// Auth cookie domain — TEMPORARILY DISABLED to test if LIFF login
+// regressed because of cross-subdomain sharing. With this undefined
+// the cookie is host-scoped (lungnote.com only); admin.lungnote.com
+// will need its own login. Was: .lungnote.com when VERCEL_ENV=production.
+const COOKIE_DOMAIN: string | undefined = undefined;
 
 export async function createClient() {
   const cookieStore = await cookies();
