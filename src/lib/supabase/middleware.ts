@@ -43,12 +43,22 @@ export async function updateSession(request: NextRequest) {
   try {
     await supabase.auth.getUser();
   } catch (err) {
+    // Dump the offending cookies so we can see what Supabase choked on.
+    const cookieDump = request.cookies
+      .getAll()
+      .filter((c) => c.name.startsWith("sb-"))
+      .map((c) => ({
+        name: c.name,
+        len: (c.value ?? "").length,
+        prefix: (c.value ?? "").slice(0, 40),
+      }));
     console.log(
       JSON.stringify({
         tag: "liff_auth",
         ts: Date.now(),
         step: "middleware_refresh_error",
         msg: err instanceof Error ? err.message : String(err),
+        cookies: cookieDump,
       }),
     );
     for (const c of request.cookies.getAll()) {
