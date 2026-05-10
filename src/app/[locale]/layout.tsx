@@ -3,6 +3,7 @@ import { Sarabun, Caveat, JetBrains_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { isLocale, locales } from "@/i18n/config";
+import { getThemeFromCookies } from "@/lib/theme";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -104,9 +105,15 @@ export default async function RootLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
+  // Theme cookie applied SSR so the page paints in the right theme
+  // immediately — no light/dark flash. "system" = no attribute, CSS
+  // falls back to prefers-color-scheme media query.
+  const theme = await getThemeFromCookies();
+
   return (
     <html
       lang={locale}
+      data-theme={theme === "system" ? undefined : theme}
       className={`${sarabun.variable} ${caveat.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

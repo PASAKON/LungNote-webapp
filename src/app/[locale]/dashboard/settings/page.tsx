@@ -5,6 +5,8 @@ import { BottomTabs } from "../BottomTabs";
 import { Sidebar } from "../Sidebar";
 import { signOut } from "../actions";
 import { PullToRefresh } from "../PullToRefresh";
+import { ThemeToggle } from "../ThemeToggle";
+import { getThemeFromCookies } from "@/lib/theme";
 import "../dashboard.css";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +22,7 @@ export default async function SettingsPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [profileRes, notesCountRes, todoOpenCountRes] = await Promise.all([
+  const [profileRes, notesCountRes, todoOpenCountRes, theme] = await Promise.all([
     supabase
       .from("lungnote_profiles")
       .select("line_display_name, line_picture_url, line_user_id, created_at")
@@ -33,6 +35,7 @@ export default async function SettingsPage({
       .from("lungnote_todos")
       .select("*", { count: "exact", head: true })
       .eq("done", false),
+    getThemeFromCookies(),
   ]);
 
   const profile = profileRes.data;
@@ -198,6 +201,32 @@ export default async function SettingsPage({
                     Todo ที่ค้าง
                   </div>
                 </div>
+              </section>
+
+              <section
+                className="sketch-box"
+                style={{ padding: 20, marginBottom: 16 }}
+              >
+                <div
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 22,
+                    fontWeight: 700,
+                    marginBottom: 4,
+                  }}
+                >
+                  ธีม
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--muted)",
+                    marginBottom: 14,
+                  }}
+                >
+                  เลือกโหมดสว่าง / มืด หรือให้ตามระบบของเครื่อง
+                </div>
+                <ThemeToggle initial={theme} />
               </section>
 
               <form action={signOut}>
