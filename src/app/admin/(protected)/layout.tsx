@@ -2,14 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminProfile } from "@/lib/admin/auth";
 import { adminLogout } from "../login/actions";
-import { MascotMark } from "@/components/MascotMark";
-import { SketchyFilter } from "../../[locale]/dashboard/SketchyFilter";
 import "../admin.css";
 
 /**
- * Auth gate for everything under app/admin/(protected)/*.
- * Login page lives at /admin/login outside this group so it can render
- * without bouncing.
+ * Auth gate + shell for everything under app/admin/(protected)/*.
+ * Layout follows design/admin/admin-shell.html: 240px sidebar + 56px
+ * topbar, max-width 1200px main. Mobile collapses sidebar.
  */
 export default async function ProtectedAdminLayout({
   children,
@@ -20,48 +18,34 @@ export default async function ProtectedAdminLayout({
   if (!profile) redirect("/login");
 
   return (
-    <div className="lungnote-admin">
-      <SketchyFilter />
-      <header className="admin-header">
-        <Link
-          href="/"
-          className="admin-header-brand"
-          style={{ textDecoration: "none" }}
-        >
-          <span style={{ color: "var(--fg)" }}>
-            <MascotMark size={28} />
-          </span>
-          <span>
-            Lung<span className="accent">Note</span> Admin
-          </span>
-        </Link>
-        <nav className="admin-header-actions">
-          <Link href="/" className="admin-header-link">
-            Summary
+    <div className="lungnote-admin admin-shell">
+      <header className="admin-topbar">
+        <div className="admin-topbar-left">
+          <Link href="/" className="admin-topbar-brand">
+            <span>LungNote</span>
+            <span className="admin-badge">Admin</span>
           </Link>
-          <Link href="/traces" className="admin-header-link">
-            Traces
-          </Link>
-          <span style={{ color: "var(--muted)", fontSize: 13 }}>
-            {profile.email}
-          </span>
+        </div>
+        <div className="admin-topbar-right">
+          <span className="admin-topbar-user">{profile.email}</span>
           <form action={adminLogout}>
-            <button
-              type="submit"
-              className="admin-header-link"
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                font: "inherit",
-              }}
-            >
+            <button type="submit" className="admin-btn-outline">
               Logout
             </button>
           </form>
-        </nav>
+        </div>
       </header>
+
+      <aside className="admin-sidebar">
+        <div className="admin-nav-section">Navigation</div>
+        <Link href="/" className="admin-nav-item">
+          Summary
+        </Link>
+        <Link href="/traces" className="admin-nav-item">
+          Traces
+        </Link>
+      </aside>
+
       <main className="admin-main">{children}</main>
     </div>
   );

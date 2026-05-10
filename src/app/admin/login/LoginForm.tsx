@@ -9,103 +9,78 @@ export function LoginForm() {
   const [showPw, setShowPw] = useState(false);
 
   return (
-    <form action={formAction} style={{ display: "grid", gap: 14 }}>
+    <form action={formAction} className="login-form">
       {state.error && (
-        <div
-          role="alert"
-          style={{
-            padding: "10px 12px",
-            borderRadius: 6,
-            background: "var(--red-light, #f0d8d0)",
-            color: "var(--red, #c45a3a)",
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          {state.error}
+        <div role="alert" className="login-error-banner">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+          <span>{state.error}</span>
         </div>
       )}
 
-      <label style={{ display: "grid", gap: 6 }}>
-        <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>
+      <div className="login-field">
+        <label className="login-label" htmlFor="email">
           Email
-        </span>
+        </label>
         <input
+          id="email"
+          className="login-input"
           type="email"
           name="email"
           required
           autoComplete="email"
           autoFocus
           disabled={pending}
-          style={inputStyle}
+          placeholder="admin@lungnote.app"
         />
-      </label>
+      </div>
 
-      <label style={{ display: "grid", gap: 6 }}>
-        <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>
+      <div className="login-field">
+        <label className="login-label" htmlFor="password">
           Password
-        </span>
-        <div style={{ position: "relative" }}>
+        </label>
+        <div className="login-input-wrap">
           <input
+            id="password"
+            className="login-input"
             type={showPw ? "text" : "password"}
             name="password"
             required
             autoComplete="current-password"
             disabled={pending}
-            style={{ ...inputStyle, paddingRight: 70 }}
+            placeholder="Enter password"
           />
           <button
             type="button"
+            className="login-input-toggle"
             onClick={() => setShowPw((v) => !v)}
             tabIndex={-1}
-            style={{
-              position: "absolute",
-              right: 8,
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "transparent",
-              border: "none",
-              color: "var(--muted)",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              padding: "4px 8px",
-            }}
           >
-            {showPw ? "ซ่อน" : "แสดง"}
+            {showPw ? "Hide" : "Show"}
           </button>
         </div>
-      </label>
+      </div>
 
-      <button
-        type="submit"
-        disabled={pending}
-        style={{
-          padding: "12px 16px",
-          borderRadius: 8,
-          border: "2px solid var(--accent)",
-          background: pending ? "var(--accent-light)" : "var(--accent)",
-          color: pending ? "var(--accent)" : "#fff",
-          fontFamily: "var(--font-body)",
-          fontWeight: 700,
-          fontSize: 15,
-          cursor: pending ? "wait" : "pointer",
-          marginTop: 4,
-        }}
-      >
-        {pending ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+      <button type="submit" className="login-submit" disabled={pending}>
+        {pending ? (
+          <>
+            <span className="login-spinner" aria-hidden="true" />
+            <span>Signing in…</span>
+          </>
+        ) : (
+          <span>Sign in</span>
+        )}
       </button>
     </form>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 6,
-  border: "2px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--fg)",
-  fontSize: 14,
-  fontFamily: "var(--font-body)",
-};
