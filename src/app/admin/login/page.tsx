@@ -9,10 +9,28 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function AdminLoginPage() {
+const ERROR_COPY: Record<string, string> = {
+  denied: "Email นี้ไม่ใช่ admin",
+  invalid_link: "ลิงก์ไม่ถูกต้องหรือหมดอายุ — ขอลิงก์ใหม่",
+  missing_token: "ลิงก์ไม่สมบูรณ์",
+};
+
+export default async function AdminLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   // Already authenticated → bounce to home.
   const profile = await getAdminProfile();
   if (profile) redirect("/");
+
+  const sp = await searchParams;
+  const rawErr = sp?.error;
+  const errorKey = Array.isArray(rawErr) ? rawErr[0] : rawErr;
+  const initialError =
+    typeof errorKey === "string" && errorKey in ERROR_COPY
+      ? ERROR_COPY[errorKey]
+      : null;
 
   return (
     <div className="lungnote-admin login-page">
@@ -24,7 +42,7 @@ export default async function AdminLoginPage() {
           </div>
           <p className="login-warning">Internal access only</p>
         </div>
-        <LoginForm />
+        <LoginForm initialError={initialError} />
       </div>
     </div>
   );

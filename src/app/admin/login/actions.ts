@@ -2,47 +2,59 @@
 import { createClient } from "@/lib/supabase/server";
 import { isEmailAllowed } from "@/lib/admin/auth";
 import { redirect } from "next/navigation";
-
-export type LoginState = { error: string | null };
+import { headers } from "next/headers";
+import type { LoginState } from "./state";
 
 /**
- * Admin sign-in via Supabase email + password. After signing in, we
- * cross-check the user's email against `ADMIN_EMAILS` and immediately
- * sign them back out if they aren't on the allowlist — that way we
- * never grant an admin cookie to a non-admin account that happens to
- * exist in our Supabase project (e.g. a LIFF-synthesised user).
+ * Admin sign-in via Supabase magic link (one-time email).
+ *
+ * Security choices:
+ *   - shouldCreateUser:false — never auto-provision admins. They must
+ *     be pre-created in Supabase auth.
+ *   - Allowlist check (ADMIN_EMAILS env) BEFORE sending — never reach
+ *     out to a non-admin address, and never leak which addresses are
+ *     allowlisted vs not (we always respond "sent" if input is a valid
+ *     email shape, error if not).
+ *   - Allowlist re-check in callback so even if the email service is
+ *     compromised, a stray sign-in won't grant the admin session.
  */
 export async function adminLogin(
   _prev: LoginState,
   form: FormData,
 ): Promise<LoginState> {
-  const email = String(form.get("email") ?? "").trim();
-  const password = String(form.get("password") ?? "");
-  if (!email || !password) {
-    return { error: "Email + password required" };
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { status: "error", error: "ใส่ email ที่ถูกต้อง" };
   }
+
+  // Silent allowlist check — don't tell the user whether their email
+  // is on the list. They get the same "sent" response either way.
   if (!isEmailAllowed(email)) {
-    // Don't even try Supabase — refuse early to avoid leaking which
-    // emails exist in the auth table.
-    return { error: "Invalid credentials" };
+    return { status: "sent", error: null };
   }
+
+  // Build the absolute URL for the magic-link callback. headers() so
+  // local dev hits localhost, preview hits the *.vercel.app, prod hits
+  // admin.lungnote.com.
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("host") ?? "admin.lungnote.com";
+  const emailRedirectTo = `${proto}://${host}/auth/callback`;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo,
+    },
+  });
   if (error) {
-    return { error: "Invalid credentials" };
+    console.error("adminLogin signInWithOtp error", error.message);
+    // Still return "sent" — don't reveal whether the email exists.
+    return { status: "sent", error: null };
   }
-
-  // Defense in depth: re-read the user and verify the email matches.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.email || !isEmailAllowed(user.email)) {
-    await supabase.auth.signOut();
-    return { error: "Not authorised" };
-  }
-
-  redirect("/");
+  return { status: "sent", error: null };
 }
 
 export async function adminLogout(): Promise<void> {
