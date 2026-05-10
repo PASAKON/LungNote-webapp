@@ -1,12 +1,19 @@
 "use client";
-import { useTransition, useState } from "react";
+import { useTransition, useState, type ComponentType } from "react";
+import { Sun, Moon, Monitor } from "lucide-react";
 import { setTheme } from "./theme-actions";
 import type { Theme } from "@/lib/theme";
 
-const OPTIONS: Array<{ value: Theme; label: string; emoji: string }> = [
-  { value: "light", label: "สว่าง", emoji: "☀️" },
-  { value: "dark", label: "มืด", emoji: "🌙" },
-  { value: "system", label: "ตามระบบ", emoji: "🖥️" },
+type IconProps = { size?: number; strokeWidth?: number };
+
+const OPTIONS: Array<{
+  value: Theme;
+  label: string;
+  Icon: ComponentType<IconProps>;
+}> = [
+  { value: "light", label: "สว่าง", Icon: Sun },
+  { value: "dark", label: "มืด", Icon: Moon },
+  { value: "system", label: "ตามระบบ", Icon: Monitor },
 ];
 
 /**
@@ -60,6 +67,7 @@ export function ThemeToggle({ initial }: { initial: Theme }) {
     >
       {OPTIONS.map((opt) => {
         const active = current === opt.value;
+        const Icon = opt.Icon;
         return (
           <button
             key={opt.value}
@@ -73,7 +81,7 @@ export function ThemeToggle({ initial }: { initial: Theme }) {
               borderRadius: 8,
               border: active ? "2px solid var(--accent)" : "2px solid transparent",
               background: active ? "var(--surface)" : "transparent",
-              color: "var(--fg)",
+              color: active ? "var(--accent)" : "var(--muted)",
               fontFamily: "var(--font-body)",
               fontSize: 14,
               fontWeight: active ? 600 : 400,
@@ -81,12 +89,12 @@ export function ThemeToggle({ initial }: { initial: Theme }) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 4,
-              transition: "background 0.15s",
+              gap: 6,
+              transition: "background 0.15s, color 0.15s",
             }}
           >
-            <span style={{ fontSize: 20 }}>{opt.emoji}</span>
-            <span>{opt.label}</span>
+            <Icon size={22} strokeWidth={active ? 2.4 : 1.8} />
+            <span style={{ color: "var(--fg)" }}>{opt.label}</span>
           </button>
         );
       })}
