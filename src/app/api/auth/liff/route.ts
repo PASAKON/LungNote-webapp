@@ -130,31 +130,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Clear any stale Supabase auth cookies before verifyOtp. If a previous
-  // LIFF session left an expired refresh token cookie, the SSR client
-  // throws "Invalid Refresh Token: Refresh Token Not Found" before our
-  // new session can be set. Wiping the sb-* cookies first lets verifyOtp
-  // create the new session cleanly.
-  // Domain-aware cookie clear. Production sets sb-* cookies on
-  // .lungnote.com so admin.lungnote.com + www share the session.
-  // cookies().delete(name) without domain only kills host-scoped
-  // cookies, leaving the domain-scoped one. Set value="" + maxAge=0
-  // + matching domain to evict properly. Otherwise the browser keeps
-  // serving the stale refresh_token on the next page render.
-  const cookieStore = await cookies();
-  const COOKIE_DOMAIN =
-    process.env.VERCEL_ENV === "production" ? ".lungnote.com" : undefined;
-  const stale = cookieStore.getAll().filter((c) => c.name.startsWith("sb-"));
-  for (const c of stale) {
-    cookieStore.set(c.name, "", {
-      path: "/",
-      maxAge: 0,
-      ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
-    });
-    // Also kill the host-scoped variant if any exists.
-    cookieStore.set(c.name, "", { path: "/", maxAge: 0 });
-  }
-  dbg("stale_cookies_cleared", { count: stale.length, domain: COOKIE_DOMAIN ?? "host" });
+  // Previously cleared stale sb-* cookies here, but that emitted
+  // multiple Set-Cookie headers for the same name (delete + set on
+  // matching/different domains), which made the LINE in-app browser
+  // store len=0 cookies on the next request. With cookieEncoding:"raw"
+  // shared across all three clients, verifyOtp's setAll callback just
+  // overwrites the existing cookie in place — no pre-clear needed.
+  dbg("stale_cookies_skipped");
 
   const supabase = await createServerClient();
   const { error: verifyErr } = await supabase.auth.verifyOtp({
