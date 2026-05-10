@@ -1,0 +1,120 @@
+{
+  "type": "flex",
+  "altText": "{{error_title}}",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "body": {
+      "type": "box",
+      "layout": "horizontal",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "{{error_icon}}",
+              "size": "lg",
+              "align": "center"
+            }
+          ],
+          "width": "40px",
+          "height": "40px",
+          "backgroundColor": "{{error_bg_color}}",
+          "cornerRadius": "50px",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "flex": 0
+        },
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "{{error_title}}",
+              "weight": "bold",
+              "size": "sm",
+              "color": "#3a3020"
+            },
+            {
+              "type": "text",
+              "text": "{{error_description}}",
+              "size": "xs",
+              "color": "#a08050",
+              "wrap": true,
+              "margin": "xs"
+            }
+          ],
+          "flex": 1,
+          "margin": "lg"
+        }
+      ],
+      "paddingAll": "16px",
+      "cornerRadius": "md",
+      "borderWidth": "normal",
+      "borderColor": "#d4c4a0"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "button",
+          "style": "{{action_style}}",
+          "color": "{{action_color}}",
+          "action": {
+            "type": "{{action_type}}",
+            "label": "{{action_label}}",
+            "uri": "{{action_uri}}",
+            "data": "{{action_data}}"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "12px",
+      "paddingTop": "0px"
+    },
+    "styles": {
+      "footer": {
+        "separator": false
+      }
+    }
+  },
+  "_variants": {
+    "not_linked": {
+      "error_icon": "🔗",
+      "error_bg_color": "#f0d8d0",
+      "error_title": "ยังไม่ได้เชื่อมบัญชี",
+      "error_description": "กรุณาเชื่อม LINE กับ LungNote ก่อน",
+      "action_style": "primary",
+      "action_color": "#c9a040",
+      "action_type": "uri",
+      "action_label": "เชื่อมบัญชี",
+      "action_uri": "https://liff.line.me/{{liff_id}}/link"
+    },
+    "out_of_range": {
+      "error_icon": "⚠",
+      "error_bg_color": "#f0e4c4",
+      "error_title": "เลขไม่ถูกต้อง",
+      "error_description": "ส่งเลข 1-{{max_position}} เท่านั้น (มีงาน {{max_position}} รายการ)",
+      "action_style": "link",
+      "action_color": "#a08050",
+      "action_type": "postback",
+      "action_label": "ดูรายการใหม่",
+      "action_data": "action=list_pending"
+    },
+    "ai_timeout": {
+      "error_icon": "⏱",
+      "error_bg_color": "#f0d8d0",
+      "error_title": "ระบบตอบช้า",
+      "error_description": "กรุณาลองใหม่อีกครั้ง",
+      "action_style": "link",
+      "action_color": "#a08050",
+      "action_type": "postback",
+      "action_label": "ลองใหม่",
+      "action_data": "action=retry"
+    }
+  }
+}

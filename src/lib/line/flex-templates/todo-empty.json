@@ -1,0 +1,139 @@
+{
+  "type": "flex",
+  "altText": "ไม่มีงานค้าง 🎉",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "🎉",
+              "size": "3xl",
+              "align": "center"
+            },
+            {
+              "type": "text",
+              "text": "ไม่มีงานค้าง!",
+              "weight": "bold",
+              "size": "xl",
+              "align": "center",
+              "color": "#3a3020",
+              "margin": "md"
+            },
+            {
+              "type": "text",
+              "text": "ทุกอย่างเสร็จเรียบร้อยแล้ว เก่งมาก!",
+              "size": "sm",
+              "color": "#a08050",
+              "align": "center",
+              "margin": "sm",
+              "wrap": true
+            }
+          ],
+          "paddingAll": "24px",
+          "background": {
+            "type": "linearGradient",
+            "angle": "180deg",
+            "startColor": "#e8f0d8",
+            "endColor": "#faf5e8"
+          },
+          "cornerRadius": "md"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "{{completed_this_week}}",
+                  "size": "xl",
+                  "weight": "bold",
+                  "color": "#7a9a50",
+                  "align": "center"
+                },
+                {
+                  "type": "text",
+                  "text": "เสร็จสัปดาห์นี้",
+                  "size": "xxs",
+                  "color": "#a08050",
+                  "align": "center"
+                }
+              ],
+              "flex": 1
+            },
+            {
+              "type": "separator",
+              "color": "#d4c4a0"
+            },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "{{streak_days}}",
+                  "size": "xl",
+                  "weight": "bold",
+                  "color": "#c9a040",
+                  "align": "center"
+                },
+                {
+                  "type": "text",
+                  "text": "Streak วัน",
+                  "size": "xxs",
+                  "color": "#a08050",
+                  "align": "center"
+                }
+              ],
+              "flex": 1
+            }
+          ],
+          "margin": "lg",
+          "paddingAll": "12px"
+        }
+      ],
+      "paddingAll": "0px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "spacing": "sm",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "สร้างงานใหม่",
+            "uri": "https://liff.line.me/{{liff_id}}/new"
+          },
+          "height": "sm"
+        },
+        {
+          "type": "button",
+          "style": "link",
+          "color": "#a08050",
+          "action": {
+            "type": "uri",
+            "label": "เปิด Dashboard",
+            "uri": "https://liff.line.me/{{liff_id}}/dashboard"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}

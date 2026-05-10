@@ -1,0 +1,149 @@
+{
+  "type": "flex",
+  "altText": "บันทึก {{count}} รายการสำเร็จ",
+  "contents": {
+    "type": "bubble",
+    "size": "giga",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "จดสำเร็จ ✅",
+                  "weight": "bold",
+                  "size": "xl",
+                  "color": "#3a3020"
+                },
+                {
+                  "type": "text",
+                  "text": "บันทึก {{count}} รายการเรียบร้อยแล้ว",
+                  "size": "xs",
+                  "color": "#a08050",
+                  "margin": "sm"
+                }
+              ],
+              "flex": 3
+            }
+          ]
+        }
+      ],
+      "paddingAll": "20px",
+      "paddingBottom": "12px",
+      "background": {
+        "type": "linearGradient",
+        "angle": "135deg",
+        "startColor": "#f0e4c4",
+        "endColor": "#faf5e8"
+      }
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                {
+                  "type": "box",
+                  "layout": "horizontal",
+                  "contents": [
+                    { "type": "text", "text": "📁", "size": "xs", "flex": 0 },
+                    { "type": "text", "text": "{{item_1_folder}}", "size": "xxs", "color": "#a07820", "weight": "bold", "margin": "xs" }
+                  ],
+                  "backgroundColor": "#f0e4c4",
+                  "cornerRadius": "sm",
+                  "paddingAll": "4px",
+                  "paddingStart": "6px",
+                  "paddingEnd": "8px",
+                  "flex": 0
+                },
+                { "type": "text", "text": "{{item_1_date}}", "size": "xxs", "color": "#a08050", "align": "end", "flex": 1 }
+              ],
+              "margin": "none"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                { "type": "text", "text": "{{item_1_text}}", "size": "md", "weight": "bold", "color": "#3a3020", "flex": 3 },
+                { "type": "text", "text": "✓", "size": "md", "color": "#c9a040", "align": "end", "flex": 0 }
+              ],
+              "margin": "sm"
+            }
+          ]
+        },
+        { "type": "separator", "color": "#d4c4a0", "margin": "lg" },
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                {
+                  "type": "box",
+                  "layout": "horizontal",
+                  "contents": [
+                    { "type": "text", "text": "📁", "size": "xs", "flex": 0 },
+                    { "type": "text", "text": "{{item_2_folder}}", "size": "xxs", "color": "#a07820", "weight": "bold", "margin": "xs" }
+                  ],
+                  "backgroundColor": "#f0e4c4",
+                  "cornerRadius": "sm",
+                  "paddingAll": "4px",
+                  "paddingStart": "6px",
+                  "paddingEnd": "8px",
+                  "flex": 0
+                },
+                { "type": "text", "text": "{{item_2_date}}", "size": "xxs", "color": "#a08050", "align": "end", "flex": 1 }
+              ]
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                { "type": "text", "text": "{{item_2_text}}", "size": "md", "weight": "bold", "color": "#3a3020", "flex": 3 },
+                { "type": "text", "text": "✓", "size": "md", "color": "#c9a040", "align": "end", "flex": 0 }
+              ],
+              "margin": "sm"
+            }
+          ],
+          "margin": "lg"
+        }
+      ],
+      "paddingAll": "16px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "ดูใน Dashboard",
+            "uri": "https://liff.line.me/{{liff_id}}/dashboard"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}

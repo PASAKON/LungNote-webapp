@@ -6,47 +6,38 @@
     "size": "kilo",
     "header": {
       "type": "box",
-      "layout": "vertical",
+      "layout": "horizontal",
       "contents": [
         {
           "type": "box",
-          "layout": "horizontal",
+          "layout": "vertical",
           "contents": [
             {
               "type": "text",
-              "text": "✅",
+              "text": "จดสำเร็จ ✅",
+              "weight": "bold",
               "size": "lg",
-              "flex": 0
+              "color": "#3a3020"
             },
             {
               "type": "text",
-              "text": "SAVED",
+              "text": "อย่าลืมตรวจสอบรายการที่จดด้วยนะ",
               "size": "xxs",
-              "color": "#c9a040",
-              "weight": "bold",
-              "margin": "sm",
-              "gravity": "center"
+              "color": "#a08050",
+              "margin": "sm"
             }
           ],
-          "backgroundColor": "#f0e4c4",
-          "cornerRadius": "sm",
-          "paddingAll": "6px",
-          "paddingStart": "10px",
-          "paddingEnd": "10px",
-          "width": "90px"
-        },
-        {
-          "type": "text",
-          "text": "{{text}}",
-          "weight": "bold",
-          "size": "xl",
-          "margin": "md",
-          "color": "#3a3020",
-          "wrap": true
+          "flex": 3
         }
       ],
-      "paddingAll": "16px",
-      "paddingBottom": "4px"
+      "paddingAll": "20px",
+      "paddingBottom": "12px",
+      "background": {
+        "type": "linearGradient",
+        "angle": "135deg",
+        "startColor": "#f0e4c4",
+        "endColor": "#faf5e8"
+      }
     },
     "body": {
       "type": "box",
@@ -60,46 +51,53 @@
               "type": "box",
               "layout": "horizontal",
               "contents": [
-                {
-                  "type": "text",
-                  "text": "{{folder_name}}",
-                  "size": "xxs",
-                  "color": "#a08050",
-                  "weight": "bold"
-                }
+                { "type": "text", "text": "📁", "size": "xs", "flex": 0 },
+                { "type": "text", "text": "{{folder_name}}", "size": "xxs", "color": "#a07820", "weight": "bold", "margin": "xs" }
               ],
               "backgroundColor": "#f0e4c4",
               "cornerRadius": "sm",
               "paddingAll": "4px",
-              "paddingStart": "8px",
+              "paddingStart": "6px",
               "paddingEnd": "8px",
               "flex": 0
-            }
+            },
+            { "type": "text", "text": "⏰ {{due_text}}", "size": "xxs", "color": "#a08050", "align": "end", "flex": 1 }
           ]
         },
         {
           "type": "box",
           "layout": "horizontal",
           "contents": [
+            { "type": "text", "text": "{{text}}", "weight": "bold", "size": "md", "color": "#3a3020", "flex": 3, "wrap": true },
             {
-              "type": "text",
-              "text": "⏰",
-              "size": "xs",
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                {
+                  "type": "button",
+                  "action": { "type": "postback", "label": "✏", "data": "action=edit&id={{id}}" },
+                  "style": "secondary",
+                  "color": "#f0e4c4",
+                  "height": "sm",
+                  "flex": 0
+                },
+                {
+                  "type": "button",
+                  "action": { "type": "postback", "label": "✕", "data": "action=delete&id={{id}}" },
+                  "style": "secondary",
+                  "color": "#f0d8d0",
+                  "height": "sm",
+                  "flex": 0
+                }
+              ],
+              "spacing": "xs",
               "flex": 0
-            },
-            {
-              "type": "text",
-              "text": "{{due_text}}",
-              "size": "xs",
-              "color": "#a08050",
-              "margin": "sm"
             }
           ],
           "margin": "md"
         }
       ],
-      "paddingAll": "16px",
-      "paddingTop": "8px"
+      "paddingAll": "16px"
     },
     "footer": {
       "type": "box",

@@ -8,215 +8,77 @@
       "type": "box",
       "layout": "vertical",
       "contents": [
-        {
-          "type": "text",
-          "text": "งานค้าง {{count}} รายการ",
-          "weight": "bold",
-          "size": "xl",
-          "color": "#3a3020"
-        },
-        {
-          "type": "text",
-          "text": "{{date_display}}",
-          "size": "xs",
-          "color": "#a08050",
-          "margin": "sm"
-        }
+        { "type": "text", "text": "📋 งานค้าง {{count}} รายการ", "weight": "bold", "size": "lg", "color": "#3a3020" },
+        { "type": "text", "text": "{{date_thai}}", "size": "xs", "color": "#a08050", "margin": "sm" }
       ],
-      "paddingAll": "16px",
-      "paddingBottom": "8px"
+      "paddingAll": "20px",
+      "paddingBottom": "12px",
+      "background": { "type": "linearGradient", "angle": "135deg", "startColor": "#f0e4c4", "endColor": "#faf5e8" }
     },
     "body": {
       "type": "box",
       "layout": "vertical",
       "contents": [
         {
-          "type": "separator",
-          "color": "#d4c4a0"
-        },
-        {
-          "type": "box",
-          "layout": "horizontal",
+          "type": "box", "layout": "horizontal",
           "contents": [
-            {
-              "type": "text",
-              "text": "{{items[0].idx}}",
-              "size": "xxs",
-              "color": "#a08050",
-              "flex": 0,
-              "gravity": "center"
-            },
-            {
-              "type": "text",
-              "text": "{{items[0].text}}",
-              "size": "sm",
-              "weight": "bold",
-              "color": "#3a3020",
-              "margin": "md",
-              "flex": 5,
-              "wrap": true
-            },
-            {
-              "type": "text",
-              "text": "{{items[0].due_short}}",
-              "size": "xxs",
-              "weight": "bold",
-              "color": "{{items[0].urgency_color}}",
-              "align": "end",
-              "flex": 2,
-              "gravity": "center"
-            }
+            { "type": "text", "text": "{{item_1_idx}}", "size": "xxs", "color": "#c9a040", "weight": "bold", "flex": 0 },
+            { "type": "box", "layout": "vertical", "contents": [
+              { "type": "text", "text": "{{item_1_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "maxLines": 1 },
+              { "type": "text", "text": "📁 {{item_1_folder}}", "size": "xxs", "color": "#a08050" }
+            ], "flex": 3, "margin": "md" },
+            { "type": "text", "text": "{{item_1_due}}", "size": "xxs", "weight": "bold", "color": "{{item_1_urgency_color}}", "align": "end", "flex": 0, "gravity": "center" }
           ],
-          "margin": "lg",
           "paddingBottom": "12px"
         },
+        { "type": "separator", "color": "#d4c4a0" },
         {
-          "type": "separator",
-          "color": "#d4c4a0"
-        },
-        {
-          "type": "box",
-          "layout": "horizontal",
+          "type": "box", "layout": "horizontal",
           "contents": [
-            {
-              "type": "text",
-              "text": "{{items[1].idx}}",
-              "size": "xxs",
-              "color": "#a08050",
-              "flex": 0,
-              "gravity": "center"
-            },
-            {
-              "type": "text",
-              "text": "{{items[1].text}}",
-              "size": "sm",
-              "weight": "bold",
-              "color": "#3a3020",
-              "margin": "md",
-              "flex": 5,
-              "wrap": true
-            },
-            {
-              "type": "text",
-              "text": "{{items[1].due_short}}",
-              "size": "xxs",
-              "weight": "bold",
-              "color": "{{items[1].urgency_color}}",
-              "align": "end",
-              "flex": 2,
-              "gravity": "center"
-            }
+            { "type": "text", "text": "{{item_2_idx}}", "size": "xxs", "color": "#c9a040", "weight": "bold", "flex": 0 },
+            { "type": "box", "layout": "vertical", "contents": [
+              { "type": "text", "text": "{{item_2_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "maxLines": 1 },
+              { "type": "text", "text": "📁 {{item_2_folder}}", "size": "xxs", "color": "#a08050" }
+            ], "flex": 3, "margin": "md" },
+            { "type": "text", "text": "{{item_2_due}}", "size": "xxs", "weight": "bold", "color": "{{item_2_urgency_color}}", "align": "end", "flex": 0, "gravity": "center" }
           ],
-          "margin": "lg",
-          "paddingBottom": "12px"
+          "paddingTop": "12px", "paddingBottom": "12px"
         },
+        { "type": "separator", "color": "#d4c4a0" },
         {
-          "type": "separator",
-          "color": "#d4c4a0"
-        },
-        {
-          "type": "box",
-          "layout": "horizontal",
+          "type": "box", "layout": "horizontal",
           "contents": [
-            {
-              "type": "text",
-              "text": "{{items[2].idx}}",
-              "size": "xxs",
-              "color": "#a08050",
-              "flex": 0,
-              "gravity": "center"
-            },
-            {
-              "type": "text",
-              "text": "{{items[2].text}}",
-              "size": "sm",
-              "weight": "bold",
-              "color": "#3a3020",
-              "margin": "md",
-              "flex": 5,
-              "wrap": true
-            },
-            {
-              "type": "text",
-              "text": "{{items[2].due_short}}",
-              "size": "xxs",
-              "weight": "bold",
-              "color": "{{items[2].urgency_color}}",
-              "align": "end",
-              "flex": 2,
-              "gravity": "center"
-            }
+            { "type": "text", "text": "{{item_3_idx}}", "size": "xxs", "color": "#c9a040", "weight": "bold", "flex": 0 },
+            { "type": "box", "layout": "vertical", "contents": [
+              { "type": "text", "text": "{{item_3_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "maxLines": 1 },
+              { "type": "text", "text": "📁 {{item_3_folder}}", "size": "xxs", "color": "#a08050" }
+            ], "flex": 3, "margin": "md" },
+            { "type": "text", "text": "{{item_3_due}}", "size": "xxs", "weight": "bold", "color": "{{item_3_urgency_color}}", "align": "end", "flex": 0, "gravity": "center" }
           ],
-          "margin": "lg",
-          "paddingBottom": "12px"
+          "paddingTop": "12px", "paddingBottom": "12px"
         },
+        { "type": "separator", "color": "#d4c4a0" },
         {
-          "type": "separator",
-          "color": "#d4c4a0"
-        },
-        {
-          "type": "box",
-          "layout": "horizontal",
+          "type": "box", "layout": "horizontal",
           "contents": [
-            {
-              "type": "text",
-              "text": "{{items[3].idx}}",
-              "size": "xxs",
-              "color": "#a08050",
-              "flex": 0,
-              "gravity": "center"
-            },
-            {
-              "type": "text",
-              "text": "{{items[3].text}}",
-              "size": "sm",
-              "weight": "bold",
-              "color": "#3a3020",
-              "margin": "md",
-              "flex": 5,
-              "wrap": true
-            },
-            {
-              "type": "text",
-              "text": "{{items[3].due_short}}",
-              "size": "xxs",
-              "weight": "bold",
-              "color": "{{items[3].urgency_color}}",
-              "align": "end",
-              "flex": 2,
-              "gravity": "center"
-            }
+            { "type": "text", "text": "{{item_4_idx}}", "size": "xxs", "color": "#c9a040", "weight": "bold", "flex": 0 },
+            { "type": "box", "layout": "vertical", "contents": [
+              { "type": "text", "text": "{{item_4_text}}", "size": "sm", "weight": "bold", "color": "#3a3020", "maxLines": 1 },
+              { "type": "text", "text": "📁 {{item_4_folder}}", "size": "xxs", "color": "#a08050" }
+            ], "flex": 3, "margin": "md" },
+            { "type": "text", "text": "{{item_4_due}}", "size": "xxs", "weight": "bold", "color": "{{item_4_urgency_color}}", "align": "end", "flex": 0, "gravity": "center" }
           ],
-          "margin": "lg"
+          "paddingTop": "12px"
         }
       ],
-      "paddingAll": "16px",
-      "paddingTop": "0px"
+      "paddingAll": "16px"
     },
     "footer": {
       "type": "box",
       "layout": "vertical",
-      "spacing": "sm",
       "contents": [
-        {
-          "type": "button",
-          "style": "primary",
-          "color": "#c9a040",
-          "action": {
-            "type": "uri",
-            "label": "เปิด Dashboard",
-            "uri": "{{open_url}}"
-          },
-          "height": "sm"
-        },
-        {
-          "type": "text",
-          "text": "ทำเสร็จ ➡️ ส่งเลขมาบอก",
-          "size": "xxs",
-          "color": "#a08050",
-          "align": "center",
-          "margin": "sm"
-        }
+        { "type": "button", "style": "primary", "color": "#c9a040", "action": { "type": "uri", "label": "เปิด Dashboard", "uri": "https://liff.line.me/{{liff_id}}/dashboard" }, "height": "sm" },
+        { "type": "text", "text": "ทำเสร็จ → ส่งเลขมาบอก", "size": "xxs", "color": "#a08050", "align": "center", "margin": "sm" }
       ],
       "paddingAll": "16px"
     }

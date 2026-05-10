@@ -1,0 +1,162 @@
+{
+  "type": "flex",
+  "altText": "📊 สรุปสัปดาห์ — เสร็จ {{completed_count}} งาน",
+  "contents": {
+    "type": "bubble",
+    "size": "giga",
+    "header": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "📊 สรุปสัปดาห์",
+          "size": "sm",
+          "weight": "bold",
+          "color": "#c9a040",
+          "align": "center"
+        },
+        {
+          "type": "text",
+          "text": "{{week_range}}",
+          "size": "lg",
+          "weight": "bold",
+          "color": "#3a3020",
+          "align": "center",
+          "margin": "sm"
+        }
+      ],
+      "paddingAll": "20px",
+      "background": {
+        "type": "linearGradient",
+        "angle": "135deg",
+        "startColor": "#f0e4c4",
+        "endColor": "#faf5e8"
+      }
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{completed_count}}", "size": "xxl", "weight": "bold", "color": "#7a9a50", "align": "center" },
+                { "type": "text", "text": "เสร็จ", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            },
+            { "type": "separator", "color": "#d4c4a0" },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{created_count}}", "size": "xxl", "weight": "bold", "color": "#c9a040", "align": "center" },
+                { "type": "text", "text": "สร้างใหม่", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            },
+            { "type": "separator", "color": "#d4c4a0" },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{streak_days}}", "size": "xxl", "weight": "bold", "color": "#e8a946", "align": "center" },
+                { "type": "text", "text": "Streak 🔥", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            }
+          ],
+          "paddingAll": "12px"
+        },
+        { "type": "separator", "color": "#d4c4a0", "margin": "md" },
+        {
+          "type": "text",
+          "text": "📁 หมวดเยอะสุด",
+          "size": "xs",
+          "weight": "bold",
+          "color": "#c9a040",
+          "margin": "lg"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "{{top_folder}}", "size": "sm", "weight": "bold", "color": "#3a3020", "flex": 3 },
+            { "type": "text", "text": "{{top_folder_count}} งาน", "size": "sm", "color": "#c9a040", "align": "end", "flex": 2 }
+          ],
+          "margin": "md"
+        },
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [],
+              "height": "6px",
+              "backgroundColor": "#d4c4a0",
+              "cornerRadius": "sm"
+            },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [],
+              "height": "6px",
+              "backgroundColor": "#c9a040",
+              "cornerRadius": "sm",
+              "width": "{{top_folder_pct}}%",
+              "position": "absolute"
+            }
+          ],
+          "margin": "sm",
+          "position": "relative",
+          "height": "6px"
+        },
+        { "type": "separator", "color": "#d4c4a0", "margin": "lg" },
+        {
+          "type": "text",
+          "text": "⏳ ค้างอยู่",
+          "size": "xs",
+          "weight": "bold",
+          "color": "#e8a946",
+          "margin": "lg"
+        },
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "{{pending_count}} รายการ", "size": "sm", "color": "#3a3020", "flex": 3 },
+            { "type": "text", "text": "{{overdue_count}} เลยกำหนด", "size": "xs", "color": "#c45a3a", "weight": "bold", "align": "end", "flex": 2 }
+          ],
+          "margin": "md"
+        }
+      ],
+      "paddingAll": "16px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "เปิด Dashboard",
+            "uri": "https://liff.line.me/{{liff_id}}/dashboard"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}

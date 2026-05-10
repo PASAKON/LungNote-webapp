@@ -6,6 +6,24 @@
     "size": "kilo",
     "header": {
       "type": "box",
+      "layout": "horizontal",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            { "type": "text", "text": "ลบสำเร็จ ❌", "weight": "bold", "size": "lg", "color": "#ffffff" },
+            { "type": "text", "text": "รายการถูกลบเรียบร้อยแล้ว", "size": "xxs", "color": "#ffffff99", "margin": "sm" }
+          ],
+          "flex": 3
+        }
+      ],
+      "paddingAll": "20px",
+      "paddingBottom": "12px",
+      "background": { "type": "linearGradient", "angle": "135deg", "startColor": "#c45a3a", "endColor": "#d06850" }
+    },
+    "body": {
+      "type": "box",
       "layout": "vertical",
       "contents": [
         {
@@ -13,88 +31,30 @@
           "layout": "horizontal",
           "contents": [
             {
-              "type": "text",
-              "text": "🗑️",
-              "size": "lg",
-              "flex": 0
-            },
-            {
-              "type": "text",
-              "text": "DELETED",
-              "size": "xxs",
-              "color": "#c45a3a",
-              "weight": "bold",
-              "margin": "sm",
-              "gravity": "center"
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                { "type": "text", "text": "📁", "size": "xs", "flex": 0 },
+                { "type": "text", "text": "{{folder_name}}", "size": "xxs", "color": "#c45a3a", "weight": "bold", "margin": "xs" }
+              ],
+              "backgroundColor": "#f0d8d0", "cornerRadius": "sm", "paddingAll": "4px", "paddingStart": "6px", "paddingEnd": "8px", "flex": 0
             }
-          ],
-          "backgroundColor": "#f0d8d0",
-          "cornerRadius": "sm",
-          "paddingAll": "6px",
-          "paddingStart": "10px",
-          "paddingEnd": "10px",
-          "width": "105px"
+          ]
         },
-        {
-          "type": "text",
-          "text": "{{text}}",
-          "weight": "bold",
-          "size": "xl",
-          "margin": "md",
-          "color": "#a08050",
-          "decoration": "line-through",
-          "wrap": true
-        }
+        { "type": "text", "text": "{{text}}", "weight": "bold", "size": "md", "color": "#a08050", "decoration": "line-through", "margin": "md", "wrap": true },
+        { "type": "text", "text": "เหลืองานค้าง {{remaining_count}} รายการ", "size": "xs", "color": "#a08050", "margin": "md" }
       ],
-      "paddingAll": "16px",
-      "paddingBottom": "4px"
-    },
-    "body": {
-      "type": "box",
-      "layout": "vertical",
-      "contents": [
-        {
-          "type": "text",
-          "text": "เหลืองานค้าง {{remaining_count}} รายการ",
-          "size": "xs",
-          "color": "#a08050"
-        }
-      ],
-      "paddingAll": "16px",
-      "paddingTop": "4px",
-      "paddingBottom": "4px"
+      "paddingAll": "16px"
     },
     "footer": {
       "type": "box",
       "layout": "horizontal",
-      "spacing": "md",
+      "spacing": "sm",
       "contents": [
-        {
-          "type": "button",
-          "style": "link",
-          "color": "#c45a3a",
-          "action": {
-            "type": "postback",
-            "label": "↩️ Undo",
-            "data": "{{undo_postback_data}}"
-          },
-          "height": "sm",
-          "flex": 1
-        },
-        {
-          "type": "button",
-          "style": "link",
-          "color": "#a08050",
-          "action": {
-            "type": "uri",
-            "label": "ดูทั้งหมด",
-            "uri": "{{open_url}}"
-          },
-          "height": "sm",
-          "flex": 1
-        }
+        { "type": "button", "style": "link", "color": "#c45a3a", "action": { "type": "postback", "label": "↶ Undo", "data": "{{undo_postback_data}}" }, "height": "sm", "flex": 1 },
+        { "type": "button", "style": "link", "color": "#a08050", "action": { "type": "uri", "label": "ดูทั้งหมด", "uri": "https://liff.line.me/{{liff_id}}/dashboard" }, "height": "sm", "flex": 1 }
       ],
-      "paddingAll": "12px"
+      "paddingAll": "16px"
     }
   }
 }

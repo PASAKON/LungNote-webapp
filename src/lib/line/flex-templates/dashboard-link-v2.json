@@ -1,0 +1,140 @@
+{
+  "type": "flex",
+  "altText": "LungNote Dashboard — {{pending_count}} งานค้าง",
+  "contents": {
+    "type": "bubble",
+    "size": "giga",
+    "hero": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "text",
+          "text": "LungNote Dashboard",
+          "size": "lg",
+          "weight": "bold",
+          "color": "#ffffff",
+          "align": "center"
+        }
+      ],
+      "background": {
+        "type": "linearGradient",
+        "angle": "135deg",
+        "startColor": "#c9a040",
+        "endColor": "#d4a855"
+      },
+      "paddingAll": "24px",
+      "justifyContent": "center",
+      "alignItems": "center"
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{total_notes}}", "size": "xl", "weight": "bold", "color": "#c9a040", "align": "center" },
+                { "type": "text", "text": "โน้ต", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            },
+            { "type": "separator", "color": "#d4c4a0" },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{pending_count}}", "size": "xl", "weight": "bold", "color": "#e8a946", "align": "center" },
+                { "type": "text", "text": "ค้าง", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            },
+            { "type": "separator", "color": "#d4c4a0" },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{completed_count}}", "size": "xl", "weight": "bold", "color": "#7a9a50", "align": "center" },
+                { "type": "text", "text": "เสร็จ", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            },
+            { "type": "separator", "color": "#d4c4a0" },
+            {
+              "type": "box",
+              "layout": "vertical",
+              "contents": [
+                { "type": "text", "text": "{{streak_days}}", "size": "xl", "weight": "bold", "color": "#3a3020", "align": "center" },
+                { "type": "text", "text": "Streak", "size": "xxs", "color": "#a08050", "align": "center" }
+              ],
+              "flex": 1
+            }
+          ],
+          "paddingAll": "12px"
+        },
+        { "type": "separator", "color": "#d4c4a0" },
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                { "type": "text", "text": "✓", "size": "sm", "color": "#c9a040", "flex": 0 },
+                { "type": "text", "text": "{{recent_done_1}}", "size": "sm", "color": "#c4b490", "decoration": "line-through", "margin": "sm", "flex": 1 }
+              ]
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                { "type": "text", "text": "☐", "size": "sm", "color": "#c9a040", "flex": 0 },
+                { "type": "text", "text": "{{next_todo_1}}", "size": "sm", "color": "#3a3020", "margin": "sm", "flex": 1 },
+                { "type": "text", "text": "{{next_todo_1_due}}", "size": "xxs", "color": "#e8a946", "align": "end", "flex": 0 }
+              ],
+              "margin": "sm"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "contents": [
+                { "type": "text", "text": "☐", "size": "sm", "color": "#c9a040", "flex": 0 },
+                { "type": "text", "text": "{{next_todo_2}}", "size": "sm", "color": "#3a3020", "margin": "sm", "flex": 1 },
+                { "type": "text", "text": "{{next_todo_2_due}}", "size": "xxs", "color": "#3a3020", "align": "end", "flex": 0 }
+              ],
+              "margin": "sm"
+            }
+          ],
+          "margin": "lg",
+          "spacing": "sm"
+        }
+      ],
+      "paddingAll": "16px",
+      "paddingTop": "12px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "เปิด Dashboard",
+            "uri": "https://liff.line.me/{{liff_id}}/dashboard"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}
