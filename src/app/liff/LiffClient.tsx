@@ -94,9 +94,29 @@ function LiffInner({ liffId }: { liffId: string }) {
         }
 
         const idToken = liff.getIDToken();
-        debug("liff_id_token", { hasToken: !!idToken, length: idToken?.length ?? 0 });
+        // LINE id_token TTL is short (~30 min). If the user opens the
+        // /liff page from a stale tab, `getIDToken()` returns a cached
+        // expired token and the server fails with verify_failed_400
+        // "IdToken expired." Reject anything within 60s of expiry and
+        // force a fresh login round-trip instead.
+        const expSecondsAway = idToken ? jwtSecondsUntilExpiry(idToken) : null;
+        debug("liff_id_token", {
+          hasToken: !!idToken,
+          length: idToken?.length ?? 0,
+          expSecondsAway,
+        });
         if (!idToken) {
           setState({ status: "error", error: "ไม่ได้รับ id_token จาก LINE" });
+          return;
+        }
+        if (expSecondsAway !== null && expSecondsAway < 60) {
+          debug("liff_id_token_expired_relogin", { expSecondsAway });
+          try {
+            liff.logout();
+          } catch {
+            /* ignore */
+          }
+          liff.login({ redirectUri: window.location.href });
           return;
         }
 
@@ -108,6 +128,30 @@ function LiffInner({ liffId }: { liffId: string }) {
           body: JSON.stringify({ idToken }),
         });
         debug("auth_post_done", { status: res.status, ok: res.ok });
+
+        // verify_failed_400 with "IdToken expired" can still happen
+        // if the token was on the edge — LINE's server clock may say
+        // expired while ours said valid. One retry via re-login covers
+        // that case and avoids stranding the user on an error screen.
+        if (res.status === 401) {
+          const detail = await res.text();
+          if (detail.includes("verify_failed_400")) {
+            debug("auth_relogin_on_expired", { detail: detail.slice(0, 200) });
+            try {
+              liff.logout();
+            } catch {
+              /* ignore */
+            }
+            liff.login({ redirectUri: window.location.href });
+            return;
+          }
+          debug("auth_post_error", { status: res.status, detail: detail.slice(0, 300) });
+          setState({
+            status: "error",
+            error: `auth ล้มเหลว (${res.status}) ${detail}`,
+          });
+          return;
+        }
 
         if (!res.ok) {
           const detail = await res.text();
@@ -146,6 +190,32 @@ function LiffInner({ liffId }: { liffId: string }) {
       }
     />
   );
+}
+
+/**
+ * Decode a JWT payload (no signature check) and return the number of
+ * seconds until the token's `exp` claim. Returns null if the token
+ * cannot be parsed or has no `exp`. Negative number means already
+ * expired.
+ *
+ * Lives here (not in a shared lib) because it's only used by the
+ * LIFF client to decide whether to force a re-login before submitting
+ * the token to /api/auth/liff.
+ */
+function jwtSecondsUntilExpiry(token: string): number | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    // base64url → base64
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    const json = atob(padded);
+    const payload = JSON.parse(json) as { exp?: number };
+    if (typeof payload.exp !== "number") return null;
+    return payload.exp - Math.floor(Date.now() / 1000);
+  } catch {
+    return null;
+  }
 }
 
 /**
