@@ -67,7 +67,7 @@
         "footer": {
           "type": "box", "layout": "vertical",
           "contents": [
-            { "type": "button", "style": "primary", "color": "#c9a040", "action": { "type": "uri", "label": "เปิดทั้งหมดใน Dashboard", "uri": "https://liff.line.me/{{liff_id}}/dashboard" }, "height": "sm" },
+            { "type": "button", "style": "primary", "color": "#c9a040", "action": { "type": "uri", "label": "เปิดทั้งหมดใน Dashboard", "uri": "https://liff.line.me/{{liff_id}}?next=%2Fth%2Fdashboard%2Ftodo" }, "height": "sm" },
             { "type": "text", "text": "ทำเสร็จ → ส่งเลขมาบอก", "size": "xxs", "color": "#a08050", "align": "center", "margin": "sm" }
           ],
           "paddingAll": "14px"

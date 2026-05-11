@@ -151,7 +151,7 @@
           "action": {
             "type": "uri",
             "label": "เปิด Dashboard",
-            "uri": "https://liff.line.me/{{liff_id}}/dashboard"
+            "uri": "https://liff.line.me/{{liff_id}}?next=%2Fth%2Fdashboard%2Ftodo"
           },
           "height": "sm"
         }

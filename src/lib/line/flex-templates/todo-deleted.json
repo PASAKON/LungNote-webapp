@@ -52,7 +52,7 @@
       "spacing": "sm",
       "contents": [
         { "type": "button", "style": "link", "color": "#c45a3a", "action": { "type": "postback", "label": "↶ Undo", "data": "{{undo_postback_data}}" }, "height": "sm", "flex": 1 },
-        { "type": "button", "style": "link", "color": "#a08050", "action": { "type": "uri", "label": "ดูทั้งหมด", "uri": "https://liff.line.me/{{liff_id}}/dashboard" }, "height": "sm", "flex": 1 }
+        { "type": "button", "style": "link", "color": "#a08050", "action": { "type": "uri", "label": "ดูทั้งหมด", "uri": "https://liff.line.me/{{liff_id}}?next=%2Fth%2Fdashboard%2Ftodo" }, "height": "sm", "flex": 1 }
       ],
       "paddingAll": "16px"
     }

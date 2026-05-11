@@ -92,7 +92,7 @@
       "action_color": "#c9a040",
       "action_type": "uri",
       "action_label": "เชื่อมบัญชี",
-      "action_uri": "https://liff.line.me/{{liff_id}}/link"
+      "action_uri": "https://liff.line.me/{{liff_id}}?next=%2Fth%2Fdashboard"
     },
     "out_of_range": {
       "error_icon": "⚠",
