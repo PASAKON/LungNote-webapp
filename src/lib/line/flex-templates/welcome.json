@@ -87,7 +87,7 @@
           "action": {
             "type": "uri",
             "label": "เริ่มใช้งาน LungNote",
-            "uri": "https://liff.line.me/YOUR_LIFF_ID"
+            "uri": "https://liff.line.me/YOUR_LIFF_ID?next=%2Fth%2Fdashboard"
           },
           "height": "md"
         },
@@ -96,9 +96,10 @@
           "style": "secondary",
           "color": "#f0e4c4",
           "action": {
-            "type": "uri",
+            "type": "postback",
             "label": "ดูวิธีใช้งาน",
-            "uri": "https://lungnote.app/help"
+            "data": "action=help",
+            "displayText": "ช่วยเหลือ"
           },
           "height": "md"
         }

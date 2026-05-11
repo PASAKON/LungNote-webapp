@@ -1,72 +1,53 @@
 import type { FlexMessage, LineMessage } from "./client";
 import welcomeTemplate from "./flex-templates/welcome.json";
 import dashboardLinkTemplate from "./flex-templates/dashboard-link.json";
-import noteSavedTemplate from "./flex-templates/note-saved.json";
-import errorTemplate from "./flex-templates/error.json";
 
 // Designer-supplied Flex JSON lives in ./flex-templates/.
-// Templates ship with placeholder URIs ("https://liff.line.me/YOUR_LIFF_ID/...")
-// and {{token}}-style text placeholders; we substitute at runtime.
+// Each template ships with the placeholder `YOUR_LIFF_ID` baked into
+// LIFF launcher URIs (https://liff.line.me/YOUR_LIFF_ID?next=...).
+// At runtime we swap that token for the real LIFF id from env so the
+// button opens the LIFF launcher → auto-login → next path.
+// AI-driven templates (todo_*, error_inline, multi_save_summary) go
+// through the separate builder in @/lib/agent/flex/templates.ts.
 
 const SITE_URL = "https://lungnote.com";
 
-// LIFF URL has 0 round-trip cost (vs 1-time auth-link token), so we
-// prefer it whenever NEXT_PUBLIC_LINE_LIFF_ID is configured. Account-
-// linking authUrl stays as the fallback for desktop / shared contexts.
-function preferredOpenUrl(authUrl: string, path = "/dashboard"): string {
-  const liffId = process.env.NEXT_PUBLIC_LINE_LIFF_ID;
-  if (liffId) {
-    const tail = path.startsWith("/") ? path : `/${path}`;
-    return `https://liff.line.me/${liffId}?next=${encodeURIComponent(tail)}`;
+function getLiffId(): string {
+  return (process.env.NEXT_PUBLIC_LINE_LIFF_ID ?? "").trim();
+}
+
+/**
+ * Resolve YOUR_LIFF_ID inside a URI.
+ *
+ * - LIFF id configured → swap YOUR_LIFF_ID → real id. The LIFF launcher
+ *   handles auth automatically via id_token.
+ * - No LIFF id (dev / preview) → fall back to the one-time auth-link
+ *   URL if provided, else a plain SITE_URL+path deep link.
+ */
+function resolveLiffUri(uri: string, authUrl?: string): string {
+  if (!uri.includes("YOUR_LIFF_ID")) return uri;
+  const id = getLiffId();
+  if (id) return uri.replace("YOUR_LIFF_ID", id);
+  if (authUrl) return authUrl;
+  try {
+    const u = new URL(uri.replace("YOUR_LIFF_ID", "_"));
+    const next = u.searchParams.get("next");
+    const path = next ? decodeURIComponent(next) : "/th/dashboard";
+    return `${SITE_URL}${path}`;
+  } catch {
+    return `${SITE_URL}/th/dashboard`;
   }
-  return authUrl;
 }
 
 export function dashboardLinkMessage(authUrl: string): LineMessage[] {
   const tpl = clone(dashboardLinkTemplate) as FlexMessage;
-  const target = preferredOpenUrl(authUrl, "/dashboard");
-  rewriteUriActions(tpl.contents, (uri) =>
-    uri.includes("/dashboard") || uri.includes("YOUR_LIFF_ID")
-      ? target
-      : uri,
-  );
+  rewriteUriActions(tpl.contents, (uri) => resolveLiffUri(uri, authUrl));
   return [tpl];
 }
 
 export function welcomeMessage(): LineMessage[] {
   const tpl = clone(welcomeTemplate) as FlexMessage;
-  rewriteUriActions(tpl.contents, (uri) =>
-    uri.includes("YOUR_LIFF_ID") ? `${SITE_URL}` : uri,
-  );
-  return [tpl];
-}
-
-export function noteSavedMessage(opts: {
-  title: string;
-  folderName?: string | null;
-  noteId: string;
-  authUrl: string;
-}): LineMessage[] {
-  const tpl = clone(noteSavedTemplate) as FlexMessage;
-  const savedAt = new Date().toLocaleString("th-TH", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  substituteText(tpl.contents, {
-    "{{note_title}}": opts.title,
-    "{{folder_name}}": opts.folderName ?? "ไม่มีโฟลเดอร์",
-    "{{saved_at}}": savedAt,
-    "{{note_id}}": opts.noteId,
-  });
-  rewriteUriActions(tpl.contents, (uri) =>
-    uri.includes("YOUR_LIFF_ID") ? opts.authUrl : uri,
-  );
-  return [tpl];
-}
-
-export function errorFlexMessage(message: string): LineMessage[] {
-  const tpl = clone(errorTemplate) as FlexMessage;
-  substituteText(tpl.contents, { "{{MESSAGE}}": message });
+  rewriteUriActions(tpl.contents, (uri) => resolveLiffUri(uri));
   return [tpl];
 }
 
@@ -74,30 +55,6 @@ export function errorFlexMessage(message: string): LineMessage[] {
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
-}
-
-function substituteText(
-  node: unknown,
-  replacements: Record<string, string>,
-): void {
-  if (Array.isArray(node)) {
-    for (const item of node) substituteText(item, replacements);
-    return;
-  }
-  if (node && typeof node === "object") {
-    const obj = node as Record<string, unknown>;
-    for (const [k, v] of Object.entries(obj)) {
-      if (k === "text" && typeof v === "string") {
-        let next = v;
-        for (const [needle, replacement] of Object.entries(replacements)) {
-          next = next.split(needle).join(replacement);
-        }
-        obj[k] = next;
-      } else {
-        substituteText(v, replacements);
-      }
-    }
-  }
 }
 
 function rewriteUriActions(
