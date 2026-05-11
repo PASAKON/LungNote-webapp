@@ -83,7 +83,6 @@
   inset: -2px;
   border: 2.5px solid var(--fg);
   border-radius: 3px;
-  filter: url(#sketchy);
   pointer-events: none;
 }
 
@@ -108,7 +107,6 @@
   border-radius: 3px;
   background: var(--surface);
   cursor: pointer;
-  filter: url(#sketchy);
   display: flex;
   align-items: center;
   justify-content: center;

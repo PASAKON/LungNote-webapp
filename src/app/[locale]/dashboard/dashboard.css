@@ -230,7 +230,6 @@
   inset: -2px;
   border: 2.5px solid var(--fg);
   border-radius: 3px;
-  filter: url(#sketchy);
   pointer-events: none;
   z-index: 1;
 }
@@ -292,7 +291,6 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  filter: url(#sketchy);
   color: var(--fg);
   text-decoration: none;
 }
@@ -345,7 +343,6 @@
   background: var(--surface);
   color: var(--fg);
   outline: none;
-  filter: url(#sketchy);
 }
 .search-bar input:focus {
   border-color: var(--accent);
@@ -431,7 +428,6 @@
   inset: -2px;
   border: 2.5px solid var(--fg);
   border-radius: 3px;
-  filter: url(#sketchy);
   pointer-events: none;
 }
 .note-row {
@@ -498,7 +494,6 @@
   background: var(--surface);
   border: 3px solid var(--fg);
   border-radius: 3px;
-  filter: url(#sketchy);
   position: relative;
 }
 .empty-notebook::after {
@@ -525,7 +520,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: url(#sketchy);
   color: #fff;
   font-size: 24px;
   font-weight: 700;
@@ -553,7 +547,6 @@
   border: 2.5px solid var(--fg);
   border-radius: 3px;
   cursor: pointer;
-  filter: url(#sketchy);
   transition:
     background 0.15s,
     transform 0.15s;
@@ -622,7 +615,6 @@
   height: 3px;
   background: var(--accent);
   border-radius: 0 0 3px 3px;
-  filter: url(#sketchy);
 }
 .tab-item svg {
   width: 22px;
