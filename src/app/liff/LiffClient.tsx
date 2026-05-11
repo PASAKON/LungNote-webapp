@@ -121,7 +121,7 @@ function LiffInner({ liffId }: { liffId: string }) {
 
         if (cancelled) return;
         setState({ status: "ok" });
-        const next = search.get("next") || "/dashboard";
+        const next = safeNext(search.get("next"));
         debug("router_replace", { next });
         router.replace(next);
       } catch (err) {
@@ -146,6 +146,27 @@ function LiffInner({ liffId }: { liffId: string }) {
       }
     />
   );
+}
+
+/**
+ * Open-redirect guard. `next` must be a same-origin relative path:
+ *   "/"  → "/foo/bar"     OK
+ *   "//evil.com/..."      reject (protocol-relative URL)
+ *   "/\\evil.com/..."     reject (backslash variant)
+ *   "https://evil.com"    reject (absolute URL)
+ *   anything else         fall back to "/dashboard"
+ *
+ * Without this guard, an attacker could craft `?next=https://evil.com`
+ * and have LIFF auth carry the user out to a phishing page that mimics
+ * LungNote/LINE.
+ */
+function safeNext(raw: string | null): string {
+  if (!raw) return "/dashboard";
+  if (!raw.startsWith("/")) return "/dashboard";
+  // Protocol-relative URLs ("//foo.com") and backslash variants
+  // ("/\\foo.com") both bypass naive relative-path checks.
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return "/dashboard";
+  return raw;
 }
 
 // Inline LungNote mascot — Option D "Float & Dots" animation.
