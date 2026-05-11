@@ -16,8 +16,8 @@
       "bounds": { "x": 833, "y": 0, "width": 834, "height": 843 },
       "action": {
         "type": "uri",
-        "label": "Note",
-        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fth%2Fdashboard%2Fnotes"
+        "label": "ภาพรวม",
+        "uri": "https://liff.line.me/{{LIFF_ID}}?next=%2Fth%2Fdashboard"
       }
     },
     {
