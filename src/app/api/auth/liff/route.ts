@@ -53,9 +53,13 @@ export async function POST(req: NextRequest) {
   }
 
   const verified = await verifyLineIdToken(idToken);
-  dbg("verify_id_token", { ok: verified.ok, error: verified.ok ? null : verified.error });
+  dbg("verify_id_token", {
+    ok: verified.ok,
+    error: verified.ok ? null : verified.error,
+    diag: verified.ok ? undefined : verified.diag,
+  });
   if (!verified.ok) {
-    rec.flush({ outcome: verified.error });
+    rec.flush({ outcome: verified.error, diag: verified.diag });
     return NextResponse.json({ error: verified.error }, { status: 401 });
   }
 
