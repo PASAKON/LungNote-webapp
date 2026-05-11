@@ -465,11 +465,16 @@ async function sendDashboardLink(
     const url = `${SITE_URL}/auth/line?t=${token}`;
     await replyMessage(replyToken, dashboardLinkMessage(url));
   } catch (err) {
-    const detail = err instanceof Error ? err.message : "unknown";
+    // Log server-side only — don't leak DB error fragments / Supabase
+    // hints / env names back to the user (OWASP info disclosure).
+    console.error("sendDashboardLink failed", {
+      lineUserId,
+      err: err instanceof Error ? err.message : "unknown",
+    });
     await replyMessage(replyToken, [
       {
         type: "text",
-        text: `เกิดข้อผิดพลาด สร้างลิงก์ไม่สำเร็จ — ลองอีกครั้งภายหลัง\n(${detail})`,
+        text: "เกิดข้อผิดพลาด สร้างลิงก์ไม่สำเร็จ — ลองอีกครั้งภายหลัง",
       },
     ]);
   }
