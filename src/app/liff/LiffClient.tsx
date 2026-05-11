@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MascotMark } from "@/components/MascotMark";
 import { LiffSketchyFilter } from "./LiffSketchyFilter";
 import "./liff.css";
 
@@ -149,24 +148,86 @@ function LiffInner({ liffId }: { liffId: string }) {
   );
 }
 
-function Logo() {
+// Inline LungNote mascot — Option D "Float & Dots" animation.
+// Path data mirrors design/brand/mascot-loading.html.
+function MascotFloat() {
   return (
-    <div className="liff-logo" style={{ color: "#3a3020" }}>
-      <MascotMark size={64} />
-    </div>
+    <svg
+      className="liff-mascot"
+      viewBox="0 0 200 200"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={3.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M42 38 Q44 35 52 34 Q100 32 148 34 Q156 35 158 38 Q163 70 163 128 Q158 156 148 162 Q100 164 52 162 Q42 156 38 128 Q38 70 42 38Z" />
+      <path
+        d="M54 30 Q56 26 64 24 Q100 22 136 24 Q144 26 146 30 Q148 38 146 44 Q136 48 100 48 Q64 46 54 42 Q54 38 54 30Z"
+        strokeWidth={2.5}
+      />
+      <circle cx="74" cy="78" r="12" fill="currentColor" stroke="none" />
+      <circle cx="126" cy="76" r="10" fill="currentColor" stroke="none" />
+      <path
+        d="M76 114 Q84 122 90 128 Q94 126 100 118 Q108 108 126 92"
+        strokeWidth={5}
+      />
+      <path d="M36 82 Q20 72 6 82" />
+      <path d="M164 80 Q180 70 194 80" />
+      <path d="M62 162 Q68 172 76 178 Q84 172 86 162" />
+      <path d="M114 162 Q120 172 128 178 Q136 172 138 162" />
+    </svg>
+  );
+}
+
+// Error mascot — 500-style X-eyes + wavy mouth + lightning.
+function MascotError() {
+  return (
+    <svg
+      className="liff-mascot liff-mascot--error"
+      viewBox="0 0 200 200"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={3.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M42 38 Q44 35 52 34 Q100 32 148 34 Q156 35 158 38 Q163 70 163 128 Q158 156 148 162 Q100 164 52 162 Q42 156 38 128 Q38 70 42 38Z" />
+      <path
+        d="M54 30 Q56 26 64 24 Q100 22 136 24 Q144 26 146 30 Q148 38 146 44 Q136 48 100 48 Q64 46 54 42 Q54 38 54 30Z"
+        strokeWidth={2.5}
+      />
+      {/* X eyes */}
+      <path d="M64 70 L84 86 M84 70 L64 86" strokeWidth={4} />
+      <path d="M116 68 L136 84 M136 68 L116 84" strokeWidth={4} />
+      {/* Wavy mouth */}
+      <path d="M80 120 Q90 128 100 120 Q110 128 120 120" strokeWidth={4} />
+      {/* Lightning bolt above head */}
+      <path d="M95 2 L88 18 L100 16 L92 34" strokeWidth={3} />
+      <path d="M36 82 Q20 72 6 82" />
+      <path d="M164 80 Q180 70 194 80" />
+      <path d="M62 162 Q68 172 76 178 Q84 172 86 162" />
+      <path d="M114 162 Q120 172 128 178 Q136 172 138 162" />
+    </svg>
   );
 }
 
 function ConnectingView({ label }: { label: string }) {
   return (
-    <main className="liff-state">
+    <main className="liff-state liff-state--connecting">
       <LiffSketchyFilter />
-      <Logo />
+      <div className="liff-mascot-wrap liff-mascot-wrap--float">
+        <MascotFloat />
+      </div>
       <div className="liff-title">
         Lung<span>Note</span>
       </div>
-      <div className="liff-spinner-wrap">
-        <div className="liff-spinner" />
+      <div className="liff-dots" aria-hidden="true">
+        <span />
+        <span />
+        <span />
       </div>
       <div className="liff-spinner-text">{label}</div>
       <p className="liff-subtitle">
@@ -203,10 +264,10 @@ function SuccessView() {
 
 function ErrorView({ message }: { message: string }) {
   return (
-    <main className="liff-state">
+    <main className="liff-state liff-state--error">
       <LiffSketchyFilter />
-      <div className="liff-error-icon">
-        <span>!</span>
+      <div className="liff-mascot-wrap liff-mascot-wrap--error">
+        <MascotError />
       </div>
       <div className="liff-error-msg">เชื่อมต่อไม่สำเร็จ</div>
       <p className="liff-error-detail">{message}</p>
