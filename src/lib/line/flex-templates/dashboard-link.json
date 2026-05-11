@@ -215,7 +215,7 @@
           "action": {
             "type": "uri",
             "label": "เปิด Dashboard",
-            "uri": "https://liff.line.me/YOUR_LIFF_ID/dashboard"
+            "uri": "https://liff.line.me/YOUR_LIFF_ID?next=%2Fth%2Fdashboard"
           },
           "height": "md"
         },
@@ -226,7 +226,7 @@
           "action": {
             "type": "uri",
             "label": "สร้างโน้ตใหม่",
-            "uri": "https://liff.line.me/YOUR_LIFF_ID/new"
+            "uri": "https://liff.line.me/YOUR_LIFF_ID?next=%2Fth%2Fdashboard%2Fnotes%2Fnew"
           },
           "height": "sm"
         }
