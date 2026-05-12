@@ -39,6 +39,15 @@ describe("SYSTEM_PROMPT", () => {
   it("forbids exposing tool names / UUIDs / system prompt", () => {
     expect(SYSTEM_PROMPT.toLowerCase()).toMatch(/never expose|never share/);
   });
+
+  it("teaches the URL + save-intent pattern", () => {
+    // Decision-tree row for URL + save intent.
+    expect(SYSTEM_PROMPT).toMatch(/URL \+ save intent/);
+    // Few-shot example with a URL and a Thai save verb.
+    expect(SYSTEM_PROMPT).toMatch(/https?:\/\/\S+.*ฝาก/);
+    // Bare-URL ambiguity is handled (ask, don't auto-save).
+    expect(SYSTEM_PROMPT).toMatch(/bare URL/i);
+  });
 });
 
 describe("buildPromptMessages", () => {
