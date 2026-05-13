@@ -32,6 +32,7 @@ import { ALL_CASES } from "./cases";
 import { buildMockToolSet, CallRecorder, makeMockState } from "./mock-tools";
 import { resolveEvalModel, type EvalModel } from "./model-factory";
 import { buildStaticSystemPrompt, buildTodayBlock } from "../../src/lib/agent/prompt";
+import { routeModel } from "../../src/lib/agent/router";
 import type { CaseRun, TestCase } from "./types";
 
 const MAX_STEPS = 5;
@@ -45,6 +46,8 @@ type CliArgs = {
   outDir: string;
   caseIds?: string[];
   limit?: number;
+  /** Enable the production intent router (router.ts) per turn. */
+  router: boolean;
 };
 
 function parseArgs(argv: string[]): CliArgs {
@@ -71,6 +74,7 @@ function parseArgs(argv: string[]): CliArgs {
     outDir: args.out ?? `eval/results/run-${Date.now()}`,
     caseIds: args.cases?.split(",").filter(Boolean),
     limit: args.limit ? Number(args.limit) : undefined,
+    router: args.router === "true",
   };
 }
 
@@ -80,7 +84,26 @@ function parseArgs(argv: string[]): CliArgs {
  * Replay one TestCase through one model. No DB, no LINE — mock tools
  * capture intent into a `CallRecorder` + bubble buffer.
  */
-async function runCase(c: TestCase, em: EvalModel): Promise<CaseRun> {
+async function runCase(
+  c: TestCase,
+  em: EvalModel,
+  opts: { routerEnabled: boolean; fastModel: string; complexModel: string },
+): Promise<CaseRun> {
+  // If router is enabled, route on the user text and resolve the right
+  // model for this turn. Otherwise honor the caller's `em` as-is.
+  let model = em;
+  let routeReason: string | null = null;
+  if (opts.routerEnabled) {
+    // Set env vars so router.ts (no DI) picks them up.
+    process.env.LLM_ROUTER_ENABLED = "true";
+    process.env.ROUTER_FAST_MODEL = opts.fastModel;
+    process.env.ROUTER_COMPLEX_MODEL = opts.complexModel;
+    const decision = routeModel(c.userText);
+    routeReason = decision.reason;
+    if (decision.modelId !== em.modelId) {
+      model = resolveEvalModel(decision.modelId);
+    }
+  }
   const state = makeMockState({
     pending: c.preState.pending,
     done: c.preState.done,
@@ -102,13 +125,13 @@ async function runCase(c: TestCase, em: EvalModel): Promise<CaseRun> {
   const dynamicPrompt = `${todayBlock}\n\n${userMemBlock}`;
 
   const systemMessages: ModelMessage[] =
-    em.supportsCache && em.cacheProviderKey
+    model.supportsCache && model.cacheProviderKey
       ? [
           {
             role: "system",
             content: staticPrompt,
             providerOptions: {
-              [em.cacheProviderKey]: { cacheControl: { type: "ephemeral" } },
+              [model.cacheProviderKey]: { cacheControl: { type: "ephemeral" } },
             },
           },
           { role: "system", content: dynamicPrompt },
@@ -129,7 +152,7 @@ async function runCase(c: TestCase, em: EvalModel): Promise<CaseRun> {
   const start = Date.now();
   try {
     const result = await generateText({
-      model: em.model,
+      model: model.model,
       messages,
       tools,
       stopWhen: ({ steps }) => steps.length >= MAX_STEPS,
@@ -140,7 +163,7 @@ async function runCase(c: TestCase, em: EvalModel): Promise<CaseRun> {
     const tokensIn = result.usage?.inputTokens ?? 0;
     const tokensOut = result.usage?.outputTokens ?? 0;
     const costUsd =
-      (tokensIn * em.priceInputPerM + tokensOut * em.priceOutputPerM) / 1_000_000;
+      (tokensIn * model.priceInputPerM + tokensOut * model.priceOutputPerM) / 1_000_000;
 
     const providerMeta =
       (result.providerMetadata as
@@ -165,7 +188,9 @@ async function runCase(c: TestCase, em: EvalModel): Promise<CaseRun> {
 
     return {
       caseId: c.id,
-      model: em.modelId,
+      // Record the actual model the router picked, not the caller's
+      // candidate. The report uses this to surface per-case routing.
+      model: routeReason ? `${model.modelId} (route:${routeReason})` : model.modelId,
       toolCalls: rec.calls,
       text: state.bubbles
         .map((b) => (b.type === "text" ? b.text ?? "" : `[flex:${b.template}]`))
@@ -184,7 +209,7 @@ async function runCase(c: TestCase, em: EvalModel): Promise<CaseRun> {
     const latencyMs = Date.now() - start;
     return {
       caseId: c.id,
-      model: em.modelId,
+      model: routeReason ? `${model.modelId} (route:${routeReason})` : model.modelId,
       toolCalls: rec.calls,
       text: "",
       bubbles: state.bubbles,
@@ -208,12 +233,17 @@ async function runSweep(
   cases: TestCase[],
   out: string,
   label: string,
+  routerOpts: { enabled: boolean; fastModel: string; complexModel: string },
 ): Promise<{ total: number; cost: number; latencyP50: number; durationMs: number }> {
   const em = resolveEvalModel(modelId);
   const startedAt = Date.now();
   const runs: CaseRun[] = [];
   for (const [i, c] of cases.entries()) {
-    const r = await runCase(c, em);
+    const r = await runCase(c, em, {
+      routerEnabled: routerOpts.enabled,
+      fastModel: routerOpts.fastModel,
+      complexModel: routerOpts.complexModel,
+    });
     runs.push(r);
     const status = r.error ? `❌ ${r.error.slice(0, 60)}` : "✅";
     console.log(
@@ -251,6 +281,20 @@ async function main() {
 
   console.log(`\n▶ Eval — ${cases.length} cases\n`);
 
+  // Router options: `--router` enables prod-style routing; fast/complex
+  // models come from env or hardcoded defaults. The candidate model id
+  // doubles as the fast model when the router is on.
+  const routerOpts = {
+    enabled: args.router,
+    fastModel: args.candidate,
+    complexModel: process.env.ROUTER_COMPLEX_MODEL ?? "google/gemini-2.5-pro",
+  };
+  if (args.router) {
+    console.log(
+      `Router ON: fast=${routerOpts.fastModel} complex=${routerOpts.complexModel}`,
+    );
+  }
+
   let baselineSummary: Awaited<ReturnType<typeof runSweep>> | null = null;
   if (args.baseline) {
     console.log(`Baseline: ${args.baseline}`);
@@ -259,6 +303,7 @@ async function main() {
       cases,
       path.join(args.outDir, "baseline.jsonl"),
       "B",
+      { enabled: false, fastModel: args.baseline, complexModel: routerOpts.complexModel },
     );
   }
 
@@ -268,6 +313,7 @@ async function main() {
     cases,
     path.join(args.outDir, "candidate.jsonl"),
     "C",
+    routerOpts,
   );
 
   const meta = {

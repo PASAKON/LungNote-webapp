@@ -7,6 +7,7 @@ import { ALL_TOOLS } from "./tools";
 import { buildToolSet } from "./registry";
 import { buildSystemPrompt, buildStaticSystemPrompt, buildTodayBlock } from "./prompt";
 import { resolveModel } from "./model";
+import { routeModel } from "./router";
 import { loadUserMemory } from "@/lib/agent/user_memory";
 import { loadAgentSettings } from "./settings";
 
@@ -58,9 +59,11 @@ export async function runAgent(
   userText: string,
   ctx: TurnContext,
 ): Promise<AgentReply> {
+  const route = routeModel(userText);
+  ctx.trace.step("router", { model_id: route.modelId, reason: route.reason });
   let resolved;
   try {
-    resolved = resolveModel();
+    resolved = resolveModel(route.modelId);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { ok: false, reason: "ai_error", error: msg };
