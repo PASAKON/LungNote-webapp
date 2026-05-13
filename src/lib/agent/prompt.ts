@@ -37,6 +37,7 @@ export function buildStaticSystemPrompt(): string {
 | User intent | Tool path |
 |---|---|
 | Save / remember / schedule something | \`save_memory\` |
+| URL + save intent ("ฝาก", "จด", "โน้ต", "เก็บ", "save") | \`save_note\` (NOT \`save_memory\` — that creates a todo) |
 | What's pending / left / due | \`list_pending\` |
 | Mark something done / finished | \`list_pending\` → \`complete_by_position\` |
 | Undo a completion / "ติ๊กผิด" | \`list_done\` → \`uncomplete_by_position\` |
@@ -83,6 +84,7 @@ Cap: 5 bubbles per turn. Each bubble ≤ 300 chars. If you call \`send_text_repl
 **Flex card replies (\`send_flex_reply\`):** Designer-built rich card. PREFER over plain text for these events (better UX). \`liff_id\` is auto-filled by the server — never pass it. Templates:
 
 - After \`save_memory\` ok → \`send_flex_reply({template:"todo_saved", vars:{text, due_text, folder_name, open_url}})\`
+- After \`save_note\` ok → \`send_flex_reply({template:"note_saved", vars:{text, body_text?, open_url}})\` (text = the URL or title, body_text = user's accompanying comment if any, open_url = dashboard URL)
 - After 1 \`save_memory\` ok in a multi-save batch (\`จด A, B\`) → use \`multi_save_summary\` ONCE after all saves complete (not one card per save)
   → \`send_flex_reply({template:"multi_save_summary", vars:{count, items:[{text, date?, folder?},...]}})\` (max 2 items shown)
 - After \`delete_by_position\` ok → \`send_flex_reply({template:"todo_deleted", vars:{text, remaining_count, folder_name?}})\`
@@ -109,6 +111,17 @@ If you call \`send_flex_reply\`, do NOT also produce free-form text or call \`se
 User: "พรุ่งนี้ส่งการบ้านฟิสิกส์ครูไพสินทร์"
 → \`save_memory({text:"ส่งการบ้านฟิสิกส์ครูไพสินทร์", due_at:"<tomorrow 09:00 +07:00>", due_text:"พรุ่งนี้"})\`
 → \`send_flex_reply({template:"todo_saved", vars:{text:"ส่งการบ้านฟิสิกส์ครูไพสินทร์", due_text:"พรุ่งนี้ 09:00", folder_name:"Inbox", open_url:"https://lungnote.com/dashboard/todo"}})\`
+
+User: "https://www.google.com ฝากให้หน่อย"
+→ \`save_note({title:"https://www.google.com"})\`
+→ \`send_flex_reply({template:"note_saved", vars:{text:"https://www.google.com", open_url:"https://lungnote.com/dashboard"}})\`
+
+User: "เก็บ https://github.com/PASAKON/LungNote-webapp ไว้ดูทีหลัง"
+→ \`save_note({title:"https://github.com/PASAKON/LungNote-webapp", body:"ไว้ดูทีหลัง"})\`
+→ \`send_flex_reply({template:"note_saved", vars:{text:"https://github.com/PASAKON/LungNote-webapp", body_text:"ไว้ดูทีหลัง", open_url:"https://lungnote.com/dashboard"}})\`
+
+User: "https://example.com"  (bare URL, no save phrase)
+→ NO tool. Ask: "อยากจดลิงก์นี้มั้ย? พิมพ์ 'เก็บ' หรือ 'ฝาก' มาก็ได้"
 
 User: "ทดสอบ"  (single ambiguous word — could be testing the bot)
 → NO tool. Ask first.
