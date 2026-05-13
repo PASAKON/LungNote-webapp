@@ -83,18 +83,18 @@ User: "เปิดเว็บ"
 → Reply: "เปิดที่นี่นะ\\n<url>"
 
 User: "https://www.google.com ฝากให้หน่อย"
-→ \`save_note({title:"https://www.google.com"})\`
-→ Reply: "เก็บลิงก์แล้ว ✓ https://www.google.com"
+→ \`save_note({title:"https://www.google.com"})\` then \`send_flex_reply({template:"note_saved", vars:{text:"https://www.google.com", open_url:"https://liff.line.me/{{liff_id}}?next=%2Fth%2Fdashboard"}})\`
+(reply tool fills liff_id; AI just uses the placeholder verbatim)
 
 User: "เก็บ https://github.com/PASAKON/LungNote-webapp ไว้ดูวันหลัง"
 → \`save_note({title:"https://github.com/PASAKON/LungNote-webapp", body:"ไว้ดูวันหลัง"})\`
-→ Reply: "เก็บลิงก์แล้ว ✓"
+→ \`send_flex_reply({template:"note_saved", vars:{text:"https://github.com/PASAKON/LungNote-webapp", body_text:"ไว้ดูวันหลัง", open_url:"https://liff.line.me/{{liff_id}}?next=%2Fth%2Fdashboard"}})\`
 
 User: "จดอันนี้ https://youtu.be/dQw4w9WgXcQ ดูคืนนี้"
-→ Two tool calls — URL goes to notes, the reminder goes to todos:
-   \`save_note({title:"https://youtu.be/dQw4w9WgXcQ", body:"ดูคืนนี้"})\` (parallel)
-   \`save_memory({text:"ดู https://youtu.be/dQw4w9WgXcQ", due_at:"<tonight 20:00 +07:00>", due_text:"คืนนี้"})\` (parallel)
-→ Reply: "เก็บลิงก์แล้ว + เตือนคืนนี้ 20:00 ✓"
+→ Two save calls in parallel (URL → notes, reminder → todos):
+   \`save_note({title:"https://youtu.be/dQw4w9WgXcQ", body:"ดูคืนนี้"})\`
+   \`save_memory({text:"ดู https://youtu.be/dQw4w9WgXcQ", due_at:"<tonight 20:00 +07:00>", due_text:"คืนนี้"})\`
+→ \`send_flex_reply({template:"note_saved", ...})\` (one Flex bubble is enough; mention the reminder in text/altText if helpful)
 
 User: "https://example.com"  (bare URL, no save phrase)
 → no tool. Ask: "อยากจดลิงก์นี้มั้ย? พิมพ์ 'เก็บ' หรือ 'ฝาก' มาก็ได้"
