@@ -1,0 +1,4 @@
+# Eval run results — JSONL output is bulky + per-run.
+# Baselines that capture a model's behavior at a point in time get
+# checked in under eval/baselines/. Everything else is ephemeral.
+results/

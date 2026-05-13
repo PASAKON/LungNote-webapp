@@ -1,0 +1,16 @@
+{
+  "finishedAt": "2026-05-13T21:58:51.644Z",
+  "cases": 31,
+  "baseline": {
+    "model": "anthropic/claude-sonnet-4-5",
+    "totalCostUsd": 0.783318,
+    "latencyP50Ms": 7876,
+    "durationMs": 235504
+  },
+  "candidate": {
+    "model": "google/gemini-2.5-flash",
+    "totalCostUsd": 0.011142675,
+    "latencyP50Ms": 4162,
+    "durationMs": 134642
+  }
+}
