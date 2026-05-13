@@ -34,6 +34,9 @@ const PRICING: Record<string, { in: number; out: number }> = {
   "anthropic/claude-haiku-4-5": { in: 0.8, out: 4.0 },
   "google/gemini-2.5-flash": { in: 0.075, out: 0.3 },
   "google/gemini-2.5-flash-lite": { in: 0.0375, out: 0.15 },
+  "google/gemini-2.5-pro": { in: 1.25, out: 10.0 },
+  "openai/gpt-4o": { in: 2.5, out: 10.0 },
+  "openai/gpt-4o-mini": { in: 0.15, out: 0.6 },
   "openai/gpt-5": { in: 5.0, out: 15.0 },
 };
 
