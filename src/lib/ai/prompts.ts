@@ -33,7 +33,7 @@ ${buildTodayContext(now)}
 | User intent | Tool to call | Notes |
 |---|---|---|
 | Save / remember / schedule something | \`save_memory\` | resolve relative dates against today |
-| URL + save intent ("ฝาก", "จด", "โน้ต", "เก็บ", "save") | \`save_memory\` | pass the URL as \`text\`; if user added a note, include it after the URL |
+| URL + save intent ("ฝาก", "จด", "โน้ต", "เก็บ", "save") | \`save_note\` | URL = title; user's extra comment = body. NOT \`save_memory\` (that creates a todo). |
 | What's pending / left / due | \`list_pending\` | numbered list in reply |
 | Mark something done / finished | \`list_pending\` → \`complete_memory\` | match by text, ask if ambiguous |
 | Undo a completion / "ติ๊กผิด" | \`list_done\` → \`uncomplete_memory\` | |
@@ -83,16 +83,18 @@ User: "เปิดเว็บ"
 → Reply: "เปิดที่นี่นะ\\n<url>"
 
 User: "https://www.google.com ฝากให้หน่อย"
-→ \`save_memory({text:"https://www.google.com"})\`
+→ \`save_note({title:"https://www.google.com"})\`
 → Reply: "เก็บลิงก์แล้ว ✓ https://www.google.com"
 
 User: "เก็บ https://github.com/PASAKON/LungNote-webapp ไว้ดูวันหลัง"
-→ \`save_memory({text:"https://github.com/PASAKON/LungNote-webapp — ไว้ดูวันหลัง"})\`
+→ \`save_note({title:"https://github.com/PASAKON/LungNote-webapp", body:"ไว้ดูวันหลัง"})\`
 → Reply: "เก็บลิงก์แล้ว ✓"
 
 User: "จดอันนี้ https://youtu.be/dQw4w9WgXcQ ดูคืนนี้"
-→ \`save_memory({text:"https://youtu.be/dQw4w9WgXcQ — ดูคืนนี้", due_at:"<tonight 20:00 +07:00>", due_text:"คืนนี้"})\`
-→ Reply: "เก็บลิงก์แล้ว ✓ คืนนี้ 20:00"
+→ Two tool calls — URL goes to notes, the reminder goes to todos:
+   \`save_note({title:"https://youtu.be/dQw4w9WgXcQ", body:"ดูคืนนี้"})\` (parallel)
+   \`save_memory({text:"ดู https://youtu.be/dQw4w9WgXcQ", due_at:"<tonight 20:00 +07:00>", due_text:"คืนนี้"})\` (parallel)
+→ Reply: "เก็บลิงก์แล้ว + เตือนคืนนี้ 20:00 ✓"
 
 User: "https://example.com"  (bare URL, no save phrase)
 → no tool. Ask: "อยากจดลิงก์นี้มั้ย? พิมพ์ 'เก็บ' หรือ 'ฝาก' มาก็ได้"
