@@ -1,0 +1,99 @@
+{
+  "type": "flex",
+  "altText": "บันทึก URL '{{text}}' แล้ว",
+  "contents": {
+    "type": "bubble",
+    "size": "kilo",
+    "header": {
+      "type": "box",
+      "layout": "horizontal",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "text": "บันทึก URL แล้ว ✅",
+              "weight": "bold",
+              "size": "lg",
+              "color": "#3a3020"
+            },
+            {
+              "type": "text",
+              "text": "ดูในหน้า Dashboard ได้เลย",
+              "size": "xxs",
+              "color": "#a08050",
+              "margin": "sm"
+            }
+          ],
+          "flex": 3
+        }
+      ],
+      "paddingAll": "20px",
+      "paddingBottom": "12px",
+      "background": {
+        "type": "linearGradient",
+        "angle": "135deg",
+        "startColor": "#f0e4c4",
+        "endColor": "#faf5e8"
+      }
+    },
+    "body": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "box",
+          "layout": "horizontal",
+          "contents": [
+            { "type": "text", "text": "🔗", "size": "xs", "flex": 0 },
+            { "type": "text", "text": "Notes", "size": "xxs", "color": "#a07820", "weight": "bold", "margin": "xs" }
+          ],
+          "backgroundColor": "#f0e4c4",
+          "cornerRadius": "sm",
+          "paddingAll": "4px",
+          "paddingStart": "6px",
+          "paddingEnd": "8px",
+          "flex": 0
+        },
+        {
+          "type": "text",
+          "text": "{{text}}",
+          "weight": "bold",
+          "size": "sm",
+          "color": "#3a3020",
+          "wrap": true,
+          "margin": "md"
+        },
+        {
+          "type": "text",
+          "text": "{{body_text}}",
+          "size": "xxs",
+          "color": "#7a6038",
+          "wrap": true,
+          "margin": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    },
+    "footer": {
+      "type": "box",
+      "layout": "vertical",
+      "contents": [
+        {
+          "type": "button",
+          "style": "primary",
+          "color": "#c9a040",
+          "action": {
+            "type": "uri",
+            "label": "ดูใน Dashboard",
+            "uri": "{{open_url}}"
+          },
+          "height": "sm"
+        }
+      ],
+      "paddingAll": "16px"
+    }
+  }
+}

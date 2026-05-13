@@ -56,7 +56,7 @@ export const sendFlexReplyTool: AgentTool<Args> = {
   name: "send_flex_reply",
   category: "reply",
   description:
-    "Reply with a Designer-built Flex card. Templates: todo_saved, todo_deleted, todo_updated, todo_completed, todo_list, todo_empty, error_inline, multi_save_summary. liff_id is filled by the server. Skip when one plain text bubble is enough.",
+    "Reply with a Designer-built Flex card. Templates: todo_saved, note_saved, todo_deleted, todo_updated, todo_completed, todo_list, todo_empty, error_inline, multi_save_summary. liff_id is filled by the server. Skip when one plain text bubble is enough.",
   schema: args,
   async execute(input, ctx) {
     const validation = validateVars(input.template, input.vars);
@@ -122,6 +122,22 @@ function validateVars(
           due_text: asNonEmpty(raw.due_text) ?? "ไม่มีกำหนด",
           folder_name: asNonEmpty(raw.folder_name) ?? "Inbox",
           id: asNonEmpty(raw.id) ?? "",
+        },
+      };
+    }
+    case "note_saved": {
+      const text = asNonEmpty(raw.text);
+      const open_url = asNonEmpty(raw.open_url);
+      if (!text || !open_url) {
+        return { ok: false, error: "note_saved requires text + open_url" };
+      }
+      return {
+        ok: true,
+        vars: {
+          text,
+          open_url,
+          body_text:
+            asNonEmpty(raw.body_text) ?? "แตะปุ่มข้างล่างเพื่อจัดการในเว็บ",
         },
       };
     }

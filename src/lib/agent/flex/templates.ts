@@ -2,6 +2,7 @@ import "server-only";
 import type { FlexMessage, LineMessage } from "@/lib/line/client";
 
 import todoSavedTpl from "@/lib/line/flex-templates/todo-saved.json";
+import noteSavedTpl from "@/lib/line/flex-templates/note-saved.json";
 import todoDeletedTpl from "@/lib/line/flex-templates/todo-deleted.json";
 import todoUpdatedTpl from "@/lib/line/flex-templates/todo-updated.json";
 import todoCompletedTpl from "@/lib/line/flex-templates/todo-completed.json";
@@ -25,6 +26,7 @@ import multiSaveSummaryTpl from "@/lib/line/flex-templates/multi-save-summary.js
  */
 export const FLEX_TEMPLATE_NAMES = [
   "todo_saved",
+  "note_saved",
   "todo_deleted",
   "todo_updated",
   "todo_completed",
@@ -122,6 +124,11 @@ export type FlexBuildVars = {
     open_url: string;
     id?: string;
   };
+  note_saved: {
+    text: string;
+    body_text?: string;
+    open_url: string;
+  };
   todo_deleted: {
     text: string;
     folder_name?: string;
@@ -196,6 +203,7 @@ export function buildFlexMessage<K extends FlexTemplateName>(
 
 const SINGLE_TEMPLATES = {
   todo_saved: todoSavedTpl as unknown as FlexMessage,
+  note_saved: noteSavedTpl as unknown as FlexMessage,
   todo_deleted: todoDeletedTpl as unknown as FlexMessage,
   todo_updated: todoUpdatedTpl as unknown as FlexMessage,
   todo_completed: todoCompletedTpl as unknown as FlexMessage,
@@ -216,6 +224,8 @@ function withDefaults(
     fillIfEmpty("due_text", "ไม่มีกำหนด");
     fillIfEmpty("folder_name", "Inbox");
     fillIfEmpty("id", "");
+  } else if (template === "note_saved") {
+    fillIfEmpty("body_text", "แตะปุ่มข้างล่างเพื่อจัดการในเว็บ");
   } else if (template === "todo_deleted") {
     fillIfEmpty("folder_name", "Inbox");
     fillIfEmpty("undo_postback_data", "action=noop");
