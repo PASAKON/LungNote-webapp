@@ -2,6 +2,7 @@ import "server-only";
 import type { AgentTool } from "../tool";
 
 import { saveMemoryTool } from "./memory/save_memory";
+import { saveNoteTool } from "./notes/save_note";
 import { listPendingTool } from "./memory/list_pending";
 import { listDoneTool } from "./memory/list_done";
 import { completeByPositionTool } from "./memory/complete_by_position";
@@ -29,6 +30,7 @@ export const ALL_TOOLS: AgentTool<any>[] = [
   listPendingTool,
   listDoneTool,
   saveMemoryTool,
+  saveNoteTool,
   completeByPositionTool,
   uncompleteByPositionTool,
   updateByPositionTool,
@@ -44,6 +46,7 @@ export const ALL_TOOLS: AgentTool<any>[] = [
 
 export {
   saveMemoryTool,
+  saveNoteTool,
   listPendingTool,
   listDoneTool,
   completeByPositionTool,
