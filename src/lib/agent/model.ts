@@ -8,9 +8,11 @@ import type { LanguageModel } from "ai";
  *   - which provider to dial (Anthropic-direct vs OpenRouter passthrough)
  *   - which model id to send
  *
- * Default: Claude Sonnet 4.5 — strongest tool-calling + native prompt
- * caching. Override via env to swap to Gemini 2.5 Flash (cheaper, faster,
- * no caching, weaker on multi-step intent).
+ * Default: Gemini 2.5 Flash — cheapest tier, fast, no native cache. Picked
+ * for live cost trial. Known weaker on multi-step tool routing — flip back
+ * to anthropic/claude-sonnet-4-5 (best tools, cache) or
+ * anthropic/claude-haiku-4-5 (mid, cache) via env if tool-call reliability
+ * degrades.
  *
  * Examples:
  *   LLM_MODEL=anthropic/claude-sonnet-4-5    → Anthropic direct (cache on)
@@ -51,7 +53,7 @@ const PRICING: Record<string, { in: number; out: number }> = {
 };
 
 export function resolveModel(): ResolvedModel {
-  const id = (process.env.LLM_MODEL ?? "anthropic/claude-sonnet-4-5").trim();
+  const id = (process.env.LLM_MODEL ?? "google/gemini-2.5-flash").trim();
   const isAnthropic = id.startsWith("anthropic/");
 
   const price = PRICING[id] ?? { in: 1.0, out: 5.0 };
