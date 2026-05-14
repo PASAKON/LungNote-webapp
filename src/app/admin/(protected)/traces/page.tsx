@@ -5,7 +5,7 @@ import {
   getTraceByTraceId,
   type TraceRow,
 } from "@/lib/admin/traces";
-import { TracePathPill, formatRelative } from "../_widgets";
+import { RoutePill, TracePathPill, formatRelative } from "../_widgets";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -111,6 +111,7 @@ export default async function TracesList({
               <th>Path</th>
               <th>User</th>
               <th>Text</th>
+              <th>Model</th>
               <th>Iter</th>
               <th>Tools</th>
               <th>Tokens</th>
@@ -119,7 +120,13 @@ export default async function TracesList({
           </thead>
           <tbody>
             {traces.map((t) => {
-              const meta = (t.meta as { tokens_in?: number; tokens_out?: number; latency_ms?: number }) ?? {};
+              const meta = (t.meta as {
+                model?: string;
+                route_reason?: string;
+                tokens_in?: number;
+                tokens_out?: number;
+                latency_ms?: number;
+              }) ?? {};
               const tokenSum = (meta.tokens_in ?? 0) + (meta.tokens_out ?? 0);
               return (
                 <tr key={t.id}>
@@ -132,6 +139,23 @@ export default async function TracesList({
                     <Link href={`/traces/${t.id}`} style={{ color: "var(--fg)" }}>
                       {truncate(t.user_text, 80)}
                     </Link>
+                  </td>
+                  <td style={{ fontSize: 11 }}>
+                    {meta.model ? (
+                      <span title={meta.model}>
+                        <code style={{ fontFamily: "var(--font-mono, monospace)" }}>
+                          {modelShortName(meta.model)}
+                        </code>
+                        {typeof meta.route_reason === "string" ? (
+                          <>
+                            {" "}
+                            <RoutePill reason={meta.route_reason} />
+                          </>
+                        ) : null}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td>{t.ai_iterations || "—"}</td>
                   <td>
@@ -157,6 +181,20 @@ export default async function TracesList({
       </div>
     </>
   );
+}
+
+/**
+ * Compact a model id for the list column. The full id (including the
+ * provider prefix) is in the row's `title` attribute on hover, so the
+ * cell can stay tight.
+ *
+ *   anthropic/claude-sonnet-4-5   → sonnet-4-5
+ *   google/gemini-2.5-flash       → gemini-2.5-flash
+ *   openai/gpt-5                  → gpt-5
+ */
+function modelShortName(modelId: string): string {
+  const last = modelId.split("/").pop() ?? modelId;
+  return last.replace(/^claude-/, "");
 }
 
 function truncate(s: string, n: number): string {

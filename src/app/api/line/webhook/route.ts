@@ -207,6 +207,7 @@ async function handleTextAgent(
       ...(aiResult.ok
         ? {
             model: aiResult.meta.model,
+            route_reason: aiResult.meta.routeReason,
             tokens_in: aiResult.meta.tokensIn,
             tokens_out: aiResult.meta.tokensOut,
             cost_usd: aiResult.meta.costEstimate,
@@ -294,6 +295,7 @@ async function handleTextLegacy(
       ...(aiResult.ok
         ? {
             model: aiResult.meta.model,
+            route_reason: aiResult.meta.routeReason,
             tokens_in: aiResult.meta.tokensIn,
             tokens_out: aiResult.meta.tokensOut,
             cost_usd: aiResult.meta.costEstimate,
