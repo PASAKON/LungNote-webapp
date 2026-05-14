@@ -179,6 +179,67 @@ async function runCase(
       providerMeta?.openrouter?.usage?.promptTokensDetails?.cachedTokens ??
       0;
 
+    // Mirror the runtime's empty-reply retry: when the agent ends the
+    // turn after a read-only tool call (list_pending / list_done)
+    // without producing a bubble, retry once with the complex model
+    // using only the reply tools. See `src/lib/agent/runtime.ts`
+    // for the production version. We replay the same guard here so the
+    // eval reflects the prod codepath.
+    let retryTokensIn = 0;
+    let retryTokensOut = 0;
+    let retryCostUsd = 0;
+    const retryEnabled = process.env.LLM_REPLY_RETRY_ENABLED !== "false";
+    const priorToolNames = rec.calls.map((t) => t.name);
+    const allReadOnly = priorToolNames.every(
+      (n) => n === "list_pending" || n === "list_done",
+    );
+    if (
+      state.bubbles.length === 0 &&
+      priorToolNames.length > 0 &&
+      allReadOnly &&
+      retryEnabled &&
+      opts.routerEnabled &&
+      model.modelId !== opts.complexModel
+    ) {
+      const complexModel = resolveEvalModel(opts.complexModel);
+      // Build a reply-only tool subset by name.
+      const fullTools = buildMockToolSet(state, rec);
+      const replyOnlyTools = {
+        send_text_reply: fullTools.send_text_reply,
+        send_flex_reply: fullTools.send_flex_reply,
+      };
+      try {
+        const retryResult = await generateText({
+          model: complexModel.model,
+          messages: [
+            ...messages,
+            ...result.response.messages,
+            {
+              role: "user",
+              content:
+                "ตอบ user ตอนนี้เลย ใช้ผลของ tool ก่อนหน้า — เรียก send_flex_reply หรือ send_text_reply อย่างเดียว ห้ามเรียก tool อื่นอีก.",
+            },
+          ],
+          tools: replyOnlyTools,
+          stopWhen: ({ steps }) => steps.length >= 2,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+        });
+        retryTokensIn = retryResult.usage?.inputTokens ?? 0;
+        retryTokensOut = retryResult.usage?.outputTokens ?? 0;
+        retryCostUsd =
+          (retryTokensIn * complexModel.priceInputPerM +
+            retryTokensOut * complexModel.priceOutputPerM) /
+          1_000_000;
+        const retryFallback = (retryResult.text ?? "").trim();
+        if (state.bubbles.length === 0 && retryFallback) {
+          state.bubbles.push({ type: "text", text: retryFallback });
+        }
+      } catch {
+        // Retry failure is non-fatal — fall through to the empty-bubble
+        // path so the report flags this case.
+      }
+    }
+
     // If agent used multi-bubble tools, prefer bubbles. Otherwise the
     // free-form text counts as one text bubble.
     const fallback = (result.text ?? "").trim();
@@ -198,10 +259,10 @@ async function runCase(
       bubbles: state.bubbles,
       meta: {
         latencyMs,
-        tokensIn,
-        tokensOut,
+        tokensIn: tokensIn + retryTokensIn,
+        tokensOut: tokensOut + retryTokensOut,
         cacheRead,
-        costUsd,
+        costUsd: costUsd + retryCostUsd,
         steps: result.steps?.length ?? 1,
       },
     };

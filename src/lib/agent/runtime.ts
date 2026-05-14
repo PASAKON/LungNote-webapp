@@ -3,7 +3,7 @@ import { generateText, type ModelMessage } from "ai";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import type { LineMessage } from "@/lib/line/client";
 import { TurnContext } from "./context";
-import { ALL_TOOLS } from "./tools";
+import { ALL_TOOLS, sendFlexReplyTool, sendTextReplyTool } from "./tools";
 import { buildToolSet } from "./registry";
 import { buildSystemPrompt, buildStaticSystemPrompt, buildTodayBlock } from "./prompt";
 import { resolveModel } from "./model";
@@ -185,12 +185,99 @@ export async function runAgent(
     // result.text as a single text bubble.
     const bufferedBubbles = ctx.getReplyBubbles();
     const fallbackText = (result.text ?? "").trim();
-    const bubbles: LineMessage[] =
+    let bubbles: LineMessage[] =
       bufferedBubbles.length > 0
         ? bufferedBubbles
         : fallbackText
           ? [{ type: "text", text: fallbackText }]
           : [];
+
+    // Retry-on-empty-reply: Gemini Flash occasionally ends a turn after
+    // a read-only tool call (list_pending / list_done) without ever
+    // calling send_flex_reply or producing free-form text. The user
+    // ends up with no LINE bubble. Detected in the eval corpus as cases
+    // `list_pending_three_items` + `list_pending_with_flex` (ADR-0016).
+    //
+    // When this happens, retry once with the complex model — but pass
+    // only the reply tools (send_text_reply / send_flex_reply) so the
+    // retry physically can't double-mutate, and forward the prior
+    // tool results in the conversation so the model continues from
+    // where Flash stopped instead of re-executing.
+    //
+    // Guard with `LLM_REPLY_RETRY_ENABLED` so we can rollback fast.
+    let retryTokensIn = 0;
+    let retryTokensOut = 0;
+    let retryCost = 0;
+    let retryUsed = false;
+    const retryEnabled = process.env.LLM_REPLY_RETRY_ENABLED !== "false";
+    const complexModelId =
+      process.env.ROUTER_COMPLEX_MODEL ?? "google/gemini-2.5-pro";
+    const priorToolNames = ctx.trace.getToolCalls().map((t) => t.name);
+    const allReadOnly = priorToolNames.every(
+      (n) => n === "list_pending" || n === "list_done",
+    );
+    if (
+      bubbles.length === 0 &&
+      priorToolNames.length > 0 &&
+      allReadOnly &&
+      retryEnabled &&
+      resolved.modelId !== complexModelId
+    ) {
+      ctx.trace.step("reply_retry_start", {
+        from_model: resolved.modelId,
+        to_model: complexModelId,
+        prior_tools: priorToolNames,
+      });
+      retryUsed = true;
+      try {
+        const complexResolved = resolveModel(complexModelId);
+        const replyOnlyTools = buildToolSet(
+          [sendTextReplyTool, sendFlexReplyTool],
+          ctx,
+        );
+        const retryResult = await generateText({
+          model: complexResolved.model,
+          messages: [
+            ...messages,
+            // The prior assistant + tool messages carry the read-only
+            // tool results so the retry can quote items by position.
+            ...result.response.messages,
+            {
+              role: "user",
+              content:
+                "ตอบ user ตอนนี้เลย ใช้ผลของ tool ก่อนหน้า — เรียก send_flex_reply หรือ send_text_reply อย่างเดียว ห้ามเรียก tool อื่นอีก.",
+            },
+          ],
+          tools: replyOnlyTools,
+          stopWhen: ({ steps }) => steps.length >= 2,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+        });
+        retryTokensIn = retryResult.usage?.inputTokens ?? 0;
+        retryTokensOut = retryResult.usage?.outputTokens ?? 0;
+        retryCost =
+          (retryTokensIn * complexResolved.priceInputPerM +
+            retryTokensOut * complexResolved.priceOutputPerM) /
+          1_000_000;
+        const retryBubbles = ctx.getReplyBubbles();
+        const retryFallback = (retryResult.text ?? "").trim();
+        bubbles =
+          retryBubbles.length > 0
+            ? retryBubbles
+            : retryFallback
+              ? [{ type: "text", text: retryFallback }]
+              : [];
+        ctx.trace.step("reply_retry_done", {
+          bubbles: bubbles.length,
+          tokens_in: retryTokensIn,
+          tokens_out: retryTokensOut,
+        });
+      } catch (err) {
+        ctx.trace.step("reply_retry_error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
     if (bubbles.length === 0) {
       return {
         ok: false,
@@ -214,14 +301,20 @@ export async function runAgent(
       text: finalText,
       bubbles,
       meta: {
-        model: resolved.modelId,
+        // When the retry handled the actual reply, surface that to the
+        // trace so cost/latency totals reflect the *combined* turn.
+        model: retryUsed
+          ? `${resolved.modelId} +retry ${complexModelId}`
+          : resolved.modelId,
         latencyMs,
-        tokensIn,
-        tokensOut,
-        costEstimate,
+        tokensIn: tokensIn + retryTokensIn,
+        tokensOut: tokensOut + retryTokensOut,
+        costEstimate: costEstimate + retryCost,
         steps: stepCount,
         cacheHit,
-        routeReason: route.reason,
+        routeReason: retryUsed
+          ? `${route.reason}+retry`
+          : route.reason,
       },
     };
   } catch (err) {

@@ -1,0 +1,11 @@
+{
+  "finishedAt": "2026-05-14T18:19:34.707Z",
+  "cases": 31,
+  "baseline": null,
+  "candidate": {
+    "model": "google/gemini-2.5-flash",
+    "totalCostUsd": 0.04108425,
+    "latencyP50Ms": 3669,
+    "durationMs": 280405
+  }
+}
