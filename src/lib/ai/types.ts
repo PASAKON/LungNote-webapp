@@ -12,6 +12,12 @@ export type AIReplyMeta = {
   tokensIn: number;
   tokensOut: number;
   costEstimate: number; // USD
+  /**
+   * Why the intent router (see `lib/agent/router.ts`) picked this turn's
+   * model. Recorded in the trace meta so the admin viewer can show a
+   * "default" vs "update_verb" / "profile_fact" pill per row.
+   */
+  routeReason?: string;
 };
 
 /** Result of one AI reply attempt. Discriminated union. */

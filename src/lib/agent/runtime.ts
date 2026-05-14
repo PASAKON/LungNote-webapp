@@ -35,6 +35,13 @@ export type AgentReply =
         costEstimate: number;
         steps: number;
         cacheHit?: boolean;
+        /**
+         * Trigger that the intent router used to pick this turn's model
+         * (see `router.ts`). `"router_disabled"` when the router env
+         * flag is off; `"default"` when on but no escalation pattern
+         * matched. Surfaces in the admin trace viewer + the trace JSON.
+         */
+        routeReason?: string;
       };
     }
   | {
@@ -214,6 +221,7 @@ export async function runAgent(
         costEstimate,
         steps: stepCount,
         cacheHit,
+        routeReason: route.reason,
       },
     };
   } catch (err) {

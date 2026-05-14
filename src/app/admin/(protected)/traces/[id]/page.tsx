@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTrace } from "@/lib/admin/traces";
-import { TracePathPill, formatRelative } from "../../_widgets";
+import { RoutePill, TracePathPill, formatRelative } from "../../_widgets";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -44,7 +44,24 @@ export default async function TraceDetail({
         <KV label="History loaded" value={`${t.history_count} turns`} />
         <KV label="AI iterations" value={String(t.ai_iterations)} />
         <KV label="Tool calls" value={String(toolCalls.length)} />
-        {typeof meta.model === "string" && <KV label="Model" value={meta.model} />}
+        {typeof meta.model === "string" && (
+          <KV
+            label="Model"
+            value={
+              <span>
+                <code style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 12 }}>
+                  {meta.model}
+                </code>
+                {typeof meta.route_reason === "string" ? (
+                  <>
+                    {" "}
+                    <RoutePill reason={meta.route_reason} />
+                  </>
+                ) : null}
+              </span>
+            }
+          />
+        )}
         {typeof meta.tokens_in === "number" && (
           <KV label="Tokens" value={`${meta.tokens_in} in / ${meta.tokens_out} out`} />
         )}
