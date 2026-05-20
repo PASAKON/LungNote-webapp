@@ -6,6 +6,7 @@ import {
   parseIdTokenPayload,
 } from "@/lib/gmail/oauth";
 import { encryptToken } from "@/lib/gmail/crypto";
+import { startGmailWatchForUser } from "@/lib/gmail/watch";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -116,7 +117,11 @@ export async function GET(req: NextRequest) {
     return clearStateAndRedirect(settingsUrl);
   }
 
-  // TODO(Task #12): start Gmail watch() here, save watch_expires_at.
+  // Start Gmail push watch — best-effort. If it fails, the row stays
+  // active and the reconcile cron will still catch new email; the
+  // watch-renew cron will retry on its next tick.
+  await startGmailWatchForUser(user.id);
+
   settingsUrl.searchParams.set("gmail", "connected");
   return clearStateAndRedirect(settingsUrl);
 }
