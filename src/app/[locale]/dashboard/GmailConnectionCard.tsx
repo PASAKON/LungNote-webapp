@@ -20,6 +20,98 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "หมดอายุ",
 };
 
+type ScopeTier = "read" | "edit" | "full";
+
+const SCOPE_OPTIONS: Array<{
+  value: ScopeTier;
+  label: string;
+  detail: string;
+}> = [
+  {
+    value: "read",
+    label: "อ่านอย่างเดียว",
+    detail: "AI อ่านเมลเพื่อแยก to-do เท่านั้น",
+  },
+  {
+    value: "edit",
+    label: "อ่าน + แก้ไข",
+    detail: "อ่าน + ติด label + ร่าง reply + archive (ไม่ลบ)",
+  },
+  {
+    value: "full",
+    label: "ทุกสิทธิ์",
+    detail: "รวมลบเมลถาวร — ระวัง",
+  },
+];
+
+function ConnectForm() {
+  const [tier, setTier] = useState<ScopeTier>("read");
+  const selected = SCOPE_OPTIONS.find((o) => o.value === tier) ?? SCOPE_OPTIONS[0];
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 13,
+          color: "var(--muted)",
+          marginBottom: 10,
+        }}
+      >
+        ให้ AI ดึง to-do ด่วน และเมลที่ต้องตอบกลับจาก Gmail
+        เข้ามาใส่ใน Inbox อัตโนมัติ
+      </div>
+      <label
+        style={{
+          display: "block",
+          fontSize: 12,
+          color: "var(--muted)",
+          marginBottom: 4,
+        }}
+      >
+        ระดับสิทธิ์
+      </label>
+      <select
+        value={tier}
+        onChange={(e) => setTier(e.target.value as ScopeTier)}
+        style={{
+          width: "100%",
+          padding: "8px 10px",
+          marginBottom: 6,
+          background: "var(--bg)",
+          color: "var(--fg)",
+          border: "2px solid var(--fg)",
+          borderRadius: 6,
+          fontSize: 14,
+        }}
+      >
+        {SCOPE_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <div
+        style={{
+          fontSize: 12,
+          color: "var(--muted)",
+          marginBottom: 14,
+        }}
+      >
+        {selected.detail}
+      </div>
+      <a
+        href={`/api/auth/gmail/connect?tier=${tier}`}
+        className="btn-main"
+        style={{
+          display: "inline-block",
+          textDecoration: "none",
+        }}
+      >
+        เชื่อมต่อ Gmail
+      </a>
+    </div>
+  );
+}
+
 export function GmailConnectionCard({ connection }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -49,30 +141,7 @@ export function GmailConnectionCard({ connection }: Props) {
   }
 
   if (!connection) {
-    return (
-      <div>
-        <div
-          style={{
-            fontSize: 13,
-            color: "var(--muted)",
-            marginBottom: 14,
-          }}
-        >
-          ให้ AI ดึง to-do ด่วน และเมลที่ต้องตอบกลับจาก Gmail
-          เข้ามาใส่ใน Inbox อัตโนมัติ
-        </div>
-        <a
-          href="/api/auth/gmail/connect"
-          className="btn-main"
-          style={{
-            display: "inline-block",
-            textDecoration: "none",
-          }}
-        >
-          เชื่อมต่อ Gmail
-        </a>
-      </div>
-    );
+    return <ConnectForm />;
   }
 
   const synced = connection.last_synced_at

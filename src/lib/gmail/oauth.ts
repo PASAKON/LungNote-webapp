@@ -17,8 +17,25 @@ const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 
-export const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
-export const FULL_SCOPES = ["openid", "email", "profile", GMAIL_SCOPE].join(" ");
+export type GmailScopeTier = "read" | "edit" | "full";
+
+const GMAIL_SCOPE_BY_TIER: Record<GmailScopeTier, string> = {
+  read: "https://www.googleapis.com/auth/gmail.readonly",
+  edit: "https://www.googleapis.com/auth/gmail.modify",
+  full: "https://mail.google.com/",
+};
+
+export const GMAIL_SCOPE = GMAIL_SCOPE_BY_TIER.read;
+
+export function buildScopeString(tier: GmailScopeTier): string {
+  return ["openid", "email", "profile", GMAIL_SCOPE_BY_TIER[tier]].join(" ");
+}
+
+export const FULL_SCOPES = buildScopeString("read");
+
+export function isGmailScopeTier(v: unknown): v is GmailScopeTier {
+  return v === "read" || v === "edit" || v === "full";
+}
 
 export const STATE_COOKIE = "gmail_oauth_state";
 export const STATE_TTL_SECONDS = 5 * 60;
@@ -52,12 +69,16 @@ export function hashState(state: string): string {
   return createHash("sha256").update(state).digest("hex");
 }
 
-export function buildAuthorizeUrl(opts: { state: string; redirectUri: string }): string {
+export function buildAuthorizeUrl(opts: {
+  state: string;
+  redirectUri: string;
+  tier?: GmailScopeTier;
+}): string {
   const params = new URLSearchParams({
     client_id: requireEnv("GOOGLE_OAUTH_CLIENT_ID"),
     redirect_uri: opts.redirectUri,
     response_type: "code",
-    scope: FULL_SCOPES,
+    scope: buildScopeString(opts.tier ?? "read"),
     access_type: "offline",
     include_granted_scopes: "true",
     prompt: "consent", // force refresh_token return every time

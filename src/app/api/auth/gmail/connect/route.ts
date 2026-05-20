@@ -4,6 +4,7 @@ import {
   STATE_COOKIE,
   STATE_TTL_SECONDS,
   buildAuthorizeUrl,
+  isGmailScopeTier,
   newState,
 } from "@/lib/gmail/oauth";
 
@@ -22,7 +23,9 @@ export async function GET(req: NextRequest) {
 
   const redirectUri = redirectUriFor(req);
   const state = newState();
-  const url = buildAuthorizeUrl({ state, redirectUri });
+  const tierParam = req.nextUrl.searchParams.get("tier");
+  const tier = isGmailScopeTier(tierParam) ? tierParam : "read";
+  const url = buildAuthorizeUrl({ state, redirectUri, tier });
 
   const res = NextResponse.redirect(url);
   res.cookies.set(STATE_COOKIE, state, {
