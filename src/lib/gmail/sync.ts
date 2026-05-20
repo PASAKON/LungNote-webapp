@@ -195,7 +195,9 @@ async function syncOneConnection(conn: ConnectionRow): Promise<SyncResult> {
     .select("message_id")
     .eq("user_id", conn.user_id)
     .in("message_id", messageIds);
-  const seenSet = new Set((seen ?? []).map((r) => r.message_id));
+  const seenSet = new Set(
+    ((seen ?? []) as Array<{ message_id: string }>).map((r) => r.message_id),
+  );
   const fresh = messageIds.filter((id) => !seenSet.has(id));
   result.skipped = messageIds.length - fresh.length;
 
