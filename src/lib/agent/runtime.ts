@@ -2,6 +2,7 @@ import "server-only";
 import { generateText, type ModelMessage } from "ai";
 import { loadMemory, saveMemory } from "@/lib/ai/memory";
 import type { LineMessage } from "@/lib/line/client";
+import { recordBulkOp } from "@/lib/memory/bulk_ops";
 import { TurnContext } from "./context";
 import { ALL_TOOLS, sendFlexReplyTool, sendTextReplyTool } from "./tools";
 import { buildToolSet } from "./registry";
@@ -295,6 +296,22 @@ export async function runAgent(
         console.error("saveMemory rejected", { memoryKey, err });
       },
     );
+
+    // Persist bulk op log for undo — best-effort, never blocks reply.
+    if (ctx.lineUserId) {
+      const bulkLog = ctx.drainBulkOpLog();
+      if (bulkLog) {
+        for (const [opKind, todoIds] of bulkLog) {
+          if (todoIds.length >= 2) {
+            void recordBulkOp(
+              ctx.lineUserId,
+              opKind as "complete" | "delete" | "uncomplete",
+              todoIds,
+            ).catch(() => {});
+          }
+        }
+      }
+    }
 
     return {
       ok: true,
