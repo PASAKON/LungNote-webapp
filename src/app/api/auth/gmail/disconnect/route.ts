@@ -31,13 +31,12 @@ export async function DELETE(_req: NextRequest) {
 
   if (conn?.refresh_token_enc) {
     try {
-      // refresh_token_enc comes back as base64 over the wire from PostgREST.
-      // Normalize to Buffer regardless of string/array shape.
-      const blob =
-        typeof conn.refresh_token_enc === "string"
-          ? Buffer.from(conn.refresh_token_enc, "base64")
-          : Buffer.from(conn.refresh_token_enc as unknown as ArrayBufferLike);
-      const refresh = decryptToken(blob, `lungnote_gmail_connections:${conn.id}`);
+      // Stored as base64 string in TEXT column (per migration
+      // 20260521090000_lungnote_gmail_token_columns_text).
+      const refresh = decryptToken(
+        conn.refresh_token_enc,
+        `lungnote_gmail_connections:${conn.id}`,
+      );
       await revokeToken(refresh);
     } catch {
       // best-effort; continue with row delete

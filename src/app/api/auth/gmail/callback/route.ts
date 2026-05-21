@@ -72,8 +72,8 @@ export async function GET(req: NextRequest) {
   }
 
   // 5. Two-step upsert so AAD = row id can bind the ciphertext.
-  //    a) upsert metadata only with placeholder bytea → fetch row id
-  //    b) UPDATE with encrypted tokens using AAD = row id
+  //    a) upsert metadata only with placeholder text → fetch row id
+  //    b) UPDATE with encrypted (base64) tokens using AAD = row id
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
   const { data: upserted, error: upsertErr } = await supabase
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
         scope: tokens.scope,
         status: "active",
         last_error: null,
-        refresh_token_enc: Buffer.alloc(0), // placeholder, replaced step b
+        refresh_token_enc: "", // placeholder, replaced step b
       },
       { onConflict: "user_id" },
     )

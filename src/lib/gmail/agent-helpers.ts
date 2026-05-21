@@ -83,8 +83,8 @@ export async function loadActiveGmailConnection(
     status: data.status,
     snapshot: {
       id: data.id,
-      refresh_token_enc: toBuf(data.refresh_token_enc),
-      access_token_enc: data.access_token_enc ? toBuf(data.access_token_enc) : null,
+      refresh_token_enc: data.refresh_token_enc,
+      access_token_enc: data.access_token_enc ?? null,
       access_token_expires_at: data.access_token_expires_at,
     },
     lastHistoryId: data.last_history_id,
@@ -121,11 +121,3 @@ export function hasModifyScope(conn: ResolvedGmailConnection): boolean {
   );
 }
 
-function toBuf(v: unknown): Buffer {
-  if (Buffer.isBuffer(v)) return v;
-  if (typeof v === "string") {
-    if (v.startsWith("\\x")) return Buffer.from(v.slice(2), "hex");
-    return Buffer.from(v, "base64");
-  }
-  return Buffer.from(v as ArrayBufferLike);
-}

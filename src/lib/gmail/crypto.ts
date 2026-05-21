@@ -34,18 +34,26 @@ function loadKey(): Buffer {
   return buf;
 }
 
-export function encryptToken(plaintext: string, aad?: string): Buffer {
+/**
+ * Returns base64-encoded ciphertext for storage in a Postgres TEXT column.
+ * We deliberately avoid bytea: Supabase JS auto-serializes Buffer values
+ * via JSON.stringify which corrupts bytea round-trips (the bytea ends up
+ * holding the ASCII text `{"type":"Buffer","data":[…]}` rather than the
+ * raw bytes). See migration 20260521090000_lungnote_gmail_token_columns_text.
+ */
+export function encryptToken(plaintext: string, aad?: string): string {
   const key = loadKey();
   const iv = randomBytes(IV_LEN);
   const cipher = createCipheriv(ALG, key, iv);
   if (aad) cipher.setAAD(Buffer.from(aad, "utf8"));
   const ct = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
-  return Buffer.concat([iv, ct, tag]);
+  return Buffer.concat([iv, ct, tag]).toString("base64");
 }
 
-export function decryptToken(blob: Buffer, aad?: string): string {
+export function decryptToken(b64: string, aad?: string): string {
   const key = loadKey();
+  const blob = Buffer.from(b64, "base64");
   if (blob.length < IV_LEN + AUTH_TAG_LEN) {
     throw new Error("encrypted token blob too short");
   }

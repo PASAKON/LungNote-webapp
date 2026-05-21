@@ -15,8 +15,8 @@ const TOKEN_REFRESH_SKEW_MS = 60_000; // refresh if <1m left
 
 export type ConnectionTokenSnapshot = {
   id: string; // row id
-  refresh_token_enc: Buffer;
-  access_token_enc: Buffer | null;
+  refresh_token_enc: string; // base64 ciphertext (text column)
+  access_token_enc: string | null;
   access_token_expires_at: string | null;
 };
 
@@ -24,7 +24,7 @@ export type FreshAccessToken = {
   accessToken: string;
   expiresAt: Date;
   rotated: boolean; // true → caller should persist new cipher + expiry
-  newAccessTokenEnc?: Buffer;
+  newAccessTokenEnc?: string;
 };
 
 function aadFor(rowId: string): string {

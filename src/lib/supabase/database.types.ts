@@ -319,8 +319,8 @@ export type Database = {
           user_id: string;
           google_user_id: string;
           email: string;
-          refresh_token_enc: unknown; // bytea — Buffer at runtime
-          access_token_enc: unknown | null;
+          refresh_token_enc: string; // base64 ciphertext (text column)
+          access_token_enc: string | null;
           access_token_expires_at: string | null;
           scope: string;
           status: "active" | "revoked" | "error" | "expired";
@@ -337,8 +337,8 @@ export type Database = {
           user_id: string;
           google_user_id: string;
           email: string;
-          refresh_token_enc: unknown;
-          access_token_enc?: unknown | null;
+          refresh_token_enc: string;
+          access_token_enc?: string | null;
           access_token_expires_at?: string | null;
           scope: string;
           status?: "active" | "revoked" | "error" | "expired";
@@ -355,8 +355,8 @@ export type Database = {
           user_id?: string;
           google_user_id?: string;
           email?: string;
-          refresh_token_enc?: unknown;
-          access_token_enc?: unknown | null;
+          refresh_token_enc?: string;
+          access_token_enc?: string | null;
           access_token_expires_at?: string | null;
           scope?: string;
           status?: "active" | "revoked" | "error" | "expired";

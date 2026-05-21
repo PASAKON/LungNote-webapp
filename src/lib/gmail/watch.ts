@@ -28,15 +28,6 @@ function topicName(): string {
   return t;
 }
 
-function toBuf(v: unknown): Buffer {
-  if (Buffer.isBuffer(v)) return v;
-  if (typeof v === "string") {
-    if (v.startsWith("\\x")) return Buffer.from(v.slice(2), "hex");
-    return Buffer.from(v, "base64");
-  }
-  return Buffer.from(v as ArrayBufferLike);
-}
-
 export async function startGmailWatchForUser(userId: string): Promise<{
   ok: boolean;
   error?: string;
@@ -54,8 +45,8 @@ export async function startGmailWatchForUser(userId: string): Promise<{
 
   const snapshot: ConnectionTokenSnapshot = {
     id: row.id,
-    refresh_token_enc: toBuf(row.refresh_token_enc),
-    access_token_enc: row.access_token_enc ? toBuf(row.access_token_enc) : null,
+    refresh_token_enc: row.refresh_token_enc,
+    access_token_enc: row.access_token_enc ?? null,
     access_token_expires_at: row.access_token_expires_at,
   };
 

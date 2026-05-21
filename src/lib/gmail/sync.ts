@@ -107,21 +107,11 @@ function normalize(row: Record<string, unknown>): ConnectionRow {
     id: row.id as string,
     user_id: row.user_id as string,
     email: row.email as string,
-    refresh_token_enc: toBuf(row.refresh_token_enc),
-    access_token_enc: row.access_token_enc ? toBuf(row.access_token_enc) : null,
+    refresh_token_enc: row.refresh_token_enc as string,
+    access_token_enc: (row.access_token_enc as string | null) ?? null,
     access_token_expires_at: (row.access_token_expires_at as string) ?? null,
     last_history_id: (row.last_history_id as string) ?? null,
   };
-}
-
-function toBuf(v: unknown): Buffer {
-  if (Buffer.isBuffer(v)) return v;
-  if (typeof v === "string") {
-    // Supabase PostgREST returns bytea as `\x<hex>` or base64 — try both.
-    if (v.startsWith("\\x")) return Buffer.from(v.slice(2), "hex");
-    return Buffer.from(v, "base64");
-  }
-  return Buffer.from(v as ArrayBufferLike);
 }
 
 async function syncOneConnection(conn: ConnectionRow): Promise<SyncResult> {
