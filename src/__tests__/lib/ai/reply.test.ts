@@ -89,7 +89,13 @@ describe("generateChatReply (memory-aware)", () => {
     // Allow fire-and-forget save to settle.
     await new Promise((r) => setImmediate(r));
 
-    expect(mockedSave).toHaveBeenCalledWith("U-456", [], "ทดสอบ", "AI reply");
+    expect(mockedSave).toHaveBeenCalledWith(
+      "U-456",
+      [],
+      "ทดสอบ",
+      "AI reply",
+      undefined,
+    );
   });
 
   it("returns ai_timeout when client throws a timeout error", async () => {

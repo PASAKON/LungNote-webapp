@@ -3,6 +3,7 @@ export type ChatRole = "system" | "user" | "assistant";
 export type ChatMessage = {
   role: ChatRole;
   content: string;
+  tool_summary?: string; // only set on assistant turns where tools were called
 };
 
 /** Metadata returned alongside a successful AI reply. */

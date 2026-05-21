@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { trimMemory, mergeAndTrim } from "@/lib/ai/memory";
 
 describe("trimMemory", () => {
-  it("returns input unchanged when ≤ 10 entries", () => {
+  it("returns input unchanged when ≤ 20 entries", () => {
     const m = Array.from({ length: 6 }, (_, i) => ({
       role: "user" as const,
       content: `m${i}`,
@@ -10,30 +10,30 @@ describe("trimMemory", () => {
     expect(trimMemory(m)).toEqual(m);
   });
 
-  it("keeps only the last 10 entries", () => {
-    const m = Array.from({ length: 15 }, (_, i) => ({
+  it("keeps only the last 20 entries", () => {
+    const m = Array.from({ length: 25 }, (_, i) => ({
       role: "user" as const,
       content: `m${i}`,
     }));
     const out = trimMemory(m);
-    expect(out).toHaveLength(10);
+    expect(out).toHaveLength(20);
     expect(out[0].content).toBe("m5");
-    expect(out[9].content).toBe("m14");
+    expect(out[19].content).toBe("m24");
   });
 });
 
 describe("mergeAndTrim", () => {
-  it("appends user + assistant and trims to last 10", () => {
-    const prior = Array.from({ length: 9 }, (_, i) => ({
+  it("appends user + assistant; under threshold returns verbatim", () => {
+    const prior = Array.from({ length: 6 }, (_, i) => ({
       role: i % 2 === 0 ? ("user" as const) : ("assistant" as const),
       content: `p${i}`,
     }));
     const out = mergeAndTrim(prior, "new-user", "new-assistant");
-    expect(out).toHaveLength(10);
-    expect(out[8].content).toBe("new-user");
-    expect(out[9].content).toBe("new-assistant");
-    // First "p0" was dropped because we appended 2 and trimmed to 10.
-    expect(out[0].content).toBe("p1");
+    // 6 prior + 2 appended = 8 ≤ COMPACT_THRESHOLD(10); no compaction.
+    expect(out).toHaveLength(8);
+    expect(out[6].content).toBe("new-user");
+    expect(out[7].content).toBe("new-assistant");
+    expect(out[0].content).toBe("p0");
   });
 
   it("works with empty prior", () => {
