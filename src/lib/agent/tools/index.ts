@@ -16,6 +16,7 @@ import { sendFlexReplyTool } from "./reply/send_flex_reply";
 import { searchGmailTool } from "./gmail/search_gmail";
 import { saveEmailAsTodoTool } from "./gmail/save_email_as_todo";
 import { scanGmailNowTool } from "./gmail/scan_gmail_now";
+import { undoLastBulkTool } from "./memory/undo_last_bulk";
 
 /**
  * All tools available to the agent. Add a new tool by:
@@ -49,6 +50,8 @@ export const ALL_TOOLS: AgentTool<any>[] = [
   searchGmailTool,
   saveEmailAsTodoTool,
   scanGmailNowTool,
+  // Undo last confirmed bulk op
+  undoLastBulkTool,
 ];
 
 export {
@@ -67,4 +70,5 @@ export {
   searchGmailTool,
   saveEmailAsTodoTool,
   scanGmailNowTool,
+  undoLastBulkTool,
 };

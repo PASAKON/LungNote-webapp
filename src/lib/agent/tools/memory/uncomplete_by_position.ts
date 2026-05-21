@@ -21,8 +21,22 @@ export const uncompleteByPositionTool: AgentTool<z.infer<typeof args>> = {
   requires: ["linked"],
   async execute(input, ctx) {
     if (!ctx.lineUserId) return { ok: false, reason: "not_linked" };
+
+    ctx.announceBulkOp("uncomplete");
+
     const listErr = await ensureDoneList(ctx);
     if (listErr) return listErr;
+
+    if (ctx.shouldBlockBulk()) {
+      return {
+        ok: false,
+        reason: "requires_confirmation",
+        count: ctx.getBulkOpCount(),
+        op: "uncomplete",
+        message: `${ctx.getBulkOpCount()} uncomplete ops requested — ask user to confirm before executing.`,
+      };
+    }
+
     const item = ctx.getDoneByPosition(input.position);
     if (!item) {
       return {
@@ -35,6 +49,7 @@ export const uncompleteByPositionTool: AgentTool<z.infer<typeof args>> = {
     if (!result.ok) {
       return { ok: false, reason: result.reason, error: result.error };
     }
+    ctx.pushBulkOpId("uncomplete", result.todoId);
     return { ok: true, text: result.text };
   },
 };

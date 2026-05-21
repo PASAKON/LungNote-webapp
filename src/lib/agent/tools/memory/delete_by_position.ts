@@ -17,8 +17,22 @@ export const deleteByPositionTool: AgentTool<z.infer<typeof args>> = {
   requires: ["linked"],
   async execute(input, ctx) {
     if (!ctx.lineUserId) return { ok: false, reason: "not_linked" };
+
+    ctx.announceBulkOp("delete");
+
     const listErr = await ensurePendingList(ctx);
     if (listErr) return listErr;
+
+    if (ctx.shouldBlockBulk()) {
+      return {
+        ok: false,
+        reason: "requires_confirmation",
+        count: ctx.getBulkOpCount(),
+        op: "delete",
+        message: `${ctx.getBulkOpCount()} delete ops requested — ask user to confirm before executing.`,
+      };
+    }
+
     const item = ctx.getPendingByPosition(input.position);
     if (!item) {
       return {
@@ -31,8 +45,7 @@ export const deleteByPositionTool: AgentTool<z.infer<typeof args>> = {
     if (!result.ok) {
       return { ok: false, reason: result.reason, error: result.error };
     }
-    // remaining_count = pending list size BEFORE this delete, minus 1.
-    // AI uses this for the todo_deleted flex card.
+    ctx.pushBulkOpId("delete", result.todoId);
     const remaining_count = Math.max(0, ctx.pendingCount() - 1);
     return { ok: true, text: result.text, remaining_count };
   },
