@@ -1,6 +1,8 @@
 import "server-only";
 import type { TraceCollector } from "@/lib/observability/trace";
 import type { LineMessage } from "@/lib/line/client";
+import type { BulkOpKind } from "@/lib/agent/bulk_guard";
+import { shouldRequireConfirmation } from "@/lib/agent/bulk_guard";
 
 /**
  * Per-turn working memory for the agent runtime. Holds state that survives
@@ -28,6 +30,18 @@ export class TurnContext {
   private pendingList: AgentTodoItem[] | null = null;
   /** Done todos cached by the most recent list_done call this turn. */
   private doneList: AgentTodoItem[] | null = null;
+
+  // ── Bulk guard state ────────────────────────────────────────────────
+  /**
+   * Count of bulk op tool calls (complete/delete/uncomplete) announced
+   * synchronously in this turn before any awaits. All parallel tool
+   * executions increment this before yielding, so post-await checks see
+   * the full turn count.
+   */
+  private _bulkOpCount = 0;
+  private _bulkConfirmed = false;
+  /** Accumulated successful bulk op ids per op kind for undo recording. */
+  private _bulkOpLog = new Map<BulkOpKind, string[]>();
 
   /**
    * In-flight auto-list promises. When two parallel *_by_position tool
@@ -71,6 +85,56 @@ export class TurnContext {
     if (!this.doneList) return null;
     if (!Number.isInteger(position) || position < 1) return null;
     return this.doneList[position - 1] ?? null;
+  }
+
+  // ── Bulk guard API ─────────────────────────────────────────────────
+  /**
+   * Synchronously announce intent to run a bulk op. MUST be called as the
+   * very first statement in execute() — before any await — so all parallel
+   * tool calls in one model step increment the counter before any of them
+   * checks shouldBlockBulk().
+   */
+  announceBulkOp(_opKind: BulkOpKind): void {
+    this._bulkOpCount++;
+  }
+
+  getBulkOpCount(): number {
+    return this._bulkOpCount;
+  }
+
+  setBulkConfirmed(val: boolean): void {
+    this._bulkConfirmed = val;
+  }
+
+  isBulkConfirmed(): boolean {
+    return this._bulkConfirmed;
+  }
+
+  /**
+   * Returns true if the turn's bulk op count meets the guard threshold and
+   * the user has not yet confirmed. Check AFTER the first async barrier in
+   * execute() — by then all parallel calls have announced.
+   */
+  shouldBlockBulk(): boolean {
+    return shouldRequireConfirmation(this._bulkOpCount, "complete") && !this._bulkConfirmed;
+  }
+
+  /** Record a successful bulk op id for end-of-turn undo persistence. */
+  pushBulkOpId(opKind: BulkOpKind, todoId: string): void {
+    const ids = this._bulkOpLog.get(opKind) ?? [];
+    ids.push(todoId);
+    this._bulkOpLog.set(opKind, ids);
+  }
+
+  /**
+   * Returns accumulated bulk op log (opKind → todoIds[]) and clears the
+   * buffer. Returns null when nothing was recorded.
+   */
+  drainBulkOpLog(): Map<BulkOpKind, string[]> | null {
+    if (this._bulkOpLog.size === 0) return null;
+    const snapshot = new Map(this._bulkOpLog);
+    this._bulkOpLog.clear();
+    return snapshot;
   }
 
   // ── Reply buffer (multi-bubble) ─────────────────────────────────────
