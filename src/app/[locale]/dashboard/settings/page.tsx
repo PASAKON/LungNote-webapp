@@ -48,13 +48,7 @@ export default async function SettingsPage({
   const profile = profileRes.data;
   const notesCount = notesCountRes.count;
   const todoOpenCount = todoOpenCountRes.count;
-  // database.types.ts not yet regenerated for lungnote_gmail_connections —
-  // typed as never by Supabase client. Cast to known schema shape from
-  // migration 20260521000000_lungnote_gmail.sql. Remove after running
-  // `supabase gen types typescript --linked > database.types.ts`.
-  const gmailConn = gmailConnRes.data as
-    | { email: string; status: string; last_synced_at: string | null }
-    | null;
+  const gmailConn = gmailConnRes.data;
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
