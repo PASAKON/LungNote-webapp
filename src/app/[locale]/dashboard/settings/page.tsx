@@ -6,6 +6,7 @@ import { Sidebar } from "../Sidebar";
 import { signOut } from "../actions";
 import { PullToRefresh } from "../PullToRefresh";
 import { ThemeToggle } from "../ThemeToggle";
+import { GmailConnectionCard } from "../GmailConnectionCard";
 import { getThemeFromCookies } from "@/lib/theme";
 import "../dashboard.css";
 
@@ -22,25 +23,32 @@ export default async function SettingsPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [profileRes, notesCountRes, todoOpenCountRes, theme] = await Promise.all([
-    supabase
-      .from("lungnote_profiles")
-      .select("line_display_name, line_picture_url, line_user_id, created_at")
-      .eq("id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("lungnote_notes")
-      .select("*", { count: "exact", head: true }),
-    supabase
-      .from("lungnote_todos")
-      .select("*", { count: "exact", head: true })
-      .eq("done", false),
-    getThemeFromCookies(),
-  ]);
+  const [profileRes, notesCountRes, todoOpenCountRes, gmailConnRes, theme] =
+    await Promise.all([
+      supabase
+        .from("lungnote_profiles")
+        .select("line_display_name, line_picture_url, line_user_id, created_at")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("lungnote_notes")
+        .select("*", { count: "exact", head: true }),
+      supabase
+        .from("lungnote_todos")
+        .select("*", { count: "exact", head: true })
+        .eq("done", false),
+      supabase
+        .from("lungnote_gmail_connections")
+        .select("email, status, last_synced_at")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      getThemeFromCookies(),
+    ]);
 
   const profile = profileRes.data;
   const notesCount = notesCountRes.count;
   const todoOpenCount = todoOpenCountRes.count;
+  const gmailConn = gmailConnRes.data;
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
@@ -227,6 +235,33 @@ export default async function SettingsPage({
                   เลือกโหมดสว่าง / มืด หรือให้ตามระบบของเครื่อง
                 </div>
                 <ThemeToggle initial={theme} />
+              </section>
+
+              <section
+                className="sketch-box"
+                style={{ padding: 20, marginBottom: 16 }}
+              >
+                <div
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 22,
+                    fontWeight: 700,
+                    marginBottom: 4,
+                  }}
+                >
+                  Gmail
+                </div>
+                <GmailConnectionCard
+                  connection={
+                    gmailConn
+                      ? {
+                          email: gmailConn.email,
+                          status: gmailConn.status,
+                          last_synced_at: gmailConn.last_synced_at,
+                        }
+                      : null
+                  }
+                />
               </section>
 
               <form action={signOut}>
