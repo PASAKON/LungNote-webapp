@@ -432,6 +432,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      lungnote_bulk_ops: {
+        Row: {
+          id: string;
+          user_id: string;
+          op_kind: "complete" | "delete" | "uncomplete";
+          todo_ids: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          op_kind: "complete" | "delete" | "uncomplete";
+          todo_ids: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          op_kind?: "complete" | "delete" | "uncomplete";
+          todo_ids?: string[];
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

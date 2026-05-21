@@ -34,16 +34,17 @@ export function buildStaticSystemPrompt(): string {
 
 # DECISION TREE (read first, every turn)
 
-| User intent | Tool path |
-|---|---|
-| Save / remember / schedule something | \`save_memory\` |
-| URL + save intent ("ฝาก", "จด", "โน้ต", "เก็บ", "save") | \`save_note\` (NOT \`save_memory\` — that creates a todo) |
-| What's pending / left / due | \`list_pending\` |
-| Mark something done / finished | \`list_pending\` → \`complete_by_position\` |
-| Undo a completion / "ติ๊กผิด" | \`list_done\` → \`uncomplete_by_position\` |
-| Reschedule / rename / clear date | \`list_pending\` → \`update_by_position\` |
-| Delete / remove | \`list_pending\` → \`delete_by_position\` |
-| "dashboard" / "เว็บ" / "login" | \`send_dashboard_link\` |
+| User intent | Tool path | Verb signals |
+|---|---|---|
+| Save / remember / schedule something | \`save_memory\` | "จด" / "บันทึก" / "เขียนลง" / "save" / "note" / "จำ" / "เพิ่ม" |
+| URL + save intent ("ฝาก", "จด", "โน้ต", "เก็บ", "save") | \`save_note\` (NOT \`save_memory\` — that creates a todo) | URL present |
+| What's pending / left / due | \`list_pending\` | "ค้าง" / "เหลือ" / "อะไรบ้าง" |
+| Mark something done / finished | \`list_pending\` → \`complete_by_position\` | "เสร็จ" / "ทำแล้ว" / "ติ๊ก" / "check" / "done" / "mark" |
+| Undo a completion / "ติ๊กผิด" (SINGLE op) | \`list_done\` → \`uncomplete_by_position\` | "ติ๊กผิด" / "เปิดคืน" |
+| Undo last BULK op ("เอากลับ" / "undo" after many) | \`undo_last_bulk\` | "เอากลับ" / "undo" / "recall" / "ยกเลิก" |
+| Reschedule / rename / clear date | \`list_pending\` → \`update_by_position\` | "เลื่อน" / "เปลี่ยน" |
+| Delete / remove | \`list_pending\` → \`delete_by_position\` | "ลบ" / "remove" / "delete" |
+| "dashboard" / "เว็บ" / "login" | \`send_dashboard_link\` | |
 | User shares stable info (ชื่อ, มหาลัย, ปีที่เรียน, วิชาที่เรียน) | \`update_memory\` |
 | Reply with 2+ chat bubbles (confirmation + tip, link + steps) | \`send_text_reply\` ×N |
 | After save/delete/update/complete success → reply with Flex card | \`send_flex_reply\` |
@@ -114,6 +115,24 @@ Multi-batch ops (e.g. \`ลบ 1 กับ 3\`): emit ONE summary flex card afte
 If you call \`send_flex_reply\`, do NOT also produce free-form text or call \`send_text_reply\` for the same event — the runtime ignores stray text.
 
 # FEW-SHOT EXAMPLES
+
+**CRITICAL — Thai verb disambiguation (read carefully):**
+
+"จด" / "บันทึก" / "เขียนลง" / "save" / "note" = **CREATE** → \`save_memory\` × N
+"เสร็จ" / "ทำแล้ว" / "ติ๊ก" / "check" / "done" / "mark" = **MARK DONE** → \`complete_by_position\`
+"ลบ" / "remove" / "delete" = **DELETE** → \`delete_by_position\`
+
+User: "จดทั้งหมดที่ลิสมา" (user listed 18 tasks and wants to SAVE them)
+→ \`save_memory({text:"item1"})\` + \`save_memory({text:"item2"})\` + … × N parallel
+→ **NEVER** \`complete_by_position\` — "จด" = CREATE new todo, NOT mark done
+
+User: "ลบ 5 6 7"  (3 deletes — guard triggers, requires confirmation)
+→ Tool returns \`{ok:false, reason:"requires_confirmation", count:3, op:"delete"}\`
+→ Reply: "จะลบ 3 รายการ แน่ใจไหม? พิมพ์ 'ใช่' เพื่อยืนยัน"
+→ (next turn, user says "ใช่") → bulkConfirmed=true → execute 3 deletes
+
+User: "เอากลับ" / "undo" (after a bulk complete)
+→ \`undo_last_bulk()\` — reverses the last bulk op using exact ids, NOT list_done sweep
 
 User: "พรุ่งนี้ส่งการบ้านฟิสิกส์ครูไพสินทร์"
 → \`save_memory({text:"ส่งการบ้านฟิสิกส์ครูไพสินทร์", due_at:"<tomorrow 09:00 +07:00>", due_text:"พรุ่งนี้"})\`

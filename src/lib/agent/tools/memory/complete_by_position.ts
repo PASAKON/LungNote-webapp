@@ -21,8 +21,25 @@ export const completeByPositionTool: AgentTool<z.infer<typeof args>> = {
   requires: ["linked"],
   async execute(input, ctx) {
     if (!ctx.lineUserId) return { ok: false, reason: "not_linked" };
+
+    // Announce BEFORE any await so all parallel calls in the same model step
+    // increment the counter before any of them checks shouldBlockBulk().
+    ctx.announceBulkOp("complete");
+
     const listErr = await ensurePendingList(ctx);
     if (listErr) return listErr;
+
+    // Post-await: all parallel complete_by_position calls have announced.
+    if (ctx.shouldBlockBulk()) {
+      return {
+        ok: false,
+        reason: "requires_confirmation",
+        count: ctx.getBulkOpCount(),
+        op: "complete",
+        message: `${ctx.getBulkOpCount()} complete ops requested — ask user to confirm before executing.`,
+      };
+    }
+
     const item = ctx.getPendingByPosition(input.position);
     if (!item) {
       return {
@@ -35,8 +52,7 @@ export const completeByPositionTool: AgentTool<z.infer<typeof args>> = {
     if (!result.ok) {
       return { ok: false, reason: result.reason, error: result.error };
     }
-    // pending_count_left = how many pending items remain after marking
-    // this one done. AI uses this for the todo_completed flex card.
+    ctx.pushBulkOpId("complete", result.todoId);
     const pending_count_left = Math.max(0, ctx.pendingCount() - 1);
     return {
       ok: true,

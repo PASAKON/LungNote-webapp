@@ -169,6 +169,9 @@ async function handleText(ev: LineTextMessageEvent): Promise<unknown> {
   return handleTextLegacy(ev, text, userId, trace);
 }
 
+/** Matches single-word affirmative replies that confirm a pending bulk op. */
+const BULK_AFFIRM_RE = /^(yes|ใช่|โอเค|ok|ยืนยัน|แน่ใจ|ลุย)$/i;
+
 /**
  * Full agent mode (v2) — Vercel AI SDK + custom TurnContext + position-aware
  * tools. Each turn instantiates a fresh TurnContext so the agent's working
@@ -182,6 +185,9 @@ async function handleTextAgent(
 ): Promise<unknown> {
   trace.step("path_ai");
   const ctx = new TurnContext(userId ?? null, trace);
+  if (BULK_AFFIRM_RE.test(text.trim())) {
+    ctx.setBulkConfirmed(true);
+  }
   const aiResult = await runAgent(text, ctx);
   const replyText = aiResult.ok
     ? aiResult.text
