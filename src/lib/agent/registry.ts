@@ -2,6 +2,7 @@ import "server-only";
 import { tool, type Tool, type ToolSet } from "ai";
 import type { AgentTool, AgentRequirement, AgentToolResult } from "./tool";
 import type { TurnContext } from "./context";
+import { hasActiveGmailConnection } from "@/lib/gmail/agent-helpers";
 
 /**
  * Build a Vercel AI SDK ToolSet from our AgentTool registry, bound to a
@@ -29,7 +30,7 @@ function wrap(t: AgentTool<any>, ctx: TurnContext): Tool {
     description: t.description,
     inputSchema: t.schema,
     execute: async (input: unknown) => {
-      const precheck = checkRequirements(t.requires, ctx);
+      const precheck = await checkRequirements(t.requires, ctx);
       if (precheck) {
         ctx.trace.recordTool(t.name, input, precheck);
         return precheck;
@@ -47,10 +48,10 @@ function wrap(t: AgentTool<any>, ctx: TurnContext): Tool {
   });
 }
 
-function checkRequirements(
+async function checkRequirements(
   reqs: AgentRequirement[] | undefined,
   ctx: TurnContext,
-): AgentToolResult | null {
+): Promise<AgentToolResult | null> {
   if (!reqs) return null;
   for (const r of reqs) {
     if (r === "linked" && !ctx.lineUserId) {
@@ -75,6 +76,24 @@ function checkRequirements(
         reason: "must_list_done_first",
         message: "Call list_done in this turn before uncomplete_by_position.",
       };
+    }
+    if (r === "gmail_connected") {
+      if (!ctx.lineUserId) {
+        return {
+          ok: false,
+          reason: "not_linked",
+          message: "Send dashboard link first.",
+        };
+      }
+      const connected = await hasActiveGmailConnection(ctx.lineUserId);
+      if (!connected) {
+        return {
+          ok: false,
+          reason: "gmail_not_connected",
+          message:
+            "User has not connected Gmail. Tell them to open /dashboard/settings and click 'เชื่อมต่อ Gmail'.",
+        };
+      }
     }
   }
   return null;

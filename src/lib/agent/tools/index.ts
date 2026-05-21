@@ -13,6 +13,9 @@ import { sendDashboardLinkTool } from "./auth/send_dashboard_link";
 import { updateMemoryTool } from "./profile/update_memory";
 import { sendTextReplyTool } from "./reply/send_text_reply";
 import { sendFlexReplyTool } from "./reply/send_flex_reply";
+import { searchGmailTool } from "./gmail/search_gmail";
+import { saveEmailAsTodoTool } from "./gmail/save_email_as_todo";
+import { scanGmailNowTool } from "./gmail/scan_gmail_now";
 
 /**
  * All tools available to the agent. Add a new tool by:
@@ -42,6 +45,10 @@ export const ALL_TOOLS: AgentTool<any>[] = [
   // Reply (multi-bubble; opt-in)
   sendTextReplyTool,
   sendFlexReplyTool,
+  // Gmail (ADR-0020) — gated by gmail_connected requirement
+  searchGmailTool,
+  saveEmailAsTodoTool,
+  scanGmailNowTool,
 ];
 
 export {
@@ -57,4 +64,7 @@ export {
   updateMemoryTool,
   sendTextReplyTool,
   sendFlexReplyTool,
+  searchGmailTool,
+  saveEmailAsTodoTool,
+  scanGmailNowTool,
 };

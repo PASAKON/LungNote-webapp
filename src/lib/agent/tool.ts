@@ -12,7 +12,11 @@ import type { TurnContext } from "./context";
  *   - TArgs: zod-inferred shape of the tool's arguments
  *   - TResult: shape of the structured result the tool returns to the AI
  */
-export type AgentRequirement = "linked" | "pending_listed" | "done_listed";
+export type AgentRequirement =
+  | "linked"
+  | "pending_listed"
+  | "done_listed"
+  | "gmail_connected";
 
 export type AgentToolResult =
   | { ok: true; [k: string]: unknown }
@@ -22,7 +26,7 @@ export type AgentTool<TArgs = unknown> = {
   /** Tool name as the model sees it. snake_case. */
   name: string;
   /** Coarse category — used for grouping in the admin viewer / tests. */
-  category: "memory" | "auth" | "system" | "profile" | "reply";
+  category: "memory" | "auth" | "system" | "profile" | "reply" | "gmail";
   /** Description sent to the model. Keep short — system prompt has the
    *  decision tree; this is the per-tool reminder. */
   description: string;
