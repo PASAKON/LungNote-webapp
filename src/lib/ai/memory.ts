@@ -2,11 +2,31 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ChatMessage } from "./types";
 
-const MAX_MEMORY_ENTRIES = 10; // 5 user + 5 assistant
+const MAX_MEMORY_ENTRIES = 20; // 10 user + 10 assistant
+const COMPACT_THRESHOLD = 10;
 
 export function trimMemory(messages: ChatMessage[]): ChatMessage[] {
   if (messages.length <= MAX_MEMORY_ENTRIES) return messages;
   return messages.slice(-MAX_MEMORY_ENTRIES);
+}
+
+/**
+ * When stored count exceeds COMPACT_THRESHOLD, fold oldest entries into a
+ * single system summary message so the model retains context without
+ * ballooning the prompt. Keeps the most recent COMPACT_THRESHOLD entries
+ * verbatim.
+ */
+export function compactOldEntries(messages: ChatMessage[]): ChatMessage[] {
+  if (messages.length <= COMPACT_THRESHOLD) return messages;
+  const oldCount = messages.length - COMPACT_THRESHOLD;
+  const oldest = messages.slice(0, oldCount);
+  const recent = messages.slice(oldCount);
+  const joined = oldest.map((m) => `${m.role}: ${m.content}`).join("\n");
+  const summary: ChatMessage = {
+    role: "system",
+    content: `[Previous conversation summary]\n${joined.slice(0, 1500)}`,
+  };
+  return [summary, ...recent];
 }
 
 /**
@@ -38,11 +58,12 @@ export function mergeAndTrim(
   newUser: string,
   newAssistant: string,
 ): ChatMessage[] {
-  return trimMemory([
+  const appended: ChatMessage[] = [
     ...prior,
     { role: "user", content: newUser },
     { role: "assistant", content: summarizeListReply(newAssistant) },
-  ]);
+  ];
+  return trimMemory(compactOldEntries(appended));
 }
 
 /**
@@ -67,7 +88,7 @@ export async function loadMemory(lineUserId: string): Promise<ChatMessage[]> {
 }
 
 /**
- * Append the new user/assistant exchange and persist (trimmed to last 10).
+ * Append the new user/assistant exchange and persist (compacted then trimmed to 20).
  * Best-effort: errors are logged but not thrown — the user already got their reply.
  */
 export async function saveMemory(
@@ -75,9 +96,18 @@ export async function saveMemory(
   prior: ChatMessage[],
   newUser: string,
   newAssistant: string,
+  toolSummary?: string,
 ): Promise<void> {
   const sb = createAdminClient();
   const next = mergeAndTrim(prior, newUser, newAssistant);
+
+  if (toolSummary) {
+    const lastIdx = next.length - 1;
+    const last = next[lastIdx];
+    if (last?.role === "assistant") {
+      next[lastIdx] = { ...last, tool_summary: toolSummary };
+    }
+  }
 
   const { error } = await sb
     .from("lungnote_conversation_memory")

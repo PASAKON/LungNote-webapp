@@ -52,6 +52,7 @@ export async function generateChatReply(
   let totalOut = 0;
   let totalCost = 0;
   let lastModel = "";
+  const allToolCallNames: string[] = [];
 
   try {
     for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
@@ -81,8 +82,20 @@ export async function generateChatReply(
       if (!result.toolCalls) {
         const finalText = result.text;
 
+        let toolSummary: string | undefined;
+        if (allToolCallNames.length > 0) {
+          const counts = new Map<string, number>();
+          for (const name of allToolCallNames) {
+            counts.set(name, (counts.get(name) ?? 0) + 1);
+          }
+          const parts = [...counts.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([name, count]) => `${name}×${count}`);
+          toolSummary = `[tools] ${parts.join(", ")}`;
+        }
+
         // Persist user + final assistant turn (skip tool scaffolding).
-        void saveMemory(lineUserId, memory, userText, finalText).catch(
+        void saveMemory(lineUserId, memory, userText, finalText, toolSummary).catch(
           (err: unknown) => {
             console.error("saveMemory rejected", { lineUserId, err });
           },
@@ -101,7 +114,10 @@ export async function generateChatReply(
         };
       }
 
-      // Model wants to call tools — append assistant turn + execute each call.
+      // Model wants to call tools — accumulate names for toolSummary, then execute.
+      for (const call of result.toolCalls) {
+        allToolCallNames.push(call.function.name);
+      }
       wire.push({
         role: "assistant",
         content: result.text || null,
