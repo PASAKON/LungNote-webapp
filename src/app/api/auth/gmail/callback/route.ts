@@ -6,7 +6,6 @@ import {
   parseIdTokenPayload,
 } from "@/lib/gmail/oauth";
 import { encryptToken } from "@/lib/gmail/crypto";
-import { startGmailWatchForUser } from "@/lib/gmail/watch";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,11 +116,10 @@ export async function GET(req: NextRequest) {
     return clearStateAndRedirect(settingsUrl);
   }
 
-  // Start Gmail push watch — best-effort. If it fails, the row stays
-  // active and the reconcile cron will still catch new email; the
-  // watch-renew cron will retry on its next tick.
-  await startGmailWatchForUser(user.id);
-
+  // Auto-extract disabled: no users.watch() call here, no Pub/Sub push,
+  // no hourly reconcile cron (vercel.json crons:[]). Todos are saved
+  // selectively via LINE agent tools (search_gmail / save_email_as_todo /
+  // scan_gmail_now). See ADR-0020.
   settingsUrl.searchParams.set("gmail", "connected");
   return clearStateAndRedirect(settingsUrl);
 }
