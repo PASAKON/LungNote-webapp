@@ -64,6 +64,7 @@ export async function chatCompletion(
     timeoutMs?: number;
     tools?: ToolDef[];
     toolChoice?: "auto" | "none";
+    maxTokens?: number;
   } = {},
 ): Promise<ChatCompletionResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -76,7 +77,7 @@ export async function chatCompletion(
   const body: Record<string, unknown> = {
     model,
     messages,
-    max_tokens: MAX_OUTPUT_TOKENS,
+    max_tokens: options.maxTokens ?? MAX_OUTPUT_TOKENS,
   };
   if (options.tools && options.tools.length > 0) {
     body.tools = options.tools;

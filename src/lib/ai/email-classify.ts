@@ -60,6 +60,11 @@ const MAX_BATCH = 10;
 const MAX_TEXT_LENGTH = 160;
 const MAX_REASON_LENGTH = 200;
 const DEFAULT_TIMEOUT_MS = 12_000;
+// Output budget: a full batch (≤10 emails) each with text + up to 3 action
+// suggestions (≤200-char Thai bodies) far exceeds the client's 300-token
+// default, which truncates the JSON and forces the all-false fallback. Give it
+// generous headroom so classification + actions survive.
+const CLASSIFY_MAX_TOKENS = 2_000;
 
 function buildPromptContext(now: Date): {
   isoDate: string;
@@ -178,6 +183,7 @@ export async function classifyEmailsForTodo(
     const result = await chatCompletion(messages, {
       timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       model: options.model,
+      maxTokens: CLASSIFY_MAX_TOKENS,
     });
     const parsed = safeParseJsonArray(result.text);
     if (Array.isArray(parsed) && parsed.length === emails.length) {
