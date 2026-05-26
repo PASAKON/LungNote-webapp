@@ -319,24 +319,122 @@
   margin-top: 4px;
 }
 
-/* Gmail-sourced todo tag (ADR-0022) */
-.todo-source-tag {
+/* Gmail-sourced todo tag + reply UI (ADR-0022) */
+.lungnote-dashboard .todo-source-tag {
+  grid-column: 1 / -1;
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  margin-left: 8px;
-  padding: 1px 6px;
+  margin-top: 6px;
+  padding: 1px 7px;
   font-size: 11px;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.7;
   white-space: nowrap;
   color: #c5221f;
   background: #fce8e6;
   border: 1px solid #f3c9c6;
   border-radius: 6px;
   text-decoration: none;
-  vertical-align: middle;
 }
-.todo-source-tag:hover {
+.lungnote-dashboard .todo-source-tag:hover {
   background: #f8d7d4;
+}
+
+.lungnote-dashboard .todo-reply {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+.lungnote-dashboard .todo-reply-sent {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent, #2f7d32);
+}
+.lungnote-dashboard .todo-reply-trigger {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.lungnote-dashboard .todo-reply-trigger:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.lungnote-dashboard .todo-reply-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.lungnote-dashboard .todo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lungnote-dashboard .todo-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  cursor: pointer;
+  color: var(--fg);
+}
+.lungnote-dashboard .todo-chip:hover {
+  border-color: var(--fg);
+}
+.lungnote-dashboard .todo-chip.approve {
+  border-color: #2f7d32;
+  color: #2f7d32;
+}
+.lungnote-dashboard .todo-chip.reject {
+  border-color: var(--red, #c5221f);
+  color: var(--red, #c5221f);
+}
+.lungnote-dashboard .todo-reply-input {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+}
+.lungnote-dashboard .todo-reply-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.lungnote-dashboard .todo-reply-send {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 6px 14px;
+  border: 2px solid var(--accent, #2f7d32);
+  border-radius: 3px;
+  background: var(--accent, #2f7d32);
+  color: #fff;
+  cursor: pointer;
+}
+.lungnote-dashboard .todo-reply-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lungnote-dashboard .todo-reply-cancel {
+  font-size: 14px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
 }

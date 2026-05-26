@@ -6,7 +6,15 @@ import {
   toggleTodoDone,
   updateTodoText,
   deleteTodo,
+  replyToEmailTodo,
 } from "./actions";
+
+export type QuickChip = {
+  label: string;
+  body: string;
+  intent?: string;
+  need_reason?: boolean;
+};
 
 export type TodoRow = {
   id: string;
@@ -19,6 +27,8 @@ export type TodoRow = {
   updated_at: string;
   source: "chat" | "web" | "liff" | "email";
   source_url: string | null;
+  suggested_actions: QuickChip[];
+  replied: boolean;
 };
 
 type FilterKey = "today" | "open" | "all";
@@ -101,6 +111,13 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  // per-row email reply state
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [confirmReplyId, setConfirmReplyId] = useState<string | null>(null);
+  const [replySavingId, setReplySavingId] = useState<string | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+
   const counts = {
     today: initial.filter((t) => matchesTodayFilter(t) && !t.done).length,
     open: initial.filter((t) => !t.done).length,
@@ -165,6 +182,21 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
     setSavingId(null);
     if (!res.ok) setGlobalError(res.error);
     setConfirmDeleteId(null);
+  };
+
+  const handleReply = async (id: string) => {
+    setReplySavingId(id);
+    setGlobalError(null);
+    const res = await replyToEmailTodo(id, replyText);
+    setReplySavingId(null);
+    setConfirmReplyId(null);
+    if (!res.ok) {
+      setGlobalError(res.error);
+      return;
+    }
+    setSentIds((prev) => new Set(prev).add(id));
+    setReplyOpenId(null);
+    setReplyText("");
   };
 
   return (
@@ -305,6 +337,16 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
                     })()}
                   </button>
                 )}
+                <div className="todo-actions">
+                  <button
+                    type="button"
+                    className="todo-action-btn danger"
+                    onClick={() => setConfirmDeleteId(t.id)}
+                    aria-label="ลบ"
+                  >
+                    ลบ
+                  </button>
+                </div>
                 {t.source === "email" && (
                   <a
                     className="todo-source-tag"
@@ -316,16 +358,6 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
                     ✉ gmail
                   </a>
                 )}
-                <div className="todo-actions">
-                  <button
-                    type="button"
-                    className="todo-action-btn danger"
-                    onClick={() => setConfirmDeleteId(t.id)}
-                    aria-label="ลบ"
-                  >
-                    ลบ
-                  </button>
-                </div>
 
                 {(isEditingCheck || isEditingText) && (
                   <div className="todo-confirm">
@@ -352,6 +384,103 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
                     >
                       {savingId === t.id ? "..." : "ยืนยันบันทึก"}
                     </button>
+                  </div>
+                )}
+
+                {t.source === "email" && (
+                  <div className="todo-reply">
+                    {t.replied || sentIds.has(t.id) ? (
+                      <span className="todo-reply-sent">✓ ตอบกลับอีเมลแล้ว</span>
+                    ) : replyOpenId === t.id ? (
+                      <div className="todo-reply-box">
+                        {t.suggested_actions.length > 0 && (
+                          <div className="todo-chips">
+                            {t.suggested_actions.map((a, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                className={`todo-chip${
+                                  a.intent === "approve"
+                                    ? " approve"
+                                    : a.intent === "reject"
+                                      ? " reject"
+                                      : ""
+                                }`}
+                                onClick={() => setReplyText(a.body)}
+                              >
+                                {a.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <textarea
+                          className="todo-reply-input"
+                          value={replyText}
+                          maxLength={5000}
+                          placeholder="พิมพ์ข้อความตอบกลับ หรือกดปุ่มลัดด้านบน..."
+                          onChange={(e) => setReplyText(e.target.value)}
+                        />
+                        {confirmReplyId === t.id ? (
+                          <div className="todo-confirm">
+                            <span className="todo-confirm-text">
+                              ส่งอีเมลตอบกลับจริง? (ส่งแล้วแก้ไม่ได้)
+                            </span>
+                            <button
+                              type="button"
+                              className="todo-confirm-btn cancel"
+                              disabled={replySavingId === t.id}
+                              onClick={() => setConfirmReplyId(null)}
+                            >
+                              ยกเลิก
+                            </button>
+                            <button
+                              type="button"
+                              className="todo-confirm-btn save"
+                              disabled={replySavingId === t.id}
+                              onClick={() => handleReply(t.id)}
+                            >
+                              {replySavingId === t.id ? "..." : "ยืนยันส่ง"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="todo-reply-actions">
+                            <button
+                              type="button"
+                              className="todo-reply-cancel"
+                              onClick={() => {
+                                setReplyOpenId(null);
+                                setReplyText("");
+                              }}
+                            >
+                              ปิด
+                            </button>
+                            <button
+                              type="button"
+                              className="todo-reply-send"
+                              disabled={!replyText.trim()}
+                              onClick={() => setConfirmReplyId(t.id)}
+                            >
+                              ส่งตอบกลับ
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="todo-reply-trigger"
+                        onClick={() => {
+                          setReplyOpenId(t.id);
+                          setReplyText("");
+                          setConfirmReplyId(null);
+                        }}
+                      >
+                        ↩ ตอบกลับ
+                        {t.suggested_actions.length > 0
+                          ? ` · ${t.suggested_actions.length} ปุ่มลัด`
+                          : ""}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

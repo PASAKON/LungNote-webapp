@@ -44,9 +44,43 @@ export default async function TodoPage({
   ]);
 
   const profile = profileRes.data;
-  const todos = todosRes.data;
+  const todos = todosRes.data ?? [];
   const openCount = openCountRes.count;
   const notesCount = notesCountRes.count;
+
+  // Enrich email-sourced todos with AI-suggested reply chips + reply state.
+  const emailIds = todos.filter((t) => t.source === "email").map((t) => t.id);
+  const actionsByTodo: Record<string, unknown[]> = {};
+  const repliedSet = new Set<string>();
+  if (emailIds.length > 0) {
+    const [syncedRes, repliesRes] = await Promise.all([
+      supabase
+        .from("lungnote_gmail_synced_messages")
+        .select("todo_id, suggested_actions")
+        .in("todo_id", emailIds),
+      supabase
+        .from("lungnote_email_replies")
+        .select("todo_id")
+        .in("todo_id", emailIds)
+        .eq("status", "sent"),
+    ]);
+    for (const r of syncedRes.data ?? []) {
+      if (r.todo_id) {
+        actionsByTodo[r.todo_id] = Array.isArray(r.suggested_actions)
+          ? (r.suggested_actions as unknown[])
+          : [];
+      }
+    }
+    for (const r of repliesRes.data ?? []) {
+      if (r.todo_id) repliedSet.add(r.todo_id);
+    }
+  }
+  const initialRows = todos.map((t) => ({
+    ...t,
+    suggested_actions: (actionsByTodo[t.id] ??
+      []) as TodoRow["suggested_actions"],
+    replied: repliedSet.has(t.id),
+  }));
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
@@ -68,7 +102,7 @@ export default async function TodoPage({
           />
           <PullToRefresh>
             <div className="dash-body">
-              <TodoListClient initial={(todos ?? []) as TodoRow[]} />
+              <TodoListClient initial={initialRows as TodoRow[]} />
             </div>
           </PullToRefresh>
         </main>

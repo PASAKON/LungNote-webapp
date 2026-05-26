@@ -465,6 +465,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      lungnote_email_replies: {
+        Row: {
+          id: string;
+          user_id: string;
+          todo_id: string;
+          thread_id: string | null;
+          message_id: string | null;
+          body: string;
+          status: "sent" | "failed";
+          gmail_message_id: string | null;
+          error: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          todo_id: string;
+          thread_id?: string | null;
+          message_id?: string | null;
+          body: string;
+          status?: "sent" | "failed";
+          gmail_message_id?: string | null;
+          error?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          todo_id?: string;
+          thread_id?: string | null;
+          message_id?: string | null;
+          body?: string;
+          status?: "sent" | "failed";
+          gmail_message_id?: string | null;
+          error?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       lungnote_conversation_memory: {
         Row: {
           line_user_id: string;
