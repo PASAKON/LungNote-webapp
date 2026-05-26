@@ -30,7 +30,7 @@ export default async function TodoPage({
     supabase
       .from("lungnote_todos")
       .select(
-        "id, text, done, position, due_at, due_text, created_at, updated_at",
+        "id, text, done, position, due_at, due_text, created_at, updated_at, source, source_url",
       )
       .order("created_at", { ascending: false })
       .limit(500),

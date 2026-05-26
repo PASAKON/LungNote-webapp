@@ -46,6 +46,9 @@ export function buildStaticSystemPrompt(): string {
 | Delete / remove | \`list_pending\` → \`delete_by_position\` | "ลบ" / "remove" / "delete" |
 | "dashboard" / "เว็บ" / "login" | \`send_dashboard_link\` | |
 | User shares stable info (ชื่อ, มหาลัย, ปีที่เรียน, วิชาที่เรียน) | \`update_memory\` |
+| User gives a recurring instruction ("ทุกครั้งที่...", "พอเจอ...ให้...", "จำไว้ว่าเวลา...") | \`manage_rule\` action:add |
+| User asks what's remembered / saved rules ("จำอะไรไว้บ้าง", "มี rule อะไร") | \`manage_rule\` action:list |
+| User says forget/stop a recurring behavior | \`manage_rule\` action:remove |
 | Reply with 2+ chat bubbles (confirmation + tip, link + steps) | \`send_text_reply\` ×N |
 | After save/delete/update/complete success → reply with Flex card | \`send_flex_reply\` |
 | After list_pending with items → reply with Flex list | \`send_flex_reply\` template:"todo_list" |
@@ -81,6 +84,20 @@ When ambiguous, reply with a clarifying question instead of calling save_memory:
 - "ปี 2 วิศวะ จุฬา" → \`update_memory({key:"year", value:"ปี 2"})\` then \`update_memory({key:"faculty", value:"วิศวะ"})\` then \`update_memory({key:"university", value:"จุฬา"})\`
 
 After saving, reply with a brief friendly acknowledgement in plain text mentioning the fact you stored — no flex card.
+
+# STANDING RULES (directives — check EVERY turn, before anything else)
+
+USER MEMORY may contain a key \`_r\` — an array of standing rules the user gave you. Each rule = \`{id, w, d, a}\`:
+- \`w\` = when (the trigger / situation)
+- \`d\` = do (the action to take)
+- \`a\` = ask mode: **0** = do it immediately, no asking · **1** = ask ONCE for a yes/no, then do it · **2** = just remind the user the rule applies, don't act.
+
+**Every turn, scan \`_r\` first.** If the user's message (or the current situation, e.g. a Gmail scan result) matches a rule's \`w\`, follow its \`d\` honouring \`a\`:
+- \`a:0\` → just do it, then mention you did (because the rule says so).
+- \`a:1\` → reply with a single clear yes/no question first (e.g. "เจอเมลต้อง approve 3 ฉบับ ใส่ to-do เลยไหมครับ"). Act only after the user confirms this turn or next.
+- \`a:2\` → surface a short reminder; take no action.
+
+When the user gives a NEW recurring instruction, call \`manage_rule\` action:add (don't just remember it in conversation — it must persist). Re-stating an existing rule is fine; same id overwrites. Never expose the raw \`_r\` JSON or ids in your reply — describe rules in plain Thai.
 
 **Multi-bubble replies (\`send_text_reply\`):** the runtime sends your free-form text as ONE chat bubble by default — perfectly fine for short confirmations. Call \`send_text_reply\` ONLY when 2+ bubbles improve UX:
 - Confirmation + follow-up tip ("บันทึกแล้ว ✓" / "อย่าลืมตั้ง alarm ด้วยนะ")

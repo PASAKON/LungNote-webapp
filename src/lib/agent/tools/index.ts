@@ -11,6 +11,8 @@ import { updateByPositionTool } from "./memory/update_by_position";
 import { uncompleteByPositionTool } from "./memory/uncomplete_by_position";
 import { sendDashboardLinkTool } from "./auth/send_dashboard_link";
 import { updateMemoryTool } from "./profile/update_memory";
+import { manageRuleTool } from "./profile/manage_rule";
+import { createQuickActionTool } from "./profile/create_quick_action";
 import { sendTextReplyTool } from "./reply/send_text_reply";
 import { sendFlexReplyTool } from "./reply/send_flex_reply";
 import { searchGmailTool } from "./gmail/search_gmail";
@@ -41,8 +43,10 @@ export const ALL_TOOLS: AgentTool<any>[] = [
   deleteByPositionTool,
   // Auth
   sendDashboardLinkTool,
-  // Profile (persistent user facts)
+  // Profile (persistent user facts) + standing rules (directives)
   updateMemoryTool,
+  manageRuleTool,
+  createQuickActionTool,
   // Reply (multi-bubble; opt-in)
   sendTextReplyTool,
   sendFlexReplyTool,
@@ -65,6 +69,8 @@ export {
   uncompleteByPositionTool,
   sendDashboardLinkTool,
   updateMemoryTool,
+  manageRuleTool,
+  createQuickActionTool,
   sendTextReplyTool,
   sendFlexReplyTool,
   searchGmailTool,

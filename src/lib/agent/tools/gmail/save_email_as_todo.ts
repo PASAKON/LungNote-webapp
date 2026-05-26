@@ -1,7 +1,10 @@
 import "server-only";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { classifyEmailsForTodo } from "@/lib/ai/email-classify";
+import {
+  classifyEmailsForTodo,
+  type ClassifiedAction,
+} from "@/lib/ai/email-classify";
 import {
   loadActiveGmailConnection,
   withFreshAccessToken,
@@ -111,6 +114,7 @@ export const saveEmailAsTodoTool: AgentTool<z.infer<typeof args>> = {
     let finalDueAt: string | null = due_at ?? null;
     let finalDueText: string | null = null;
     let aiReason = "user_explicit";
+    let suggestedActions: ClassifiedAction[] = [];
 
     if (!finalText) {
       try {
@@ -127,6 +131,7 @@ export const saveEmailAsTodoTool: AgentTool<z.infer<typeof args>> = {
         if (due_at === undefined) finalDueAt = c.due_at;
         finalDueText = c.due_text;
         aiReason = c.reason.slice(0, 200);
+        suggestedActions = c.actions;
       } catch {
         finalText = subjectRaw.slice(0, 160) || "(no subject)";
       }
@@ -189,6 +194,7 @@ export const saveEmailAsTodoTool: AgentTool<z.infer<typeof args>> = {
         is_todo: true,
         todo_id: todo.id,
         ai_reason: aiReason,
+        suggested_actions: suggestedActions,
       },
       { onConflict: "user_id,message_id" },
     );

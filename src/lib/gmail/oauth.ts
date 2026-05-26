@@ -17,10 +17,16 @@ const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 
-export type GmailScopeTier = "read" | "edit" | "full";
+export type GmailScopeTier = "read" | "send" | "edit" | "full";
 
+// `send` (ADR-0021) bundles readonly + gmail.send so the user keeps to-do
+// ingest AND gains reply. gmail.send is Sensitive (not Restricted); readonly is
+// Restricted but already required by the base app, so this tier adds reply
+// without escalating to the modify/full CASA tier. Google accepts the
+// space-separated scope list. `edit` (modify) supersets this but is Restricted.
 const GMAIL_SCOPE_BY_TIER: Record<GmailScopeTier, string> = {
   read: "https://www.googleapis.com/auth/gmail.readonly",
+  send: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send",
   edit: "https://www.googleapis.com/auth/gmail.modify",
   full: "https://mail.google.com/",
 };
@@ -34,7 +40,7 @@ export function buildScopeString(tier: GmailScopeTier): string {
 export const FULL_SCOPES = buildScopeString("read");
 
 export function isGmailScopeTier(v: unknown): v is GmailScopeTier {
-  return v === "read" || v === "edit" || v === "full";
+  return v === "read" || v === "send" || v === "edit" || v === "full";
 }
 
 export const STATE_COOKIE = "gmail_oauth_state";

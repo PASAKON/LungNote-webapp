@@ -20,7 +20,7 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "หมดอายุ",
 };
 
-type ScopeTier = "read" | "edit" | "full";
+type ScopeTier = "read" | "send" | "edit" | "full";
 
 const SCOPE_OPTIONS: Array<{
   value: ScopeTier;
@@ -31,6 +31,11 @@ const SCOPE_OPTIONS: Array<{
     value: "read",
     label: "อ่านอย่างเดียว",
     detail: "AI อ่านเมลเพื่อแยก to-do เท่านั้น",
+  },
+  {
+    value: "send",
+    label: "อ่าน + ตอบกลับ",
+    detail: "อ่าน to-do + ตอบกลับเมลจากปุ่มลัด (ส่งอย่างเดียว ไม่ลบ/ไม่แก้)",
   },
   {
     value: "edit",

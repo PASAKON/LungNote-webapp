@@ -121,3 +121,16 @@ export function hasModifyScope(conn: ResolvedGmailConnection): boolean {
   );
 }
 
+/**
+ * Returns true if the connection can SEND a message — gmail.send, gmail.modify,
+ * or full all grant sending. Reply tooling gates on this (ADR-0021).
+ */
+export function canSendReply(conn: ResolvedGmailConnection): boolean {
+  const s = conn.scope;
+  return (
+    s.includes("gmail.send") ||
+    s.includes("gmail.modify") ||
+    s.includes("https://mail.google.com/")
+  );
+}
+

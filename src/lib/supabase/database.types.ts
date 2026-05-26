@@ -383,6 +383,7 @@ export type Database = {
           is_todo: boolean;
           todo_id: string | null;
           ai_reason: string | null;
+          suggested_actions: unknown; // jsonb — ClassifiedAction[] in app code
         };
         Insert: {
           id?: string;
@@ -397,6 +398,7 @@ export type Database = {
           is_todo?: boolean;
           todo_id?: string | null;
           ai_reason?: string | null;
+          suggested_actions?: unknown;
         };
         Update: {
           id?: string;
@@ -411,6 +413,55 @@ export type Database = {
           is_todo?: boolean;
           todo_id?: string | null;
           ai_reason?: string | null;
+          suggested_actions?: unknown;
+        };
+        Relationships: [];
+      };
+      lungnote_quick_actions: {
+        Row: {
+          id: string;
+          user_id: string;
+          label: string;
+          body: string;
+          intent: "approve" | "reject" | "ask" | "ack" | "other";
+          scope: "global" | "category";
+          match_category: string | null;
+          need_reason: boolean;
+          emoji: string | null;
+          position: number;
+          enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          label: string;
+          body: string;
+          intent?: "approve" | "reject" | "ask" | "ack" | "other";
+          scope?: "global" | "category";
+          match_category?: string | null;
+          need_reason?: boolean;
+          emoji?: string | null;
+          position?: number;
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          label?: string;
+          body?: string;
+          intent?: "approve" | "reject" | "ask" | "ack" | "other";
+          scope?: "global" | "category";
+          match_category?: string | null;
+          need_reason?: boolean;
+          emoji?: string | null;
+          position?: number;
+          enabled?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

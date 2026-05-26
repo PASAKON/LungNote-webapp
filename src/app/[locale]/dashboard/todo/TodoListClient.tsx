@@ -17,6 +17,8 @@ export type TodoRow = {
   due_text: string | null;
   created_at: string;
   updated_at: string;
+  source: "chat" | "web" | "liff" | "email";
+  source_url: string | null;
 };
 
 type FilterKey = "today" | "open" | "all";
@@ -302,6 +304,17 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
                       ) : null;
                     })()}
                   </button>
+                )}
+                {t.source === "email" && (
+                  <a
+                    className="todo-source-tag"
+                    href={t.source_url ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="งานนี้มาจาก Gmail — แตะเพื่อเปิดอีเมล"
+                  >
+                    ✉ gmail
+                  </a>
                 )}
                 <div className="todo-actions">
                   <button
