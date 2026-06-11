@@ -750,3 +750,92 @@
   color: var(--red);
   font-size: 14px;
 }
+
+/* --- Tags: Gmail-label-style chips + filter bar -------------------------- */
+/* Each chip carries its tag colour via the inline --tag-color custom prop.
+   Soft 14% background keeps it subtle; text is mixed toward --fg so gold-on-
+   cream stays readable in light AND dark themes (no per-colour overrides). */
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  background: color-mix(in srgb, var(--tag-color, var(--accent)) 14%, transparent);
+  color: color-mix(in oklch, var(--tag-color, var(--accent)) 55%, var(--fg));
+}
+.tag-chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--tag-color, var(--accent));
+}
+.tag-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Detail page: give the chip row a little breathing room above the form. */
+.note-form-wrap .note-tags {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.tag-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px;
+  margin-bottom: 16px;
+}
+.tag-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.tag-filter-chip:hover {
+  border-color: color-mix(
+    in oklch,
+    var(--tag-color, var(--accent)) 50%,
+    var(--border)
+  );
+}
+.tag-filter-chip.active {
+  border-color: var(--tag-color, var(--accent));
+  background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, var(--surface));
+}
+.tag-filter-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tag-filter-count {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.tag-filter-chip.active .tag-filter-count {
+  color: color-mix(in oklch, var(--tag-color, var(--accent)) 55%, var(--fg));
+}
