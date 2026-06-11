@@ -1,18 +1,33 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getUserTags,
+  getAllNoteTagPairs,
+  withCounts,
+  groupTagsByNote,
+  noteIdsForTag,
+  type NoteTag,
+} from "@/lib/notes/tags";
 import { SketchyFilter } from "./SketchyFilter";
 import { Topbar } from "./Topbar";
 import { BottomTabs } from "./BottomTabs";
 import { Sidebar } from "./Sidebar";
 import { PullToRefresh } from "./PullToRefresh";
+import { TagFilterBar } from "./TagFilterBar";
+import { TagChips } from "./TagChip";
 import "./dashboard.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage({
   params,
+  searchParams,
 }: PageProps<"/[locale]/dashboard">) {
   const { locale } = await params;
+  const sp = await searchParams;
+  const rawTag = sp?.tag;
+  const activeTag = Array.isArray(rawTag) ? rawTag[0] : rawTag;
+
   const supabase = await createClient();
 
   const {
@@ -20,33 +35,65 @@ export default async function DashboardPage({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // 4 queries in parallel — RLS scopes them to user; cuts ~3 round-trips
-  // (sin1↔BKK ≈ 30 ms each) off first paint.
-  const [profileRes, notesCountRes, todoOpenCountRes, notesRes] =
-    await Promise.all([
-      supabase
-        .from("lungnote_profiles")
-        .select("line_display_name, line_picture_url")
-        .eq("id", user.id)
-        .maybeSingle(),
-      supabase
-        .from("lungnote_notes")
-        .select("*", { count: "exact", head: true }),
-      supabase
-        .from("lungnote_todos")
-        .select("*", { count: "exact", head: true })
-        .eq("done", false),
-      supabase
-        .from("lungnote_notes")
-        .select("id, title, body, updated_at")
-        .order("updated_at", { ascending: false })
-        .limit(20),
-    ]);
+  // 6 queries in parallel — RLS scopes them to user; cuts round-trips
+  // (sin1↔BKK ≈ 30 ms each) off first paint. Tag pairs + tag list feed
+  // both the per-row chips and the Gmail-style filter bar.
+  const [
+    profileRes,
+    notesCountRes,
+    todoOpenCountRes,
+    notesRes,
+    userTags,
+    tagPairs,
+  ] = await Promise.all([
+    supabase
+      .from("lungnote_profiles")
+      .select("line_display_name, line_picture_url")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("lungnote_notes")
+      .select("*", { count: "exact", head: true }),
+    supabase
+      .from("lungnote_todos")
+      .select("*", { count: "exact", head: true })
+      .eq("done", false),
+    supabase
+      .from("lungnote_notes")
+      .select("id, title, body, updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(20),
+    getUserTags(supabase),
+    getAllNoteTagPairs(supabase),
+  ]);
 
   const profile = profileRes.data;
   const notesCount = notesCountRes.count;
   const todoOpenCount = todoOpenCountRes.count;
-  const notes = notesRes.data;
+
+  const tagsWithCount = withCounts(userTags, tagPairs);
+  const tagsById = new Map<string, NoteTag>(userTags.map((t) => [t.id, t]));
+  const tagsByNote = groupTagsByNote(tagPairs, tagsById);
+  const activeTagValid =
+    !!activeTag && userTags.some((t) => t.id === activeTag);
+
+  // Default: 20 most-recent notes. With ?tag= active, narrow to that tag's
+  // notes (one extra round-trip, only when filtering).
+  let notes = notesRes.data;
+  if (activeTagValid) {
+    const ids = noteIdsForTag(tagPairs, activeTag);
+    if (ids.length === 0) {
+      notes = [];
+    } else {
+      const { data } = await supabase
+        .from("lungnote_notes")
+        .select("id, title, body, updated_at")
+        .in("id", ids)
+        .order("updated_at", { ascending: false })
+        .limit(20);
+      notes = data;
+    }
+  }
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
@@ -102,22 +149,38 @@ export default async function DashboardPage({
           <Link href="/dashboard/notes/new">+ ใหม่</Link>
         </div>
 
+        <TagFilterBar
+          tags={tagsWithCount}
+          activeTag={activeTagValid ? activeTag : undefined}
+          basePath="/dashboard"
+        />
+
         {!notes || notes.length === 0 ? (
-          <div className="empty-block">
-            <div className="empty-illustration">
-              <div className="empty-notebook" />
-              <div className="empty-plus">+</div>
+          activeTagValid ? (
+            <div className="empty-block">
+              <div className="empty-title">ไม่มีโน้ตที่มีแท็กนี้</div>
+              <p className="empty-desc">
+                ลองเลือกแท็กอื่น หรือดู
+                <Link href="/dashboard"> ทั้งหมด</Link>
+              </p>
             </div>
-            <div className="empty-title">ยังไม่มีโน้ต</div>
-            <p className="empty-desc">
-              สร้างโน้ตเล่มแรกของคุณ แล้วเริ่มจดสิ่งที่สำคัญ
-            </p>
-            <p style={{ marginTop: 16 }}>
-              <Link href="/dashboard/notes/new" className="btn-main primary">
-                สร้างโน้ตแรก
-              </Link>
-            </p>
-          </div>
+          ) : (
+            <div className="empty-block">
+              <div className="empty-illustration">
+                <div className="empty-notebook" />
+                <div className="empty-plus">+</div>
+              </div>
+              <div className="empty-title">ยังไม่มีโน้ต</div>
+              <p className="empty-desc">
+                สร้างโน้ตเล่มแรกของคุณ แล้วเริ่มจดสิ่งที่สำคัญ
+              </p>
+              <p style={{ marginTop: 16 }}>
+                <Link href="/dashboard/notes/new" className="btn-main primary">
+                  สร้างโน้ตแรก
+                </Link>
+              </p>
+            </div>
+          )
         ) : (
           <div className="recent-section">
             <div className="recent-list">
@@ -130,6 +193,7 @@ export default async function DashboardPage({
                   <span className="note-dot" />
                   <div className="note-info">
                     <div className="note-title">{n.title}</div>
+                    <TagChips tags={tagsByNote.get(n.id) ?? []} />
                     <div className="note-meta">
                       {formatRelative(n.updated_at)}
                     </div>

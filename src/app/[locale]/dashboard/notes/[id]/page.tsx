@@ -5,6 +5,8 @@ import { SketchyFilter } from "../../SketchyFilter";
 import { Topbar } from "../../Topbar";
 import { BottomTabs } from "../../BottomTabs";
 import { NoteForm } from "../../NoteForm";
+import { TagChips } from "../../TagChip";
+import { getTagsForNote } from "@/lib/notes/tags";
 import { updateNote, deleteNote } from "../../actions";
 import "../../dashboard.css";
 
@@ -34,6 +36,8 @@ export default async function EditNotePage({
     .maybeSingle();
 
   if (!note) notFound();
+
+  const tags = await getTagsForNote(supabase, note.id);
 
   const displayName = profile?.line_display_name ?? "ผู้ใช้ LINE";
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
@@ -71,6 +75,7 @@ export default async function EditNotePage({
           >
             แก้ไขโน้ต
           </h1>
+          <TagChips tags={tags} />
           <NoteForm
             initialTitle={note.title}
             initialBody={note.body}
