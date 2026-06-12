@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { NoteTag } from "@/lib/notes/tags";
+import { TagChips } from "../TagChip";
 import {
   createTodo,
   toggleTodoDone,
@@ -18,6 +20,7 @@ export type QuickChip = {
 
 export type TodoRow = {
   id: string;
+  note_id: string;
   text: string;
   done: boolean;
   position: number;
@@ -29,6 +32,8 @@ export type TodoRow = {
   source_url: string | null;
   suggested_actions: QuickChip[];
   replied: boolean;
+  /** Parent note's tags — rendered as Gmail-style chips on the row. */
+  tags: NoteTag[];
 };
 
 type FilterKey = "today" | "open" | "all";
@@ -347,6 +352,7 @@ export function TodoListClient({ initial }: { initial: TodoRow[] }) {
                     ลบ
                   </button>
                 </div>
+                <TagChips tags={t.tags} />
                 {t.source === "email" && (
                   <a
                     className="todo-source-tag"

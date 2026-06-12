@@ -265,6 +265,14 @@
   border: 1px solid var(--border);
 }
 
+/* Parent-note tag chips (reuses .note-tags/.tag-chip from dashboard.css) —
+   drop to a full-width row beneath the todo text, matching the source-tag/
+   reply rows in this 32px/1fr/auto grid. */
+.lungnote-dashboard .todo-row .note-tags {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
 .lungnote-dashboard .todo-empty {
   text-align: center;
   padding: 32px 20px;
